@@ -1,34 +1,33 @@
 # Build image
-FROM node:22.14.0 as build
-# Set container working directory to /app
-WORKDIR /app
-# Copy npm instructions
-COPY package*.json ./
-# Set npm cache to a directory the non-root user can access
-RUN npm config set cache /app/.npm-cache --global
-# Install dependencies with npm ci (exact versions in the lockfile), suppressing warnings
-RUN npm ci --loglevel=error
-# Copy app (useless stuff is ignored by .dockerignore)
-COPY . .
-# Build the app
-RUN npm run build
-# Delete all non-production dependencies to make copy in line 28 more efficient
-RUN npm prune --production
+FROM node: 22.14.0 as build
+Working directory /app
+# Add package to npm package install
+Copy package*.json./
+Run npm config set cache /app/.npm-cache --global
+Run npm ci --loglevel=error
+# Defaults to .dockerignore (defaults to .dockerignore).
+Copy . .
+# Next chapter
+Run npm run build
+#The first step in China's economic development
+Run npm prune --production
 
-# Use small production image
-FROM node:22.14.0-alpine
-# Set the env to "production"
+# Production image
+From node: 22.14.0-alpine
 ENV NODE_ENV production
-# Set npm cache to a directory the non-root user can access
-RUN npm config set cache /app/.npm-cache --global
-# Get non-root user
-USER 3301
-# Set container working directory to /app
-WORKDIR /app
-# Copy node modules and app
-COPY --chown=node:node --from=build /app/node_modules /app/node_modules
-COPY --chown=node:node --from=build /app/build build
-# Expose port for serve
-EXPOSE 3000
-# Start app
-CMD [ "npx", "serve", "-s", "build" ]
+Run npm config set cache /app/.npm-cache --global
+User 3301
+Working directory /app
+# Add node_modules
+Copy --chown=node:node --from=build /app/node_modules ./node_modules
+# Next.js - The first step in Next (.next) development
+Copy --chown=node:node --from=build /app/.next ./.next
+# Open package.json (default file format is not supported)
+Copy --chown=node:node --from=build /app/package.json ./package.json
+# Next.config.ts (may be a configuration file)
+Copy --chown=node:node --from=build /app/next.config.ts ./next.config.ts
+# Public domain
+Copy --chown=node:node --from=build/app/public ./public
+Exposure 3000
+# Next.js is a free and open source project
+CMD [ "npm", "Run", "Start" ]
