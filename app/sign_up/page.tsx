@@ -92,6 +92,9 @@ const SignUp: React.FC = () => {
       }}>
         {/* 表单容器 */}
         <div style={{
+          backgroundColor: 'rgba(15, 33, 73, 0.7)',
+          borderRadius: '8px',
+          padding: '30px',
           maxWidth: '400px',
           width: '100%'
         }}>

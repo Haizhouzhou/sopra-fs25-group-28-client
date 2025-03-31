@@ -5,12 +5,14 @@ import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { User } from "@/types/user";
 import { Button, Form, Input } from "antd";
+import mockAuth from "../../mock/auth";
+
 // Optionally, you can import a CSS module or file for additional styling:
 // import styles from "@/styles/page.module.css";
 
 interface FormFieldProps {
-  label: string;
-  value: string;
+  username: string;
+  password: string;
 }
 
 const Login: React.FC = () => {
@@ -30,15 +32,24 @@ const Login: React.FC = () => {
   const handleLogin = async (values: FormFieldProps) => {
     try {
       // Call the API service and let it handle JSON serialization and error handling
-      const response = await apiService.post<User>("/users", values);
+
+
+
+      //const response = await apiService.post<User>("/users", values); 
+
+      const response = mockAuth.login(values.username, values.password);
+
+
+
+
 
       // Use the useLocalStorage hook that returned a setter function (setToken in line 41) to store the token if available
-      if (response.token) {
+      if (response && response.token) {
         setToken(response.token);
       }
 
       // Navigate to the user overview
-      router.push("/users");
+      router.push("/lobby");
     } catch (error) {
       if (error instanceof Error) {
         alert(`Something went wrong during the login:\n${error.message}`);
@@ -99,6 +110,9 @@ const Login: React.FC = () => {
       }}>
         {/* 表单容器 */}
         <div style={{
+          backgroundColor: 'rgba(15, 33, 73, 0.7)',
+          borderRadius: '8px',
+          padding: '30px',
           maxWidth: '400px',
           width: '100%'
         }}>
