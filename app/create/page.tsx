@@ -32,8 +32,10 @@ const CreateGame: React.FC = () => {
       const newRoomId = Math.floor(Math.random() * 1000) + 3;
       console.log('Created game room:', { id: newRoomId, name: roomName, playerCount });
       
-      // 重定向到新创建的游戏房间
-      router.push(`/room/${newRoomId}`);
+      // 重定向到新创建的游戏房间 via URL
+      router.push(`/room/${newRoomId}?name=${encodeURIComponent(roomName)}`);
+
+
     } catch (error) {
       setError('Failed to create game room. Please try again.');
       console.error("Error creating game room:", error);

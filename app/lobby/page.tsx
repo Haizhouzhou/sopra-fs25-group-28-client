@@ -19,11 +19,18 @@ const GameLobby: React.FC = () => {
   const [gameRooms, setGameRooms] = useState<GameRoom[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
   const [username, setUsername] = useState<string>('');
-  
+  const [currentUser, setCurrentUser] = useState<{ name: string; avatar: string } | null>(null);
+
   const { value: token, clear: clearToken } = useLocalStorage<string>("token", "");
 
   // 获取游戏房间列表
   useEffect(() => {
+
+    const user = JSON.parse(localStorage.getItem("currentUser") || "null");
+    if (user) {
+        setCurrentUser({ name: user.name, avatar: user.avatar || "a_01.png" });
+    }
+
     const fetchGameRooms = async () => {
       try {
         // 实际项目中从API获取游戏房间列表
@@ -32,13 +39,13 @@ const GameLobby: React.FC = () => {
         
         // 模拟数据
         setGameRooms([
-          { id: 1, name: "Tom's Game", owner: "Tom", players: "1/4" },
-          { id: 2, name: "Jeanette's Game", owner: "Jeanette", players: "2/4" }
-        ]);
+            { id: 999, name: "Test Room (Join as Guest)", owner: "Tom", players: "3/4" }
+          ]);
       } catch (error) {
         console.error("Failed to fetch game rooms:", error);
       }
     };
+    fetchGameRooms();
 
   }, [router, token, apiService]);
 
@@ -70,6 +77,18 @@ const GameLobby: React.FC = () => {
   const handleLogout = () => {
     clearToken();
     router.push('/');
+  };
+
+  
+  const handleProfileClick = () => {
+    const currentUser = localStorage.getItem('currentUser');
+    if (!currentUser) {
+      alert("User not logged in");
+      return;
+    }
+  
+    const user = JSON.parse(currentUser);
+    router.push(`/users/${user.id}`);
   };
 
   return (
@@ -118,33 +137,82 @@ const GameLobby: React.FC = () => {
       }}>
         {/* 顶部导航栏 */}
         <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px'
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px'
         }}>
-          <h1 style={{
+        <h1 style={{
             color: '#FFD700',
             fontSize: '2.5rem',
             margin: 0
-          }}>
+        }}>
             Game Lobby
-          </h1>
-          
-          <button
-            onClick={handleLogout}
-            style={{
-              backgroundColor: '#0F2149',
-              border: '2px solid #FFD700',
-              color: '#FFD700',
-              padding: '8px 20px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            LOG OUT
-          </button>
+        </h1>
+
+        {/* 用户头像 + 按钮区域整体 */}
+        <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'flex-end', 
+            gap: '20px' 
+        }}>
+            {currentUser && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <img
+                src={`/avatar/${currentUser.avatar}`}
+                alt="User Avatar"
+                style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    border: '3px solid #FFD700'
+                }}
+                />
+                <span style={{
+                color: '#FFD700',
+                fontWeight: 'bold',
+                fontSize: '1.3rem',
+                textTransform: 'capitalize'
+                }}>
+                {currentUser.name}
+                </span>
+            </div>
+            )}
+
+
+            <div style={{ display: 'flex', gap: '20px' }}>
+                <button
+                onClick={handleProfileClick}
+                style={{
+                    backgroundColor: '#0F2149',
+                    border: '2px solid #FFD700',
+                    color: '#FFD700',
+                    padding: '8px 20px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                }}
+                >
+                PROFILE
+                </button>
+
+                <button
+                onClick={handleLogout}
+                style={{
+                    backgroundColor: '#0F2149',
+                    border: '2px solid #FFD700',
+                    color: '#FFD700',
+                    padding: '8px 20px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                }}
+                >
+                LOG OUT
+                </button>
+            </div>
+        </div>
         </div>
 
         {/* 游戏房间列表 */}
