@@ -30,12 +30,13 @@ reason).
 
 ---
 
-## Contributions Week 1 - [Begin Date] to [End Date]
+## Contributions Week 1 - [2025-03-25] to [2025-04-01]
 
 | **Student**        | **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
 | ------------------ | -------- | ------------------ | ------------------------------- | ----------------------------------- |
-| **[@githubUser1]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
-|                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
+| **Yiming Xiao (@yimxia)** | 2025.3.31| [5a94f5a](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/5a94f5a)| Implement homepage, sign-up and sign-in pages of user management system (#1, #5, #6)| Provides entry point for users and handles account auth logic |
+|    | 2025.3.31   | [3f903a1](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/3f903a123ce72de9fd23b2b3e6c0a7d3d527d59f) | Implement game lobby UI and game room interface (#2, #10) | Core UI components for multiplayer room joining & creation flow |
+|                    | 2025.4.1   | [0eac737](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/0eac73708805eae3cc37660e4ccdf6f3c150db63) | Implement profile editing, create new game, join game; integrated in unit feature layout (#1, #2, #8, #10, #11) | Key functions for managing user identity and game initiation |
 | **[@githubUser2]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **[@githubUser3]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
