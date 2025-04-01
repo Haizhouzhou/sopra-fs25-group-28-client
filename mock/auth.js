@@ -65,6 +65,7 @@ const mockAuth = {
       
       // 返回用户信息和模拟令牌
       const token = `mock-token-${Date.now()}`;
+      localStorage.setItem('currentUser', JSON.stringify({ ...user, token }));
       localStorage.setItem('token', token);
       return { ...user, token };
     },
