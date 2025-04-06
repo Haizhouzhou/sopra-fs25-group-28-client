@@ -29,7 +29,7 @@ export class MockWebSocket {
                   level2: [],
                   level3: []
                 },
-                gems: { r: 2, g: 1, b: 1, u: 0, w: 0 },
+                gems: { r: 2, g: 1, b: 1, u: 0, w: 0, '*': 1},
                 nobles: [],
                 reserved: []
               },
@@ -84,7 +84,7 @@ export class MockWebSocket {
                 ]
               }
             ],
-            gems: { r: 4, g: 4, b: 4, u: 4, w: 4 },
+            gems: { r: 4, g: 4, b: 4, u: 4, w: 4, '*': 4},
             cards: {
               level1: [
                 { uuid: "c106", level: "level1", color: "b", points: 0, cost: { r: 1, g: 0, b: 1, u: 0, w: 0 } },
