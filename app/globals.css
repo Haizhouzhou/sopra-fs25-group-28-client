@@ -876,9 +876,7 @@ body {
   }
 
 #chat-box.hidden,
-#log-box.hidden {
-  display: none;
-}
+
 
   #chat {
     position: absolute;
@@ -934,9 +932,7 @@ body {
     margin-bottom: 5px;
   }
   
-  #log-box .title {
-    width: 480px;
-  }
+
   
   #chat-box .title {
     width: 230px;
