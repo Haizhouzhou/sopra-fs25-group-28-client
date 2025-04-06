@@ -1,8 +1,12 @@
+"use client";
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConfigProvider, theme } from "antd";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
 import "@/styles/globals.css";
+import "./globals.css";
+
 import { useEffect } from "react";
 
 
@@ -18,10 +22,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Splendor - Team 28",
-  description: "sopra-fs25-template-client",
-};
 
 export default function RootLayout({
   children,
