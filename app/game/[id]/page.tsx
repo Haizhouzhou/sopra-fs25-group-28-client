@@ -6,10 +6,17 @@ import { useRouter } from "next/navigation";
 // 🧩 卡牌类型
 interface Card {
   uuid: string;
-  level: string; // level1, level2, level3
-  color: string; // w, u, g, b, r
+  level: string;
+  color: string;
   points: number;
-  cost: { [key: string]: number }; // 每种颜色的花费
+  cost: { [key: string]: number };
+}
+
+// 👑 贵族卡类型
+interface Noble {
+  uuid: string;
+  points: number;
+  requirement: { [key: string]: number };
 }
 
 // 🧍‍♂️ 玩家类型
@@ -18,17 +25,10 @@ interface Player {
   name: string;
   uuid: string;
   score: number;
-  cards: { [level: string]: Card[] }; // 已拥有的卡牌
-  gems: { [color: string]: number }; // 持有的宝石
+  cards: { [level: string]: Card[] };
+  gems: { [color: string]: number };
   nobles: Noble[];
   reserved: Card[];
-}
-
-// 👑 贵族卡类型
-interface Noble {
-  uuid: string;
-  points: number;
-  requirement: { [key: string]: number }; // 获得条件
 }
 
 // 🎲 游戏状态类型
@@ -50,25 +50,21 @@ interface ChatMessage {
   timestamp: number;
 }
 
-// 🔄 WebSocket 消息类型
 type WSMessageType = "state" | "chat" | "start" | "error" | "info";
 interface WSMessage {
   type: WSMessageType;
   payload: any;
 }
 
-// ⏱️ 倒计时组件（30秒）
 const CountdownTimer = ({ initialSeconds = 30 }: { initialSeconds?: number }) => {
   const [seconds, setSeconds] = useState(initialSeconds);
-
   useEffect(() => {
     if (seconds <= 0) return;
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
       setSeconds((prev) => prev - 1);
     }, 1000);
-    return () => clearInterval(interval);
+    return () => clearInterval(timer);
   }, [seconds]);
-
   return (
     <div style={{ fontSize: "24px", fontWeight: "bold", margin: "10px" }}>
       {seconds > 0 ? `Time remaining: ${seconds}s` : "Time's up!"}
@@ -86,14 +82,14 @@ export default function GamePage({ params }: { params: { id: string } }) {
   const [wsConnected, setWsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
-  const currentUser = typeof window !== "undefined"
-    ? JSON.parse(localStorage.getItem("currentUser") || "{}")
-    : {};
-  // 🌐 建立 WebSocket 连接
+  const currentUser =
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("currentUser") || "{}")
+      : {};
+
   useEffect(() => {
     if (!gameId) return;
 
-    // 💻 如果是开发环境，引入 mock WebSocket 模块
     if (process.env.NODE_ENV === "development") {
       import("./mocks/mockWS.js");
     }
@@ -106,12 +102,9 @@ export default function GamePage({ params }: { params: { id: string } }) {
       console.log("WebSocket connected");
       setWsConnected(true);
     };
-
     ws.onmessage = (event) => {
       try {
         const msg: WSMessage = JSON.parse(event.data);
-        console.log("WS message received:", msg);
-
         switch (msg.type) {
           case "state":
             setGameState(msg.payload);
@@ -176,8 +169,9 @@ export default function GamePage({ params }: { params: { id: string } }) {
     <div id="game-board">
       <CountdownTimer initialSeconds={30} />
 
+      {/* 🎯 公共区域 */}
       <div id="common-area">
-        {/* 👑 贵族区域 */}
+        {/* 👑 贵族展示区域 */}
         <div id="noble-area">
           {gameState?.nobles?.map((noble, idx) => (
             <div
@@ -201,8 +195,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
             </div>
           ))}
         </div>
-
-        {/* 🃏 卡牌展示区 */}
+        {/* 🃏 卡牌展示区域 */}
         <div id="level-area">
           {["level1", "level2", "level3"].map((level) => (
             <div key={level}>
@@ -243,9 +236,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
                       <div className="underlay"></div>
                       <div className="header">
                         <div className={`color ${card.color}gem`}></div>
-                        <div className="points">
-                          {card.points > 0 ? card.points : ""}
-                        </div>
+                        <div className="points">{card.points > 0 ? card.points : ""}</div>
                       </div>
                       <div className="costs">
                         {Object.entries(card.cost).map(([color, count]) =>
@@ -263,14 +254,12 @@ export default function GamePage({ params }: { params: { id: string } }) {
             </div>
           ))}
         </div>
+
         {/* 💎 公共宝石池 */}
         <div id="gem-area">
           {gameState?.gems &&
             Object.entries(gameState.gems).map(([color, count]) => {
-              // 渲染每种宝石，包括黄金（*）
-              const chipClass =
-                color === "*" ? "schip" : `${color}chip`;
-
+              const chipClass = color === "*" ? "schip" : `${color}chip`;
               return (
                 <div
                   key={color}
@@ -284,7 +273,6 @@ export default function GamePage({ params }: { params: { id: string } }) {
             })}
         </div>
       </div>
-
       {/* 👥 玩家面板 */}
       <div id="player-area">
         {gameState?.players?.map((player) => (
@@ -300,12 +288,12 @@ export default function GamePage({ params }: { params: { id: string } }) {
               )}
             </div>
 
-            {/* 玩家宝石和保留卡摘要 */}
+            {/* 玩家状态区 */}
             <div className="stats">
+              {/* 💠 宝石统计 */}
               <div className="gem-stats">
                 {Object.entries(player.gems).map(([color, count]) => {
                   if (color === "*") {
-                    // 黄金宝石单独渲染：无卡牌数量，只显示数量
                     return (
                       <div key="gold" className="statSet">
                         <div className="stat staty">{count}</div>
@@ -320,7 +308,6 @@ export default function GamePage({ params }: { params: { id: string } }) {
                     );
                   }
 
-                  // 普通颜色宝石（r/g/b/u/w）
                   const cardCount = Object.values(player.cards || {})
                     .flat()
                     .filter((card) => card.color === color).length;
@@ -341,17 +328,57 @@ export default function GamePage({ params }: { params: { id: string } }) {
                   );
                 })}
               </div>
+            </div>
 
-              {/* 保留卡图标（小缩略图） */}
-              <div className="reservedStat">
-                {player.reserved?.map((card) => (
+            {/* 🃏 保留卡展示区域（与 stats 分离） */}
+            {player.reserved?.length > 0 && (
+              <div className="reserveCards">
+                {player.reserved.map((card) => (
                   <div
                     key={card.uuid}
                     className={`card card-${card.color} card-${card.level}`}
-                  ></div>
+                  >
+                    <div className="overlay"></div>
+                    <div className="underlay"></div>
+                    <div className="header">
+                      <div className={`color ${card.color}gem`}></div>
+                      <div className="points">{card.points}</div>
+                    </div>
+                    <div className="costs">
+                      {Object.entries(card.cost).map(([color, count]) =>
+                        count > 0 ? (
+                          <div key={color} className={`cost ${color}`}>
+                            {count}
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
+            )}
+
+            {/* 👑 拥有贵族卡展示 */}
+            {player.nobles?.length > 0 && (
+              <div className="nobleStat">
+                <div className="nobleLabel">Nobel</div>
+                <div className="nobleCards">
+                  {player.nobles.map((noble, idx) => (
+                    <div
+                      key={noble.uuid}
+                      className="noble"
+                      id={`noble${idx}`}
+                      style={{
+                        width: "65px",
+                        height: "65px",
+                        marginLeft: "4px",
+                        marginTop: "10px",
+                      }}
+                    ></div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -376,7 +403,14 @@ export default function GamePage({ params }: { params: { id: string } }) {
         }}
       >
         {/* 聊天记录展示区域 */}
-        <div style={{ maxHeight: "150px", overflowY: "auto", color: "white" }}>
+        <div
+          style={{
+            maxHeight: "150px",
+            overflowY: "auto",
+            color: "white",
+            paddingBottom: "4px",
+          }}
+        >
           {chatMessages.map((msg, idx) => (
             <div key={idx}>
               <strong>{msg.player}: </strong>
@@ -395,13 +429,13 @@ export default function GamePage({ params }: { params: { id: string } }) {
             value={newChat}
             onChange={(e) => setNewChat(e.target.value)}
             placeholder="Type your message..."
-            style={{ flex: 1, padding: "8px" }}
+            style={{ flex: 1, padding: "8px", marginRight: "6px" }}
           />
           <button type="submit" style={{ padding: "8px 16px" }}>
             Send
           </button>
         </form>
       </div>
-    </div>
+    </div> // game-board 结束
   );
 }

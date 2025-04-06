@@ -274,7 +274,7 @@ body {
     border-radius: 6.2%;
     background-color: #eeeeee;
     background-size: 1000% 100%;
-    background-image: url('../public/gamesource/game_page/nobles.jpg')
+    background-image: url('/gamesource/game_page/nobles.jpg')
   }
   
   #noble0 {
@@ -318,7 +318,7 @@ body {
   }
   
   .card {
-    background-image: url('../public/gamesource/game_page/cards.jpg');
+    background-image: url('/gamesource/game_page/cards.jpg');
     background-size: 1500% 100%;
   }
   
@@ -524,31 +524,6 @@ body {
     top: 10px;
   }
   
-  .reservedStat .level1, .reservedStat .card-level1 {
-    background-color: #109e0e;
-  }
-  
-  .reservedStat .level2, .reservedStat .card-level2 {
-    background-color: #f2ba1f;
-  }
-  
-  .reservedStat .level3, .reservedStat .card-level3 {
-    background-color: #0f5bad;
-  }
-  
-  .reservedStat .card, .reservedStat .deck {
-    height: 20px;
-    width: 14px;
-    margin-left: 4px;
-    border: 2px solid black;
-    background-image: none;
-    border-radius: 15%;
-  }
-  
-  .reservedStat .card .overlay, .reservedStat .card .header, .reservedStat .card .cost {
-    display: none;
-  }
-  
   .stats {
     display: flex;
     width: 600px;
@@ -578,6 +553,7 @@ body {
     margin-top: 20px;
   }
   
+  /* ----------- 卡牌背景图定位（非常关键）----------- */
   .card-r.card-level1 {
     background-position: 85.71% 0;
   }
@@ -637,7 +613,7 @@ body {
   
   .card-u.card-level3 {
     background-position: 35.71% 0;
-  }
+  }  
   
   .color {
     width: 32.1%;
@@ -647,7 +623,7 @@ body {
     top: 14.2%;
     background-repeat: no-repeat;
     background-size: 500% 100%;
-    background-image: url('../public/gamesource/game_page/gems.png')
+    background-image: url('/gamesource/game_page/gems.png')
   }
   
   .side-bar {
@@ -938,32 +914,32 @@ body {
   }
   
   .uchip {
-    background: url('../public/gamesource/game_page/chips.jpg') 20% 0;
+    background: url('/gamesource/game_page/chips.jpg') 20% 0;
     background-size: 600% 100%;
   }
   
   .bchip {
-    background: url('../public/gamesource/game_page/chips.jpg') 0 0;
+    background: url('/gamesource/game_page/chips.jpg') 0 0;
     background-size: 600% 100%;
   }
   
   .rchip {
-    background: url('../public/gamesource/game_page/chips.jpg') 80% 0;
+    background: url('/gamesource/game_page/chips.jpg') 80% 0;
     background-size: 600% 100%;
   }
   
   .gchip {
-    background: url('../public/gamesource/game_page/chips.jpg') 60% 0;
+    background: url('/gamesource/game_page/chips.jpg') 60% 0;
     background-size: 600% 100%;
   }
   
   .wchip {
-    background: url('../public/gamesource/game_page/chips.jpg') 40% 0;
+    background: url('/gamesource/game_page/chips.jpg') 40% 0;
     background-size: 600% 100%;
   }
   
   .schip {
-    background: url('../public/gamesource/game_page/chips.jpg') 100% 0;
+    background: url('/gamesource/game_page/chips.jpg') 100% 0;
     background-size: 600% 100%;
   }
   
@@ -1003,7 +979,7 @@ body {
   
   .deck {
     background-size: 300% 100%;
-    background-image: url('../public/gamesource/game_page/deck.jpg');
+    background-image: url('/gamesource/game_page/deck.jpg');
   }
   
   .face-up-cards {
