@@ -318,6 +318,8 @@ body {
   }
   
   .card {
+    width: 75px;
+    height: 105px;
     background-image: url('/gamesource/game_page/cards.jpg');
     background-size: 1500% 100%;
   }
