@@ -30,7 +30,7 @@ reason).
 
 ---
 
-## Contributions Week 1 - [2025-03-25] to [2025-04-01]
+## Contributions Week 1 - 2025-03-25 to 2025-04-01
 
 | **Student**        | **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
 | ------------------ | -------- | ------------------ | ------------------------------- | ----------------------------------- |
@@ -46,12 +46,12 @@ reason).
 
 ---
 
-## Contributions Week 2 - [Begin Date] to [End Date]
+## Contributions Week 2 - 2025-04-01 to 2025-04-07
 
 | **Student**        | **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
 | ------------------ | -------- | ------------------ | ------------------------------- | ----------------------------------- |
-| **[@githubUser1]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
-|                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
+| **Yiming Xiao (@yimxia)** |2025.4.7   | [feefb6e](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/tree/feefb6e13787fcd1c3ca5ecf34b389a52c660957) | Updated CSS styles for the game page and PlayPanel to match the overall UI design | Improves UI consistency across pages and enhances game interface clarity |
+|                    | 2025.4.7   | [65075e4](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/tree/65075e4857c628e0f2cb4ab99187fb689b4e7130) | Processed 100 card images and added ID numbers to support consistent frontend-backend card referencing | Enables accurate card selection and synchronization between frontend and backend |
 | **[@githubUser2]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **[@githubUser3]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
