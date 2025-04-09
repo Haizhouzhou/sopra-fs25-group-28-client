@@ -39,7 +39,7 @@ reason).
 |                    | 2025.4.1   | [0eac737](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/0eac73708805eae3cc37660e4ccdf6f3c150db63) | Implement profile editing, create new game, join game; integrated in unit feature layout (#1, #2, #8, #10, #11) | Key functions for managing user identity and game initiation |
 | **Haizhou Zheng[@haizhouzhou]** | 2025.04.01   | [0c9a9237466282bf17d0b6870d3a902bff428051](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/0c9a9237466282bf17d0b6870d3a902bff428051) | #18 #19 #20 #21 Implement base player actions and board layout with mock state | Defined Actions, Compomemts, Boards for Gamepage and Integrated them together |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
-| **[@githubUser3]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+| **Philip Spasojevic (@sopraPH)** | 2025.04.01   | [[Link to Commit 1](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/290cb23befb05e297945a88573c6fc89613f659d)] | [User registration and login functions] | [Cant have a game without users] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **[@githubUser4]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
@@ -56,7 +56,7 @@ reason).
 |                    | 2025.04.06   | [f3ff40e](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/f3ff40e99d9d66fd99ad1eec5425b013240bc044) | Redesigned the Whole Gamepage | Deleted the deifiend acitons, boards, components of gamepage and change them in to one file that shows define all the action and layout logic |
 |                    | 2025.04.06   | [8aabc9c](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/8aabc9c9b98776f5b2d23e914ea4d13cdc04af56) | gamepage with gold | In the game rule, the gold plays a different rule to the gemstones, so this commit redesigned a use role for the gold |
 |                    | 2025.04.06   | [836d69c](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/836d69c8a45fd55ccc4d24bba5611cfc1bb18050) | Add chatroom feature to the gamepage #12 | Define chatroom layout including conversation history with username and inputbox, support expansion and collapse of chatroom   |
-| **[@githubUser3]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+| **Philip Spasojevic (@sopraPH)** | 2025.04.08   | [[Link to Commit 1](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/50f4912d8f0946815902e7163316dca0a23d91e4)] | Added classes for cards/noblemen and full decklists as JSON | cant have a game without the game elements |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **[@githubUser4]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
