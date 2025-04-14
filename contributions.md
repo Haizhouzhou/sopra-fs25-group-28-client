@@ -41,8 +41,8 @@ reason).
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **Philip Spasojevic (@sopraPH)** | 2025.04.01   | [[Link to Commit 1](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/290cb23befb05e297945a88573c6fc89613f659d)] | [User registration and login functions] | [Cant have a game without users] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
-| **[@githubUser4]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
-|                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
+| **Zizhou Luo (@Skiingseason)** | 2025.4.1 | [f78ebce](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/f78ebce33f7c681be48fef67596dabf32a6fe19f) | implment Websocket framework, relative util class like WebSocketMessage, GameRoomManager (User Story issue#10, #11, #43) | Provides general framework for real-time game interaction to be held on |
+|                                | 2025.4.1 | [5d73ad1](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/5d73ad1bf8056088f218c34383829a19bc681ee3) | implement create/join room methods, but needs to reorganize class structure. (#10, #12, #13) | Core UI components for multiplayer room joining & creation flow |
 
 ---
 
@@ -58,14 +58,18 @@ reason).
 |                    | 2025.04.06   | [836d69c](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/836d69c8a45fd55ccc4d24bba5611cfc1bb18050) | Add chatroom feature to the gamepage #12 | Define chatroom layout including conversation history with username and inputbox, support expansion and collapse of chatroom   |
 | **Philip Spasojevic (@sopraPH)** | 2025.04.08   | [[Link to Commit 1](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/50f4912d8f0946815902e7163316dca0a23d91e4)] | Added classes for cards/noblemen and full decklists as JSON | cant have a game without the game elements |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
-| **[@githubUser4]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
-|                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
+| **Zizhou Luo (@Skiingseason)** | 2025.4.6 | [adec3f6](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/adec3f663ed311a68b72369b962fd5a382a4c8d3) | Create new branch `demo`, merge result of previous week. Fixed bug in `User` Test. Create `contribution.md` | Organize last week's work product, resolve small bugs and add to the record |
+|                                | 2025.4.6 | [cb18e35](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/cb18e351a1302cfca0837352ff1d47ea3cde9d8c) | #14, #15 Players status in Gameroom(gready or not). Host player can start the game if it applay | Part of the game room logic. Only when all players are ready, the game can be started |
+|                                | 2025.4.7 | [761a29e](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/761a29e03dee09e0aff5098a788eb3e9ffbced80) | #16, #18, #20 implemented `Game` class and modify `Player` class to hold game information | Hold Game related information and handle core logic of the game |
 
 ---
 
 ## Contributions Week 3 - [Begin Date] to [End Date]
 
-_Continue with the same table format as above._
+| **Student**                    | **Date**  | **Link to Commit**                                           | **Description**                                              | **Relevance**                                        |
+| ------------------------------ | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------- |
+| **Zizhou Luo (@Skiingseason)** | 2025.4.13 | [dda2493](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/dda2493d94ad83eafe96e5dcbc8c11676113eed1) | #16, #22, # 23 Merged Philips implementation of `items`(include `card` and `noble`) into demo branch. Wrote some test files | cards and nobles are important component of the game |
+|                                | 2025.4.14 | [a3bca26](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/a3bca26b60a605ea0a00bc657d00e35a3c6bb4a0) | #17, #26, #35 complete `Game`, implement method in `Game` to check victory condition. Add counter to decide players turn | part of game logic                                   |
 
 ---
 
