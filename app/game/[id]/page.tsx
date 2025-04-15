@@ -22,7 +22,7 @@ interface Noble {
   requirement: { [key: string]: number };
 }
 
-  // Player
+// Player
 interface Player {
   id: number;
   name: string;
@@ -47,7 +47,6 @@ interface GameState {
 }
 
 // Chat Message
-
 interface ChatMessage {
   player: string;
   text: string;
@@ -94,12 +93,111 @@ export default function GamePage({ params }: { params: { id: string } }) {
       ? JSON.parse(localStorage.getItem("currentUser") || "{}")
       : {};
 
+  // 新增函数：检查用户是否有足够资源购买卡牌
+  const canAffordCard = (card: Card): boolean => {
+    if (!gameState) return false;
+    
+    // 找到当前玩家
+    const currentPlayer = gameState.players.find(p => p.uuid === currentUser.uuid);
+    if (!currentPlayer) return false;
+    
+    // 如果不是当前玩家的回合，不允许购买
+    if (gameState.turn !== currentPlayer.id) {
+      return false;
+    }
+
+    // 计算玩家拥有的实际资源(宝石 + 卡牌折扣)
+    const playerCards = Object.values(currentPlayer.cards).flat();
+    
+    // 统计玩家拥有的各颜色卡牌数量（这些可以作为对应颜色的折扣）
+    const discounts: { [color: string]: number } = {};
+    
+    // 初始化所有颜色的折扣为0
+    ["r", "g", "b", "u", "w"].forEach(color => {
+      discounts[color] = playerCards.filter(c => c.color === color).length;
+    });
+    
+    // 计算购买卡牌需要额外支付的宝石数量
+    const requiredGems: { [color: string]: number } = {};
+    
+    Object.entries(card.cost).forEach(([color, count]) => {
+      // 计算需要的宝石 = 卡牌花费 - 已有的同色卡牌折扣
+      const discount = discounts[color] || 0;
+      const required = Math.max(0, count - discount);
+      
+      if (required > 0) {
+        requiredGems[color] = required;
+      }
+    });
+    
+    // 检查玩家是否有足够的宝石
+    let wildcardsNeeded = 0;
+    
+    for (const [color, required] of Object.entries(requiredGems)) {
+      const available = currentPlayer.gems[color] || 0;
+      
+      if (available < required) {
+        // 差额需要用通配符宝石补充
+        wildcardsNeeded += (required - available);
+      }
+    }
+    
+    // 检查玩家的通配符宝石是否足够
+    const wildcards = currentPlayer.gems["*"] || 0;
+    return wildcards >= wildcardsNeeded;
+  };
+
+  // 处理卡牌操作的函数
+  const handleCardAction = (action: string, cardUuid: string) => {
+    if (!gameState) return;
+    
+    // 找到当前玩家
+    const currentPlayer = gameState.players.find(p => p.uuid === currentUser.uuid);
+    if (!currentPlayer) {
+      console.warn("Cannot find current player data");
+      return;
+    }
+    
+    // 寻找要操作的卡牌
+    let targetCard: Card | undefined;
+    
+    // 从所有展示的卡牌中查找
+    for (const level in gameState.cards) {
+      const found = gameState.cards[level].find(card => card.uuid === cardUuid);
+      if (found) {
+        targetCard = found;
+        break;
+      }
+    }
+    
+    // 如果没找到，可能是从预留卡牌列表中选择的
+    if (!targetCard) {
+      targetCard = currentPlayer.reserved.find(card => card.uuid === cardUuid);
+    }
+    
+    if (!targetCard) {
+      console.warn("Card not found:", cardUuid);
+      return;
+    }
+    
+    if (action === "buy") {
+      if (canAffordCard(targetCard)) {
+        sendAction("buy", cardUuid);
+      } else {
+        alert("You don't have enough gems to buy this card!");
+      }
+    } else if (action === "reserve") {
+      // 检查是否已经有3张预留卡牌
+      if (currentPlayer.reserved.length >= 3) {
+        alert("You already have 3 reserved cards!");
+      } else {
+        sendAction("reserve", cardUuid);
+      }
+    }
+  };
+
   useEffect(() => {
     if (!gameId) return;
-
-    /*if (process.env.NODE_ENV === "development") {
-      import("./mocks/mockWS.js");
-    }*/
 
     const wsUrl = `wss://yourserver.com/ws?gid=${gameId}&pid=${currentUser.id || 0}&uuid=${currentUser.uuid || ""}`;
     const ws = new WebSocket(wsUrl);
@@ -120,15 +218,18 @@ export default function GamePage({ params }: { params: { id: string } }) {
             setChatMessages((prev) =>
               Array.isArray(msg.payload) ? [...prev, ...msg.payload] : [...prev, msg.payload]
             );
+            if (!showChat) {
+              setChatNotify(true);
+            }
             break;
           case "start":
             console.log("Game started!");
             break;
           case "error":
-            alert("Error" + msg.payload);
+            alert("Error: " + msg.payload);
             break;
           case "info":
-            console.log("hint：" + msg.payload);
+            console.log("Hint: " + msg.payload);
             break;
           default:
             break;
@@ -170,6 +271,12 @@ export default function GamePage({ params }: { params: { id: string } }) {
     sendAction("chat", "", message);
     setChatMessages((prev) => [...prev, message]);
     setNewChat("");
+  };
+
+  // 检查是否是当前玩家的回合
+  const isPlayerTurn = (): boolean => {
+    if (!gameState) return false;
+    return gameState.turn === currentUser.id;
   };
 
   return (
@@ -228,61 +335,82 @@ export default function GamePage({ params }: { params: { id: string } }) {
           <div id="level-area">
             {["level1", "level2", "level3"].map((level) => (
               <div key={level} className="card-row flex items-start gap-4 min-w-[1200px] mb-6">
-              {/* 卡堆（deck） */}
-              <div className={`deck ${level} w-[130px] h-[180px] relative`}>
-                <div className="remaining">{gameState?.decks?.[level] ?? 0}</div>
-                <div className="overlay"></div>
-                <div className="reserve" onClick={() => sendAction("reserve", level)}>
-                  <img
-                    className="floppy"
-                    src="/gamesource/game_page/floppy.png"
-                    alt="reserve"
-                  />
+                {/* 卡堆（deck） */}
+                <div className={`deck ${level} w-[130px] h-[180px] relative`}>
+                  <div className="remaining">{gameState?.decks?.[level] ?? 0}</div>
+                  <div className="overlay"></div>
+                  <div 
+                    className={`reserve ${isPlayerTurn() ? 'active' : 'inactive'}`}
+                    onClick={() => {
+                      if (isPlayerTurn()) {
+                        const currentPlayer = gameState?.players.find(p => p.uuid === currentUser.uuid);
+                        if (currentPlayer && currentPlayer.reserved.length < 3) {
+                          sendAction("reserve", level);
+                        } else {
+                          alert("You already have 3 reserved cards!");
+                        }
+                      } else {
+                        alert("It's not your turn!");
+                      }
+                    }}
+                  >
+                    <img
+                      className="floppy"
+                      src="/gamesource/game_page/floppy.png"
+                      alt="reserve"
+                    />
+                  </div>
                 </div>
-              </div>
-            
-              {/* 翻开的卡牌 */}
-              <div className={`c_${level} face-up-cards`}>
-                <div className="cards-inner flex gap-4 flex-nowrap overflow-x-auto">
-                  {gameState?.cards?.[level]?.map((card) => (
-                    <div
-                      key={card.uuid}
-                      className={`card card-${card.color} card-${card.level} w-[280px] h-[400px]`}
-                      onClick={() => sendAction("buy", card.uuid)}
-                    >
-                      <div
-                        className="reserve"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          sendAction("reserve", card.uuid);
-                        }}
-                      >
-                        <img
-                          className="floppy"
-                          src="/gamesource/game_page/floppy.png"
-                          alt="reserve"
-                        />
-                      </div>
-                      <div className="overlay"></div>
-                      <div className="underlay"></div>
-                      <div className="header">
-                        <div className={`color ${card.color}gem`}></div>
-                        <div className="points">{card.points > 0 ? card.points : ""}</div>
-                      </div>
-                      <div className="costs">
-                        {Object.entries(card.cost).map(([color, count]) =>
-                          count > 0 ? (
-                            <div key={color} className={`cost ${color}`}>
-                              {count}
-                            </div>
-                          ) : null
-                        )}
-                      </div>
-                    </div>
-                  ))}
+              
+                {/* 翻开的卡牌 */}
+                <div className={`c_${level} face-up-cards`}>
+                  <div className="cards-inner flex gap-4 flex-nowrap overflow-x-auto">
+                    {gameState?.cards?.[level]?.map((card) => {
+                      const affordable = canAffordCard(card);
+                      return (
+                        <div
+                          key={card.uuid}
+                          className={`card card-${card.color} card-${card.level} w-[280px] h-[400px] ${affordable ? 'affordable' : 'not-affordable'}`}
+                          onClick={() => handleCardAction("buy", card.uuid)}
+                        >
+                          <div
+                            className={`reserve ${isPlayerTurn() ? 'active' : 'inactive'}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isPlayerTurn()) {
+                                handleCardAction("reserve", card.uuid);
+                              } else {
+                                alert("It's not your turn!");
+                              }
+                            }}
+                          >
+                            <img
+                              className="floppy"
+                              src="/gamesource/game_page/floppy.png"
+                              alt="reserve"
+                            />
+                          </div>
+                          <div className={`overlay ${affordable ? 'affordable' : 'not-affordable'}`}></div>
+                          <div className="underlay"></div>
+                          <div className="header">
+                            <div className={`color ${card.color}gem`}></div>
+                            <div className="points">{card.points > 0 ? card.points : ""}</div>
+                          </div>
+                          <div className="costs">
+                            {Object.entries(card.cost).map(([color, count]) =>
+                              count > 0 ? (
+                                <div key={color} className={`cost ${color}`}>
+                                  {count}
+                                </div>
+                              ) : null
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            </div>            
+              </div>            
             ))}
           </div>
   
@@ -294,8 +422,14 @@ export default function GamePage({ params }: { params: { id: string } }) {
                 return (
                   <div
                     key={color}
-                    className={`gem ${chipClass}`}
-                    onClick={() => sendAction("take", color)}
+                    className={`gem ${chipClass} ${isPlayerTurn() ? 'active' : 'inactive'}`}
+                    onClick={() => {
+                      if (isPlayerTurn()) {
+                        sendAction("take", color);
+                      } else {
+                        alert("It's not your turn!");
+                      }
+                    }}
                   >
                     <div className="bubble">{count}</div>
                     <div className="underlay"></div>
@@ -315,8 +449,6 @@ export default function GamePage({ params }: { params: { id: string } }) {
           display: "flex",
           flexDirection: "column",
           gap: "12px"
-          // maxHeight: "90vh",
-          // overflowY: "auto"
         }}>
           {gameState?.players?.map((player) => {
             const colorToChip: Record<string, string> = {
@@ -368,34 +500,44 @@ export default function GamePage({ params }: { params: { id: string } }) {
                 </div>
 
                 {/* Reserved Cards */}
-                    <div className="reserveCards" style={{
-                      minWidth: "450px",
-                      minHeight: "220px",
-                      display: "flex",
-                    }
-                    }
-                    >
-
-                      {[0, 1, 2].map((i) => {
-                        const card = player.reserved[i];
-                        return card ? (
-                          <div key={card.uuid} className={`card card-sm card-${card.color}`}>
-                            <div className="points">{card.points}</div>
-                            <div className="costs">
-                              {Object.entries(card.cost).map(([color, count]) =>
-                                count > 0 ? (
-                                  <div key={color} className={`cost ${color}`}>
-                                    {count}
-                                  </div>
-                                ) : null
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <div key={i} className="card card-sm placeholder-card" />
-                        );
-                      })}
-                    </div>
+                <div className="reserveCards" style={{
+                  minWidth: "450px",
+                  minHeight: "220px",
+                  display: "flex",
+                }}>
+                  {[0, 1, 2].map((i) => {
+                    const card = player.reserved[i];
+                    // 检查当前玩家是否可以购买这张预留卡
+                    const isCurrentPlayer = player.uuid === currentUser.uuid;
+                    const affordable = card && isCurrentPlayer ? canAffordCard(card) : false;
+                    
+                    return card ? (
+                      <div 
+                        key={card.uuid} 
+                        className={`card card-sm card-${card.color} ${affordable ? 'affordable' : 'not-affordable'}`}
+                        onClick={() => {
+                          if (isCurrentPlayer && isPlayerTurn()) {
+                            handleCardAction("buy", card.uuid);
+                          }
+                        }}
+                      >
+                        <div className="points">{card.points}</div>
+                        <div className={`overlay ${affordable ? 'affordable' : 'not-affordable'}`}></div>
+                        <div className="costs">
+                          {Object.entries(card.cost).map(([color, count]) =>
+                            count > 0 ? (
+                              <div key={color} className={`cost ${color}`}>
+                                {count}
+                              </div>
+                            ) : null
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div key={i} className="card card-sm placeholder-card" />
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
@@ -406,7 +548,13 @@ export default function GamePage({ params }: { params: { id: string } }) {
       {/* Pass turn */}
       <button
         id="pass-turn"
-        onClick={() => sendAction("next", "")}
+        onClick={() => {
+          if (isPlayerTurn()) {
+            sendAction("next", "");
+          } else {
+            alert("It's not your turn!");
+          }
+        }}
         style={{
           margin: "20px auto",
           padding: "10px 20px",
@@ -417,13 +565,13 @@ export default function GamePage({ params }: { params: { id: string } }) {
           cursor: "pointer",
           fontSize: "16px",
           fontWeight: "bold",
-          opacity: gameState?.turn === currentUser.id ? 1 : 0.3
+          opacity: isPlayerTurn() ? 1 : 0.3
         }}
       >
         Pass turn
       </button>
   
-      {/* Chat box - keeping it as is */}
+      {/* Chat box */}
       <div
         id="chat-box"
         style={{
