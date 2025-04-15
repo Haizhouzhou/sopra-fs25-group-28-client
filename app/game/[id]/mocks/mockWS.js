@@ -1,5 +1,5 @@
 //FUll Loaded features test
-import { cards, nobles } from "../../../allCards";
+
 /************************************************************************************
 export class MockWebSocket {
     constructor(url) {
@@ -353,7 +353,7 @@ export class MockWebSocket {
   }
   
 ***********************************************************************/
-
+import { cards, nobles } from "../../../allCards";
 
 export class MockWebSocket {
   constructor(url) {
@@ -393,7 +393,7 @@ export class MockWebSocket {
             { id: 3, name: "Charlie", uuid: "p3", score: 0, cards: {}, reserved: [], gems: { r: 0, g: 0, b: 0, u: 0, w: 0, "*": 0 }, nobles: [] },
             { id: 4, name: "David", uuid: "p4", score: 0, cards: {}, reserved: [], gems: { r: 0, g: 0, b: 0, u: 0, w: 0, "*": 0 }, nobles: [] }
           ],
-          gems: { r: 4, g: 4, b: 4, u: 4, w: 4, "*": 5 },
+          gems: { r: 7, g: 7, b: 7, u: 7, w: 7, "*": 5 },
           cards: {
             level1: level1Uuids.map(getCardByUuid),
             level2: level2Uuids.map(getCardByUuid),
