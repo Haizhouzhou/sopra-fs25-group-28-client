@@ -64,7 +64,7 @@ reason).
 
 ---
 
-## Contributions Week 3 - [Begin Date] to [End Date]
+## Contributions Week 3 - 2025-04-07 to 2025-04-15
 
 | **Student**                    | **Date**  | **Link to Commit**                                           | **Description**                                              | **Relevance**                                        |
 | ------------------------------ | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------- |
@@ -73,6 +73,10 @@ reason).
 | **Philip Spasojevic (@sopraPH)** | 2025.04.13   | [27c9ee7](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/27c9ee7d8473211faf916c7c73c29df081e87102) | Added in some of the Player actions to be taken during the game, mainly gem aquisition and reserving cards. also updates the goldcount | gives a first starting point for the actions to be updated |
 |                    | 2025.4.14   | [9e89494](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/9e8949476fe3fc0f261c4a7b7bbed2ed8f43b2aa) | Added in the cost checking of the card to be purchased and the logic to actually purchase it. Also cleaned the payeractions code from bloat. Still needs end of turn checks | Now the in game actions are more consistent with the other actions, however they still need to be adjusted for end of turn effects |
 |                    | 2025.4.14   | - | Made an outline of instructions for the AI, i.e. a format to pass and get the requested information. Still needs adjusting to the PlayerAction file to call for the AI and package and send all the relevant information | This is a first step to make the AI API call possible. Still needs lots of work, since the structure of the format was not previously determined. |
+| **Yiming Xiao (@yimxia)** | 2025.4.15 | [61a578a](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/61a578a53f05d4d222c1288de58cafbc41f845c2) |Connected frontend pages (signup, login, gamelobby, create, and gameroom) to backend services. Implemented a unified WebSocket hook on the frontend to handle bi-directional communication. Integrated WebSocket messaging for room creation, joining, player status updates, and real-time synchronization between multiple clients.|This is a critical step that connects the frontend interface with backend game logic for the first time. By establishing full WebSocket integration and implementing message handling across core pages (signup, login, lobby, create, and room), this work enables real-time communication and dynamic UI updates.
+|| 2025.4.15 | [27d7651](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/27d76516d655deeac4249a8319fac64cb0f77e4d) |Implemented purchase validation logic in game page. Before allowing a card to be purchased, the system checks if the current player has sufficient gems based on the card’s cost. Integrated backend communication to fetch the list of stacked cards and match each card’s ID with its corresponding cost and content. UI was updated to reflect the current state and availability of each card.|This update ensures accurate resource validation during gameplay, prevents invalid moves, and maintains UI-game state consistency by synchronizing with backend card stack data. 
+
+
 ---
 
 ## Contributions Week 4 - [Begin Date] to [End Date]
