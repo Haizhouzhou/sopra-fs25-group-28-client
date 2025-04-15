@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApi } from "@/hooks/useApi";
-import useLocalStorage from "@/hooks/useLocalStorage";
+import WebSocketService, { useWebSocket, WebSocketMessage } from "@/hooks/useWebSocket";
 
 const CreateGame: React.FC = () => {
   const router = useRouter();
@@ -11,30 +11,61 @@ const CreateGame: React.FC = () => {
   const [roomName, setRoomName] = useState('');
   const [playerCount, setPlayerCount] = useState(4);
   const [error, setError] = useState('');
-  
+  const [isConnected, setIsConnected] = useState(false);
+
+  // 用于防止重复跳转
+  const hasNavigatedRef = useRef(false);
+
+  // 获取用户信息
+  const userStr = typeof window !== 'undefined' ? localStorage.getItem('currentUser') : null;
+  const user = userStr ? JSON.parse(userStr) : null;
+  const sessionId = user?.id?.toString() || Math.random().toString(36).substring(2, 15);
+
+  // 使用WebSocket服务
+  const { connected, sendMessage } = useWebSocket(sessionId, handleWebSocketMessage);
+
+  // WebSocket消息处理
+  function handleWebSocketMessage(message: WebSocketMessage) {
+    console.log('Received WebSocket message in create game:', message);
+
+    const roomId = message.roomId || (message.content && message.content.roomId);
+
+    if (
+      (message.type === 'ROOM_CREATED' || message.type === 'ROOM_STATE') &&
+      roomId &&
+      !hasNavigatedRef.current
+    ) {
+      hasNavigatedRef.current = true; 
+      console.log('Navigating to room:', roomId);
+      router.push(`/room/${roomId}?name=${encodeURIComponent(roomName)}`);
+    }
+  }
+
+  // 更新连接状态
+  useEffect(() => {
+    setIsConnected(connected);
+  }, [connected]);
+
   const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!roomName) {
       setError('Please enter a room name');
       return;
     }
 
-    try {
-      // 实际项目中调用API创建游戏房间
-      // const response = await apiService.post("/games", { 
-      //   name: roomName, 
-      //   maxPlayers: playerCount 
-      // });
-      // const newRoomId = response.id;
-      
-      // 模拟创建房间
-      const newRoomId = Math.floor(Math.random() * 1000) + 3;
-      console.log('Created game room:', { id: newRoomId, name: roomName, playerCount });
-      
-      // 重定向到新创建的游戏房间 via URL
-      router.push(`/room/${newRoomId}?name=${encodeURIComponent(roomName)}`);
+    if (!connected) {
+      setError('Not connected to server. Please try again.');
+      return;
+    }
 
+    try {
+      sendMessage({
+        type: 'CREATE_ROOM',
+        content: {
+          maxPlayers: playerCount,
+        }
+      });
 
     } catch (error) {
       setError('Failed to create game room. Please try again.');
@@ -74,8 +105,23 @@ const CreateGame: React.FC = () => {
           src="/gamesource/splendor_logo.png"
           alt="Splendor Logo"
           width={500}
-          height={200}
+          style={{ height: 'auto' }}
         />
+      </div>
+
+      {/* 连接状态指示器 */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        padding: '8px 12px',
+        borderRadius: '4px',
+        backgroundColor: isConnected ? 'rgba(0, 128, 0, 0.7)' : 'rgba(255, 0, 0, 0.7)',
+        color: 'white',
+        fontWeight: 'bold',
+        zIndex: 10
+      }}>
+        {isConnected ? 'Server Connected' : 'Server Disconnected'}
       </div>
 
       {/* 主内容区 */}
@@ -177,15 +223,17 @@ const CreateGame: React.FC = () => {
             }}>
               <button
                 type="submit"
+                disabled={!isConnected}
                 style={{
                   backgroundColor: '#0F2149',
                   border: '2px solid #FFD700',
                   color: '#FFD700',
                   padding: '10px 25px',
                   borderRadius: '4px',
-                  cursor: 'pointer',
+                  cursor: isConnected ? 'pointer' : 'not-allowed',
                   fontWeight: 'bold',
-                  fontSize: '1rem'
+                  fontSize: '1rem',
+                  opacity: isConnected ? 1 : 0.7
                 }}
               >
                 CREATE NEW GAME

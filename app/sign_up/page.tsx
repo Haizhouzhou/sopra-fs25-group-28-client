@@ -7,8 +7,9 @@ import { User } from "@/types/user";
 import { Form, Input } from "antd";
 
 interface FormFieldProps {
-  label: string;
-  value: string;
+  username: string;
+  name: string;
+  password: string;
 }
 
 const SignUp: React.FC = () => {
@@ -16,9 +17,9 @@ const SignUp: React.FC = () => {
   const apiService = useApi();
   const [form] = Form.useForm();
   
-  const {
-    set: setToken,
-  } = useLocalStorage<string>("token", "");
+  const { set: setToken } = useLocalStorage<string>("token", "");
+  const { set: setCurrentUser } = useLocalStorage("currentUser", {});
+  const { set: setUsername } = useLocalStorage<string>("username", "");
 
   const handleSignUp = async (values: FormFieldProps) => {
     try {
@@ -28,6 +29,9 @@ const SignUp: React.FC = () => {
       // Store the token if available
       if (response.token) {
         setToken(response.token);
+        setCurrentUser(response);
+        setUsername(response.username ?? "");
+
       }
       
       // Navigate to the lobby

@@ -4,8 +4,6 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
 }
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import '../../styles/globals.css';
-
 
 
 // Card Type
