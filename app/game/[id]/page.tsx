@@ -3,6 +3,7 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   require("./mocks/mockWS.js");
 }
 import { useState, useEffect, useRef } from "react";
+import { use } from 'react';
 import { useRouter } from "next/navigation";
 
 
@@ -280,31 +281,37 @@ export default function GamePage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <div id="game-board" style={{
-      backgroundImage: "url('/gamesource/tile_background.png')",
-      backgroundSize: "cover",
-      backgroundPosition: "center center",
-      minHeight: "100vh",
-      width: "100%",
-      padding: "20px",
-      color: "#fff"
-    }}>
+      <div id="game-board" style={{
+        backgroundImage: "url('/gamesource/tile_background.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center center",
+        minHeight: "100vh",
+        width: "100%",
+        padding: "20px",
+        color: "#fff",
+        display: "flex",
+        flexDirection: "column", // 垂直堆叠所有内容
+        alignItems: "center" // 水平居中
+      }}>
       <CountdownTimer initialSeconds={30} />
   
       {/* Main game layout */}
       <div style={{
-        display: "flex",
+        display: "grid",
+        gridTemplateColumns: "auto 800px", // 左侧自适应，右侧固定800px宽度
         width: "100%",
-        maxWidth: "1400px",
+        maxWidth: "1600px",
         margin: "0 auto",
-        gap: "20px",
+        gap: "30px", // 两区域之间的间距
+        alignItems: "start" // 从顶部开始对齐
       }}>
         {/* Public Area - Left side */}
         <div id="common-area" style={{
-          flex: "3",
+          flex: "2", // 从3减少
           display: "flex",
           flexDirection: "column",
-          gap: "20px"
+          gap: "10px",
+          maxWidth: "900px" // 设置最大宽度
         }}>
           {/*Noble Area*/}
           <div id="noble-area">
@@ -332,12 +339,38 @@ export default function GamePage({ params }: { params: { id: string } }) {
           </div>
           
           {/* Cards Area */}
-          <div id="level-area">
+          <div id="level-area" style={{
+            width: "100%",
+            height: "auto",
+            marginBottom: "10px" // 添加底部边距，与宝石区保持适当距离
+          }}>
             {["level1", "level2", "level3"].map((level) => (
-              <div key={level} className="card-row flex items-start gap-4 min-w-[1200px] mb-6">
+              <div key={level} className="card-row" style={{
+                display: "flex",
+                alignItems: "start",
+                gap: "15px",
+                marginBottom: "20px",
+                width: "100%",
+                overflowX: "visible" // 确保没有水平滚动
+              }}>
                 {/* 卡堆（deck） */}
                 <div className={`deck ${level} w-[130px] h-[180px] relative`}>
-                  <div className="remaining">{gameState?.decks?.[level] ?? 0}</div>
+                <div className="remaining" style={{
+                  position: "absolute",
+                  borderRadius: "50%",
+                  backgroundColor: "rgba(0, 0, 0, 0.8)",
+                  border: "2px solid white",
+                  width: "30px",
+                  height: "30px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                  fontSize: "15px",
+                  color: "white",
+                  zIndex: 2
+                }}>
+                  {gameState?.decks?.[level] ?? 0}</div>
                   <div className="overlay"></div>
                   <div 
                     className={`reserve ${isPlayerTurn() ? 'active' : 'inactive'}`}
@@ -363,7 +396,11 @@ export default function GamePage({ params }: { params: { id: string } }) {
                 </div>
               
                 {/* 翻开的卡牌 */}
-                <div className={`c_${level} face-up-cards`}>
+                <div className={`c_${level} face-up-cards`} style={{
+                  display: "flex",
+                  gap: "15px",
+                  flexWrap: "nowrap"
+                }}>
                   <div className="cards-inner flex gap-4 flex-nowrap overflow-x-auto">
                     {gameState?.cards?.[level]?.map((card) => {
                       const affordable = canAffordCard(card);
@@ -415,7 +452,13 @@ export default function GamePage({ params }: { params: { id: string } }) {
           </div>
   
           {/* Public Gem Area */}
-          <div id="gem-area">
+          <div id="gem-area" style={{
+            width: "100%",
+            height: "84px",
+            display: "flex",
+            justifyContent: "space-around",
+            marginTop: "10px" // 添加上边距，与卡牌区保持适当距离
+          }}>
             {gameState?.gems &&
               Object.entries(gameState.gems).map(([color, count]) => {
                 const chipClass = color === "*" ? "schip" : `${color}chip`;
@@ -431,7 +474,24 @@ export default function GamePage({ params }: { params: { id: string } }) {
                       }
                     }}
                   >
-                    <div className="bubble">{count}</div>
+                    <div className="bubble" style={{
+                      position: "absolute",
+                      top: "-5px",
+                      left: "-5px",
+                      borderRadius: "50%",
+                      backgroundColor: "rgba(0, 0, 0, 0.8)",
+                      border: "2px solid white",
+                      width: "30px",
+                      height: "30px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: "bold",
+                      fontSize: "15px",
+                      color: "white",
+                      zIndex: 2
+                    }}>
+                      {count}</div>
                     <div className="underlay"></div>
                   </div>
                 );
@@ -439,109 +499,186 @@ export default function GamePage({ params }: { params: { id: string } }) {
           </div>
         </div>
         
-        {/* Player Panel - Right side */}
-        <div id="player-area" style={{
-          flex: "1",
-          backgroundColor: "rgba(0, 0, 0, 0.3)",
-          padding: "10px",
-          borderRadius: "8px",
-          minWidth: "500px",
+{/* Player Panel - Right side */}
+<div id="player-area" style={{
+  flex: "1",
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr", // 2列网格
+  gridTemplateRows: "auto auto", // 2行网格，高度自适应
+  gap: "10px", // 减小间距
+  backgroundColor: "rgba(0, 0, 0, 0.3)",
+  padding: "10px", // 减小内边距
+  borderRadius: "8px",
+  width: "100%",
+  maxWidth: "750px", // 调整最大宽度
+  maxHeight: "calc(100vh - 100px)",
+  overflowY: "visible",
+  alignContent: "start"
+}}>
+  {gameState?.players?.map((player) => {
+    // 定义颜色映射
+    const colorToChip = {
+      r: "red",
+      g: "green",
+      b: "blue",
+      u: "black",
+      w: "white",
+      "*": "gold",
+    };
+
+    return (
+      <div key={player.uuid} className="player" style={{
+        padding: "6px", // 进一步减小内边距
+        backgroundColor: "rgba(0, 0, 0, 0.2)",
+        borderRadius: "5px",
+        width: "100%",
+        height: "auto",
+        maxHeight: "280px", // 减小最大高度
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between"
+      }}>
+        {/* Header */}
+        <div className="playerHeader" style={{
           display: "flex",
-          flexDirection: "column",
-          gap: "12px"
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "5px", // 减小底部边距
+          fontSize: "0.95em" // 稍微缩小字体
         }}>
-          {gameState?.players?.map((player) => {
-            const colorToChip: Record<string, string> = {
-              r: "red",
-              g: "green",
-              b: "blue",
-              u: "black",
-              w: "white",
-              "*": "gold",
-            };
+          <span>{player.name}</span>
+          <span>Score: {player.score}</span>
+          {gameState.turn === player.id && <span className="turnIndicator">←</span>}
+        </div>
+
+        {/* Nobles */}
+        {player.nobles.length > 0 && (
+          <div className="nobleStat" style={{
+            marginBottom: "8px"
+          }}>
+            <div>Nobles:</div>
+            <div className="nobleCards" style={{ display: "flex", gap: "5px" }}>
+              {player.nobles.map((noble) => (
+                <div key={noble.uuid} className="noble" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Gems and Cards */}
+        <div className="gem-stats" style={{
+          display: "flex",
+          flexWrap: "nowrap", // 不换行
+          justifyContent: "space-around", // 均匀分布
+          gap: "5px",
+          marginBottom: "10px",
+          width: "100%"
+        }}>
+          {Object.entries(player.gems).map(([color, count]) => {
+            const normalizedColor = color.toLowerCase();
+            
+            const cardCount = Object.values(player.cards || {})
+              .flat()
+              .filter((card) => card.color.toLowerCase() === normalizedColor).length;
+
+            // 确定颜色
+            const chipColor = color === 'r' ? 'red' : 
+                              color === 'g' ? 'green' : 
+                              color === 'b' ? 'blue' : 
+                              color === 'u' ? 'black' : 
+                              color === 'w' ? 'white' : 
+                              color === '*' ? 'gold' : 'black';
 
             return (
-              <div key={player.uuid} className="player">
-                {/* Header */}
-                <div className="playerHeader">
-                  <span>{player.name}</span>
-                  <span>Score: {player.score}</span>
-                  {gameState.turn === player.id && <span className="turnIndicator">←</span>}
-                </div>
-
-                {/* Nobles */}
-                {player.nobles.length > 0 && (
-                  <div className="nobleStat">
-                    <div>Nobles:</div>
-                    <div className="nobleCards">
-                      {player.nobles.map((noble) => (
-                        <div key={noble.uuid} className="noble" />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Gems and Cards */}
-                <div className="gem-stats">
-                {Object.entries(player.gems).map(([color, count]) => {
-                  const normalizedColor = color.toLowerCase(); // 保证小写
-
-                  const cardCount = Object.values(player.cards || {})
-                    .flat()
-                    .filter((card) => card.color.toLowerCase() === normalizedColor).length;
-
-                  return (
-                    <div key={color} className="statSet">
-                      <div className="stat">{count}/{cardCount}</div>
-                      <div className={`chip chip-${colorToChip[normalizedColor] || "black"}`} />
-                    </div>
-                  );
-                })}
-                </div>
-
-                {/* Reserved Cards */}
-                <div className="reserveCards" style={{
-                  minWidth: "450px",
-                  minHeight: "220px",
-                  display: "flex",
-                }}>
-                  {[0, 1, 2].map((i) => {
-                    const card = player.reserved[i];
-                    // 检查当前玩家是否可以购买这张预留卡
-                    const isCurrentPlayer = player.uuid === currentUser.uuid;
-                    const affordable = card && isCurrentPlayer ? canAffordCard(card) : false;
-                    
-                    return card ? (
-                      <div 
-                        key={card.uuid} 
-                        className={`card card-sm card-${card.color} ${affordable ? 'affordable' : 'not-affordable'}`}
-                        onClick={() => {
-                          if (isCurrentPlayer && isPlayerTurn()) {
-                            handleCardAction("buy", card.uuid);
-                          }
-                        }}
-                      >
-                        <div className="points">{card.points}</div>
-                        <div className={`overlay ${affordable ? 'affordable' : 'not-affordable'}`}></div>
-                        <div className="costs">
-                          {Object.entries(card.cost).map(([color, count]) =>
-                            count > 0 ? (
-                              <div key={color} className={`cost ${color}`}>
-                                {count}
-                              </div>
-                            ) : null
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div key={i} className="card card-sm placeholder-card" />
-                    );
-                  })}
-                </div>
+              <div key={color} className="statSet" style={{ 
+                margin: "0",
+                minWidth: "auto", // 移除最小宽度
+                textAlign: "center"
+              }}>
+                <div className="stat" style={{ 
+                  fontSize: "0.8em", 
+                  padding: "2px 4px"
+                }}>{count}/{cardCount}</div>
+                <div className={`chip chip-${chipColor}`} style={{
+                  width: "30px", // 缩小宝石图标
+                  height: "30px"
+                }} />
               </div>
             );
           })}
         </div>
+
+        {/* Reserved Cards */}
+        <div className="reserveCards" style={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "5px"
+        }}>
+          {[0, 1, 2].map((i) => {
+            const card = player.reserved[i];
+            const isCurrentPlayer = player.uuid === currentUser.uuid;
+            const affordable = card && isCurrentPlayer ? canAffordCard(card) : false;
+            
+            return card ? (
+              <div 
+                key={card.uuid} 
+                className={`card card-sm card-${card.color} ${affordable ? 'affordable' : 'not-affordable'}`}
+                onClick={() => {
+                  if (isCurrentPlayer && isPlayerTurn()) {
+                    handleCardAction("buy", card.uuid);
+                  }
+                }}
+                style={{ 
+                  width: "32%", // 百分比宽度
+                  aspectRatio: "0.7", // 固定宽高比 (7:10是标准纸牌比例)
+                  position: "relative",
+                  overflow: "hidden"
+                }}
+              >
+                <div className="points">{card.points}</div>
+                <div className={`overlay ${affordable ? 'affordable' : 'not-affordable'}`}></div>
+                <div className="costs" style={{ 
+                  position: "absolute",
+                  bottom: "5px",
+                  left: "5px",
+                  right: "5px"
+                }}>
+                  {Object.entries(card.cost).map(([color, count]) =>
+                    count > 0 ? (
+                      <div key={color} className={`cost ${color}`} style={{ 
+                        width: "16px", // 增加尺寸
+                        height: "16px", // 增加尺寸
+                        fontSize: "0.9em", // 增加字体
+                        fontWeight: "bold",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        margin: "1px",
+                        borderRadius: "50%"
+                      }}>
+                        {count}
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div key={i} style={{ 
+                width: "32%",
+                aspectRatio: "0.7", // 与卡牌相同的比例
+                border: "1px dashed rgba(255,255,255,0.3)",
+                borderRadius: "4px",
+                backgroundColor: "rgba(0,0,0,0.1)"
+              }} />
+            );
+          })}
+        </div>
+      </div>
+    );
+  })}
+</div>
 
       </div>
   

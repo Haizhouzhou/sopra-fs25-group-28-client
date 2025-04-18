@@ -139,11 +139,10 @@ body {
   
   #game-board {
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 40px;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
     width: 100%;
-    gap: 40px;
     box-sizing: border-box;
   }
   
@@ -193,15 +192,17 @@ body {
   #common-area {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    max-width: unset;     /* 不要限制 */
-    flex: 0 0 auto;        /* 不要压缩，不要拉伸 */
+    gap: 10px; /* 减少垂直间距 */
+    max-width: 850px;
+    width: 100%;
+    margin-right: 40px; /* 增加与玩家面板之间的距离 */
   }
   
   #noble-area {
     width: 640px;
     display: flex;
     justify-content: center;
+    margin-bottom: 15px; /* 添加底部边距 */
   }
   
   #noble-area .noble {
@@ -213,15 +214,17 @@ body {
   }
   
   #level-area {
-    height: 540px;
-    width: 640px;
+    width: 100%;
+    height: auto;
+    margin-bottom: 10px; /* 添加底部边距 */
   }
   
   #gem-area {
-    width: 640px;
+    width: 100%;
     height: 84px;
     display: flex;
     justify-content: space-around;
+    margin-top: 10px; /* 添加上边距 */
   }
   
   #gem-area .gem {
@@ -230,8 +233,13 @@ body {
   }
   
   #player-area {
-    flex: 1;
-    min-width: 500px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, auto);
+    gap: 15px;
+    width: 100%;
+    max-width: 800px;
+    overflow-y: visible !important; /* 强制禁用滚动 */
   }
   
   .reserve-info {
@@ -410,8 +418,16 @@ body {
   .player .reserve {
     display: none;
   }
-  
+
   .reserveCards {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    gap: 5px !important;
+    justify-content: space-between !important;
+  }
+  
+  /* .reserveCards {
     vertical-align: top;
     display: inline-block;
     width: 291px;
@@ -424,7 +440,7 @@ body {
     -webkit-box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.2);
     -moz-box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.2);
     box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.2);
-  }
+  } */
   
   .reserveArea .reserve {
     display: none;
@@ -477,8 +493,8 @@ body {
   .statSet {
     display: flex;
     flex-direction: column;
-    margin: 0 10px;
-    width: 65px;
+    margin: 0 5px;
+    width: 50px;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
@@ -527,11 +543,17 @@ body {
     position: relative;
     top: 10px;
   }
+  
 .reserveCards .cost {
-    
-    font-size: 65%;    
-    top: -15px;
-  }
+  width: 14px;
+  height: 14px;
+  font-size: 0.8em;
+  margin: 1px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
   
   .reserveCards .points {
     position: relative;
@@ -552,7 +574,10 @@ body {
   }
 
   .reserveCards .card {
-    cursor: pointer;
+    width: 32% !important;
+    aspect-ratio: 0.7 !important; /* 现代浏览器 */
+    position: relative !important;
+    height: auto !important; /* 重要：让高度由宽高比决定 */
   }
 
   .reserveCards .card .overlay {
@@ -568,6 +593,9 @@ body {
   
   .gem-stats {
     display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 8px;
   }
   
   .split {
@@ -966,17 +994,22 @@ body {
   }
   
   .playerHeader {
-    display: flex;
-    align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
   }
+  
   
   .gems {
     width: 520px;
   }
   
   .player {
-    margin-bottom: 30px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    width: 100%;
+    max-height: 350px;
+    margin-bottom: 0;
+    overflow: hidden;
   }
   
   .uchip {
@@ -1049,7 +1082,9 @@ body {
   }
   
   .face-up-cards {
-    display: inline-block;
+    display: flex;
+    gap: 15px;
+    flex-wrap: nowrap;
   }
   
   .level1 {
@@ -1076,3 +1111,10 @@ body {
     justify-content: space-between;
   }
   
+  .card-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+    width: 100%;
+  }
