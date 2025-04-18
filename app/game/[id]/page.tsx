@@ -54,7 +54,7 @@ interface ChatMessage {
   timestamp: number;
 }
 
-type WSMessageType = "state" | "chat" | "start" | "error" | "info";
+type WSMessageType = "state" | "chat" | "start" | "error" | "info" | "ai_hint";
 interface WSMessage {
   type: WSMessageType;
   payload: any;
@@ -81,7 +81,20 @@ export default function GamePage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [showChat, setShowChat] = useState(false);
   const [chatNotify, setChatNotify] = useState(false);
- 
+
+  const [seconds, setSeconds] = useState(30);
+  const [isTimeUp, setIsTimeUp] = useState(false);
+  useEffect(() => {
+    if (seconds <= 0) {
+      setIsTimeUp(true);
+      return;
+    }
+    const timer = setInterval(() => {
+      setSeconds((prev) => prev - 1);
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [seconds]);
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -197,6 +210,35 @@ export default function GamePage({ params }: { params: { id: string } }) {
     }
   };
 
+  //for AI hint
+  const [hintMessage, setHintMessage] = useState("");
+  const [hintLoading, setHintLoading] = useState(false);
+  const [hintCount, setHintCount] = useState(0); // 可以限制每场游戏使用次数
+
+  const [roomName] = "Test name"
+
+  const requestAiHint = () => {
+    if (!isPlayerTurn() || hintCount >= 1) return; // 限制使用1次
+    
+    setHintLoading(true);
+    setHintMessage("");
+    
+    // 向后端发送请求
+    if (wsRef.current && wsConnected) {
+      const message = { 
+        action: "ai_hint", 
+        target: "", 
+        token: currentUser.token 
+      };
+      wsRef.current.send(JSON.stringify(message));
+    }
+    
+    // 增加使用次数
+    setHintCount(prev => prev + 1);
+  };
+
+
+
   useEffect(() => {
     if (!gameId) return;
 
@@ -231,6 +273,10 @@ export default function GamePage({ params }: { params: { id: string } }) {
             break;
           case "info":
             console.log("Hint: " + msg.payload);
+            break;
+          case "ai_hint":
+            setHintMessage(msg.payload);
+            setHintLoading(false);
             break;
           default:
             break;
@@ -281,20 +327,49 @@ export default function GamePage({ params }: { params: { id: string } }) {
   };
 
   return (
-      <div id="game-board" style={{
-        backgroundImage: "url('/gamesource/tile_background.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center center",
-        minHeight: "100vh",
-        width: "100%",
-        padding: "20px",
-        color: "#fff",
+    <div id="game-board" style={{
+      backgroundImage: "url('/gamesource/tile_background.png')",
+      backgroundSize: "cover",
+      backgroundPosition: "center center",
+      minHeight: "100vh",
+      width: "100%",
+      padding: "20px",
+      color: "#fff",
+      display: "flex",
+      flexDirection: "column", // 垂直堆叠所有内容
+      alignItems: "center" // 水平居中
+    }}>
+
+      {/* game logo and room name */}
+      <div style={{
         display: "flex",
-        flexDirection: "column", // 垂直堆叠所有内容
-        alignItems: "center" // 水平居中
+        flexDirection: "row", 
+        alignItems: "center", 
+        justifyContent: "space-between",
+        width: "100%",
+        maxWidth: "500px", // Match the main game layout's max-width
+        margin: "0 auto", 
+        padding: "0 20px",
+        marginBottom: "20px"
       }}>
-      <CountdownTimer initialSeconds={30} />
-  
+        <img 
+          src="/gamesource/splendor_logo.png" 
+          alt="Splendor" 
+          style={{
+            height: "60px", 
+            maxWidth: "200px" 
+          }}
+        />
+        <div style={{
+          fontSize: "24px",
+          fontWeight: "bold",
+          color: "#FFD700", // Gold color
+          textShadow: "2px 2px 4px rgba(0,0,0,0.5)"
+        }}>
+          Room: {roomName}
+        </div>
+      </div>
+
       {/* Main game layout */}
       <div style={{
         display: "grid",
@@ -342,7 +417,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
           <div id="level-area" style={{
             width: "100%",
             height: "auto",
-            marginBottom: "10px" // 添加底部边距，与宝石区保持适当距离
+            marginBottom: "5px" 
           }}>
             {["level1", "level2", "level3"].map((level) => (
               <div key={level} className="card-row" style={{
@@ -351,26 +426,27 @@ export default function GamePage({ params }: { params: { id: string } }) {
                 gap: "15px",
                 marginBottom: "20px",
                 width: "100%",
-                overflowX: "visible" // 确保没有水平滚动
+                overflowX: "visible"
               }}>
                 {/* 卡堆（deck） */}
                 <div className={`deck ${level} w-[130px] h-[180px] relative`}>
-                <div className="remaining" style={{
-                  position: "absolute",
-                  borderRadius: "50%",
-                  backgroundColor: "rgba(0, 0, 0, 0.8)",
-                  border: "2px solid white",
-                  width: "30px",
-                  height: "30px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "bold",
-                  fontSize: "15px",
-                  color: "white",
-                  zIndex: 2
-                }}>
-                  {gameState?.decks?.[level] ?? 0}</div>
+                  <div className="remaining" style={{
+                    position: "absolute",
+                    borderRadius: "50%",
+                    backgroundColor: "rgba(0, 0, 0, 0.8)",
+                    border: "2px solid white",
+                    width: "30px",
+                    height: "30px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: "bold",
+                    fontSize: "15px",
+                    color: "white",
+                    zIndex: 2
+                  }}>
+                    {gameState?.decks?.[level] ?? 0}
+                  </div>
                   <div className="overlay"></div>
                   <div 
                     className={`reserve ${isPlayerTurn() ? 'active' : 'inactive'}`}
@@ -457,7 +533,7 @@ export default function GamePage({ params }: { params: { id: string } }) {
             height: "84px",
             display: "flex",
             justifyContent: "space-around",
-            marginTop: "10px" // 添加上边距，与卡牌区保持适当距离
+            marginTop: "5px" 
           }}>
             {gameState?.gems &&
               Object.entries(gameState.gems).map(([color, count]) => {
@@ -491,7 +567,8 @@ export default function GamePage({ params }: { params: { id: string } }) {
                       color: "white",
                       zIndex: 2
                     }}>
-                      {count}</div>
+                      {count}
+                    </div>
                     <div className="underlay"></div>
                   </div>
                 );
@@ -499,214 +576,327 @@ export default function GamePage({ params }: { params: { id: string } }) {
           </div>
         </div>
         
-{/* Player Panel - Right side */}
-<div id="player-area" style={{
-  flex: "1",
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr", // 2列网格
-  gridTemplateRows: "auto auto", // 2行网格，高度自适应
-  gap: "10px", // 减小间距
-  backgroundColor: "rgba(0, 0, 0, 0.3)",
-  padding: "10px", // 减小内边距
-  borderRadius: "8px",
-  width: "100%",
-  maxWidth: "750px", // 调整最大宽度
-  maxHeight: "calc(100vh - 100px)",
-  overflowY: "visible",
-  alignContent: "start"
-}}>
-  {gameState?.players?.map((player) => {
-    // 定义颜色映射
-    const colorToChip = {
-      r: "red",
-      g: "green",
-      b: "blue",
-      u: "black",
-      w: "white",
-      "*": "gold",
-    };
-
-    return (
-      <div key={player.uuid} className="player" style={{
-        padding: "6px", // 进一步减小内边距
-        backgroundColor: "rgba(0, 0, 0, 0.2)",
-        borderRadius: "5px",
-        width: "100%",
-        height: "auto",
-        maxHeight: "280px", // 减小最大高度
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between"
-      }}>
-        {/* Header */}
-        <div className="playerHeader" style={{
+        {/* Player Panel - Right side */}
+        <div style={{
+          flex: "1",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "5px", // 减小底部边距
-          fontSize: "0.95em" // 稍微缩小字体
+          flexDirection: "column",
+          gap: "50px",
+          width: "100%",
         }}>
-          <span>{player.name}</span>
-          <span>Score: {player.score}</span>
-          {gameState.turn === player.id && <span className="turnIndicator">←</span>}
-        </div>
-
-        {/* Nobles */}
-        {player.nobles.length > 0 && (
-          <div className="nobleStat" style={{
-            marginBottom: "8px"
+          {/* Player panels */}
+          <div id="player-area" style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr", // 2列网格
+            gridTemplateRows: "auto auto", // 2行网格，高度自适应
+            gap: "10px",
+            backgroundColor: "rgba(0, 0, 0, 0.3)",
+            padding: "10px", 
+            borderRadius: "8px",
+            width: "100%",
+            maxWidth: "800px",
+            maxHeight: "calc(100vh - 350px)",
+            overflowY: "visible",
+            alignContent: "start"
           }}>
-            <div>Nobles:</div>
-            <div className="nobleCards" style={{ display: "flex", gap: "5px" }}>
-              {player.nobles.map((noble) => (
-                <div key={noble.uuid} className="noble" />
-              ))}
+            {gameState?.players?.map((player) => {
+              // 定义颜色映射
+              const colorToChip = {
+                r: "red",
+                g: "green",
+                b: "blue",
+                u: "black",
+                w: "white",
+                "*": "gold",
+              };
+  
+              return (
+                <div key={player.uuid} className="player" style={{
+                  padding: "6px",
+                  backgroundColor: "rgba(0, 0, 0, 0.2)",
+                  borderRadius: "5px",
+                  width: "100%",
+                  height: "auto",
+                  maxHeight: "280px",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between"
+                }}>
+                  {/* Header */}
+                  <div className="playerHeader" style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "5px", // 减小底部边距
+                    fontSize: "0.95em" // 稍微缩小字体
+                  }}>
+                    <span>{player.name}</span>
+                    <span>Score: {player.score}</span>
+                    {gameState.turn === player.id && <span className="turnIndicator">←</span>}
+                  </div>
+  
+                  {/* Nobles */}
+                  {player.nobles.length > 0 && (
+                    <div className="nobleStat" style={{
+                      marginBottom: "8px"
+                    }}>
+                      <div>Nobles:</div>
+                      <div className="nobleCards" style={{ display: "flex", gap: "5px" }}>
+                        {player.nobles.map((noble) => (
+                          <div key={noble.uuid} className="noble" />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+  
+                  {/* Gems and Cards */}
+                  <div className="gem-stats" style={{
+                    display: "flex",
+                    flexWrap: "nowrap", // 不换行
+                    justifyContent: "space-around", // 均匀分布
+                    gap: "5px",
+                    marginBottom: "10px",
+                    width: "100%"
+                  }}>
+                    {Object.entries(player.gems).map(([color, count]) => {
+                      const normalizedColor = color.toLowerCase();
+                      
+                      const cardCount = Object.values(player.cards || {})
+                        .flat()
+                        .filter((card) => card.color.toLowerCase() === normalizedColor).length;
+  
+                      // 确定颜色
+                      const chipColor = color === 'r' ? 'red' : 
+                                        color === 'g' ? 'green' : 
+                                        color === 'b' ? 'blue' : 
+                                        color === 'u' ? 'black' : 
+                                        color === 'w' ? 'white' : 
+                                        color === '*' ? 'gold' : 'black';
+  
+                      return (
+                        <div key={color} className="statSet" style={{ 
+                          margin: "0",
+                          minWidth: "auto", // 移除最小宽度
+                          textAlign: "center"
+                        }}>
+                          <div className="stat" style={{ 
+                            fontSize: "0.8em", 
+                            padding: "2px 4px"
+                          }}>{count}/{cardCount}</div>
+                          <div className={`chip chip-${chipColor}`} style={{
+                            width: "30px", // 缩小宝石图标
+                            height: "30px"
+                          }} />
+                        </div>
+                      );
+                    })}
+                  </div>
+  
+                  {/* Reserved Cards */}
+                  <div className="reserveCards" style={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: "5px"
+                  }}>
+                    {[0, 1, 2].map((i) => {
+                      const card = player.reserved[i];
+                      const isCurrentPlayer = player.uuid === currentUser.uuid;
+                      const affordable = card && isCurrentPlayer ? canAffordCard(card) : false;
+                      
+                      return card ? (
+                        <div 
+                          key={card.uuid} 
+                          className={`card card-sm card-${card.color} ${affordable ? 'affordable' : 'not-affordable'}`}
+                          onClick={() => {
+                            if (isCurrentPlayer && isPlayerTurn()) {
+                              handleCardAction("buy", card.uuid);
+                            }
+                          }}
+                          style={{ 
+                            width: "32%", 
+                            aspectRatio: "0.7", // 固定宽高比 (7:10是标准纸牌比例)
+                            position: "relative",
+                            overflow: "hidden"
+                          }}
+                        >
+                          <div className="points">{card.points}</div>
+                          <div className={`overlay ${affordable ? 'affordable' : 'not-affordable'}`}></div>
+                          <div className="costs" style={{ 
+                            position: "absolute",
+                            bottom: "5px",
+                            left: "5px",
+                            right: "5px"
+                          }}>
+                            {Object.entries(card.cost).map(([color, count]) =>
+                              count > 0 ? (
+                                <div key={color} className={`cost ${color}`} style={{ 
+                                  width: "16px", 
+                                  height: "16px", 
+                                  fontSize: "0.9em",
+                                  fontWeight: "bold",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  margin: "1px",
+                                  borderRadius: "50%"
+                                }}>
+                                  {count}
+                                </div>
+                              ) : null
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div key={i} style={{ 
+                          width: "32%",
+                          aspectRatio: "0.7", 
+                          border: "1px dashed rgba(255,255,255,0.3)",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(0,0,0,0.1)"
+                        }} />
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* AI Assistant Area */}
+          <div id="ai-hint-area" style={{
+            width: "100%",
+            maxWidth: "800px",
+            minHeight: "160px",
+            backgroundColor: "rgba(20, 10, 80, 0.8)",
+            border: "2px solid #6644ff",
+            borderRadius: "8px",
+            padding: "15px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 0 15px rgba(102, 68, 255, 0.5)"
+          }}>
+            <h3 style={{
+              color: "#ffffff",
+              marginBottom: "15px",
+              fontSize: "20px",
+              textAlign: "center"
+            }}>AI Strategic Advisor</h3>
+            
+            <div id="ai-hint-content" style={{
+              flex: 1,
+              backgroundColor: "rgba(0, 0, 0, 0.3)",
+              borderRadius: "5px",
+              padding: "10px",
+              marginBottom: "10px",
+              minHeight: "80px",
+              width: "100%",
+              fontSize: "14px",
+              overflow: "auto"
+            }}>
+              {hintMessage ? (
+                <div>{hintMessage}</div>
+              ) : (
+                <div style={{ opacity: 0.7, textAlign: "center", marginTop: "30px" }}>
+                  Click the button below for AI strategy advice
+                </div>
+              )}
+            </div>
+            
+            <button 
+              onClick={requestAiHint}
+              disabled={hintLoading || !isPlayerTurn()}
+              style={{
+                padding: "8px 15px",
+                backgroundColor: isPlayerTurn() ? "rgba(0, 100, 255, 0.7)" : "rgba(100, 100, 100, 0.5)",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: isPlayerTurn() ? "pointer" : "not-allowed",
+                fontWeight: "bold",
+                fontSize: "14px",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+            >
+              {hintLoading ? (
+                <span>Thinking...</span>
+              ) : (
+                <span>Get AI Advice {hintCount > 0 ? `(${hintCount}/3 used)` : ""}</span>
+              )}
+            </button>
+          </div>
+          
+          {/* Game Control Area */}
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "100%",
+            maxWidth: "800px",
+            gap: "15px"
+          }}>
+            {/* Countdown Area */}
+            <div style={{
+              flex: "1",
+              backgroundColor: isTimeUp ? "rgba(255, 100, 100, 0.8)" : "rgba(255, 200, 0, 0.8)",
+              border: `3px solid ${isTimeUp ? "#ff3333" : "#ffa500"}`,
+              borderRadius: "8px",
+              padding: "10px 15px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: `0 0 20px ${isTimeUp ? "rgba(255, 100, 100, 0.6)" : "rgba(255, 200, 0, 0.6)"}`,
+              animation: isTimeUp ? "pulse 2s infinite" : "none"
+            }}>
+              <div style={{
+                fontSize: "28px",
+                fontWeight: "bold",
+                textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+                color: "#000"
+              }}>
+                {seconds > 0 ? `Timer: ${seconds}s` : "Time's up!"}
+              </div>
+            </div>
+            
+            {/* Pass Turn Button */}
+            <div style={{
+              flex: "1",
+              backgroundColor: "rgba(255, 150, 0, 0.8)",
+              border: "3px solid #ff6a00",
+              borderRadius: "8px",
+              padding: "10px 5px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: isPlayerTurn() ? "pointer" : "not-allowed",
+              boxShadow: "0 0 20px rgba(255, 150, 0, 0.6)",
+              opacity: isPlayerTurn() ? 1 : 0.5
+            }}
+            onClick={() => {
+              if (isPlayerTurn()) {
+                sendAction("next", "");
+              } else {
+                alert("It's not your turn!");
+              }
+            }}
+            >
+              <div style={{
+                fontSize: "24px",
+                fontWeight: "bold",
+                textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
+                color: "#000"
+              }}>
+                PASS TURN
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Gems and Cards */}
-        <div className="gem-stats" style={{
-          display: "flex",
-          flexWrap: "nowrap", // 不换行
-          justifyContent: "space-around", // 均匀分布
-          gap: "5px",
-          marginBottom: "10px",
-          width: "100%"
-        }}>
-          {Object.entries(player.gems).map(([color, count]) => {
-            const normalizedColor = color.toLowerCase();
-            
-            const cardCount = Object.values(player.cards || {})
-              .flat()
-              .filter((card) => card.color.toLowerCase() === normalizedColor).length;
-
-            // 确定颜色
-            const chipColor = color === 'r' ? 'red' : 
-                              color === 'g' ? 'green' : 
-                              color === 'b' ? 'blue' : 
-                              color === 'u' ? 'black' : 
-                              color === 'w' ? 'white' : 
-                              color === '*' ? 'gold' : 'black';
-
-            return (
-              <div key={color} className="statSet" style={{ 
-                margin: "0",
-                minWidth: "auto", // 移除最小宽度
-                textAlign: "center"
-              }}>
-                <div className="stat" style={{ 
-                  fontSize: "0.8em", 
-                  padding: "2px 4px"
-                }}>{count}/{cardCount}</div>
-                <div className={`chip chip-${chipColor}`} style={{
-                  width: "30px", // 缩小宝石图标
-                  height: "30px"
-                }} />
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Reserved Cards */}
-        <div className="reserveCards" style={{
-          width: "100%",
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "5px"
-        }}>
-          {[0, 1, 2].map((i) => {
-            const card = player.reserved[i];
-            const isCurrentPlayer = player.uuid === currentUser.uuid;
-            const affordable = card && isCurrentPlayer ? canAffordCard(card) : false;
-            
-            return card ? (
-              <div 
-                key={card.uuid} 
-                className={`card card-sm card-${card.color} ${affordable ? 'affordable' : 'not-affordable'}`}
-                onClick={() => {
-                  if (isCurrentPlayer && isPlayerTurn()) {
-                    handleCardAction("buy", card.uuid);
-                  }
-                }}
-                style={{ 
-                  width: "32%", // 百分比宽度
-                  aspectRatio: "0.7", // 固定宽高比 (7:10是标准纸牌比例)
-                  position: "relative",
-                  overflow: "hidden"
-                }}
-              >
-                <div className="points">{card.points}</div>
-                <div className={`overlay ${affordable ? 'affordable' : 'not-affordable'}`}></div>
-                <div className="costs" style={{ 
-                  position: "absolute",
-                  bottom: "5px",
-                  left: "5px",
-                  right: "5px"
-                }}>
-                  {Object.entries(card.cost).map(([color, count]) =>
-                    count > 0 ? (
-                      <div key={color} className={`cost ${color}`} style={{ 
-                        width: "16px", // 增加尺寸
-                        height: "16px", // 增加尺寸
-                        fontSize: "0.9em", // 增加字体
-                        fontWeight: "bold",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        margin: "1px",
-                        borderRadius: "50%"
-                      }}>
-                        {count}
-                      </div>
-                    ) : null
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div key={i} style={{ 
-                width: "32%",
-                aspectRatio: "0.7", // 与卡牌相同的比例
-                border: "1px dashed rgba(255,255,255,0.3)",
-                borderRadius: "4px",
-                backgroundColor: "rgba(0,0,0,0.1)"
-              }} />
-            );
-          })}
         </div>
       </div>
-    );
-  })}
-</div>
-
-      </div>
-  
-      {/* Pass turn */}
-      <button
-        id="pass-turn"
-        onClick={() => {
-          if (isPlayerTurn()) {
-            sendAction("next", "");
-          } else {
-            alert("It's not your turn!");
-          }
-        }}
-        style={{
-          margin: "20px auto",
-          padding: "10px 20px",
-          backgroundColor: "#ffd700",
-          color: "black",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-          fontSize: "16px",
-          fontWeight: "bold",
-          opacity: isPlayerTurn() ? 1 : 0.3
-        }}
-      >
-        Pass turn
-      </button>
   
       {/* Chat box */}
       <div
@@ -798,5 +988,4 @@ export default function GamePage({ params }: { params: { id: string } }) {
         )}
       </div>
     </div>
-  );
-}
+  )}
