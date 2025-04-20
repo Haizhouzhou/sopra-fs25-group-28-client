@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import WebSocketService, { WebSocketMessage } from '@/hooks/useWebSocket';
+import type { UserListGetDTO } from "@/types/user";
 
 interface GameRoom {
   id: string;
@@ -14,110 +15,119 @@ interface GameRoom {
   isReady: boolean;
 }
 
-interface User {
-  id: number;
-  name: string;
-  avatar: string;
-}
-
 const GameLobby: React.FC = () => {
   const router = useRouter();
   const apiService = useApi();
-  const [gameRooms, setGameRooms] = useState<GameRoom[]>([]);
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   const { value: token, clear: clearToken } = useLocalStorage<string>("token", "");
+  const { value: localUser, clear: clearUser } = useLocalStorage<UserListGetDTO>("currentUser", {} as UserListGetDTO);
 
+  const [currentUser, setCurrentUser] = useState<UserListGetDTO | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [gameRooms, setGameRooms] = useState<GameRoom[]>([]);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+
+  const websocketService = WebSocketService.getInstance();
+
+  // Handle messages
   const handleWebSocketMessage = useCallback((message: WebSocketMessage) => {
-    console.log('Received message in lobby:', message);
+    console.log('📩 Received WebSocket message:', message);
 
     if (message.type === 'ROOM_LIST') {
       const roomInfos = message.content || [];
       const parsedRooms: GameRoom[] = roomInfos.map((room: any) => ({
         id: room.roomId,
-        name: room.roomName,
+        name: room.roomName || "Untitled",
         owner: room.owner || 'Unknown',
         players: `${room.players}/${room.maxPlayers || 4}`,
         isReady: false
       }));
       setGameRooms(parsedRooms);
-    } else if (message.type === 'ROOM_JOINED') {
-      const roomId = message.roomId;
-      if (roomId) {
-        router.push(`/room/${roomId}`);
+    }
+
+    if (message.type === 'ROOM_JOINED') {
+      if (message.roomId) {
+        router.push(`/room/${message.roomId}`);
       }
     }
   }, [router]);
 
+  // Fetch game rooms
   const fetchGameRooms = useCallback(() => {
-    if (!isConnected) return;
-    WebSocketService.getInstance().sendMessage({
+    if (!isConnected || !currentUser) return;
+  
+    const message: WebSocketMessage = {
       type: "GET_ROOMS",
+      roomId: "LOBBY",
+      sessionId: currentUser.id.toString(), // ✅ 必须加上
       content: {}
-    });
-  }, [isConnected]);
+    };
+  
+    console.log("[WebSocket] sending GET_ROOMS", message);
+    websocketService.sendMessage(message);
+  }, [isConnected, currentUser]);
+  
 
+  // Connect WebSocket
   useEffect(() => {
-    const initializeConnection = async () => {
+    const initialize = async () => {
       setIsLoading(true);
       try {
-        const userStr = localStorage.getItem("currentUser");
-        if (!userStr) return router.push('/');
+        if (token === "" || !localUser) return;
+        console.log("[Lobby] token =", token);
+        console.log("[Lobby] localUser =", localUser);
+        if (!token || !localUser?.id) {
+          console.warn("Missing token or user, redirecting...");
+          router.push("/");
+          return;
+        }
 
-        const user = JSON.parse(userStr);
-        if (!user || !user.id) return router.push('/');
+        setCurrentUser(localUser);
 
-        setCurrentUser({
-          id: user.id,
-          name: user.name,
-          avatar: user.avatar || "a_01.png"
-        });
+        websocketService.setSessionId(localUser.id.toString());
 
-        const websocketService = WebSocketService.getInstance();
-        const connected = await websocketService.connect(user.id, user.name);
+        // Fix: only pass token into WebSocket connect method
+        const connected = await websocketService.connect(token);
         setIsConnected(connected);
 
         websocketService.addMessageListener(handleWebSocketMessage);
 
         if (connected) {
-          setTimeout(() => {
-            websocketService.sendMessage({ type: "GET_ROOMS", content: {} });
-          }, 300);
+          setTimeout(fetchGameRooms, 300); // wait a bit
         }
-      } catch (error) {
-        console.error("Error initializing:", error);
+      } catch (err) {
+        console.error("WebSocket connection error:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    initializeConnection();
+    initialize();
 
     return () => {
-      WebSocketService.getInstance().removeMessageListener(handleWebSocketMessage);
+      websocketService.removeMessageListener(handleWebSocketMessage);
     };
-  }, [router, handleWebSocketMessage]);
+  }, [token, localUser, fetchGameRooms, handleWebSocketMessage, router]);
 
   const handleJoinGame = () => {
-    if (!selectedRoom || !isConnected) return;
-    WebSocketService.getInstance().sendMessage({
-      type: 'JOIN_ROOM',
-      roomId: selectedRoom
+    if (!selectedRoom || !isConnected || !currentUser) return;
+    websocketService.sendMessage({
+      type: "JOIN_ROOM",
+      roomId: selectedRoom,
+      content: {}
     });
   };
 
   const handleCreateGame = () => {
-    router.push('/create');
+    router.push("/create");
   };
 
   const handleLogout = () => {
-    WebSocketService.getInstance().disconnect();
+    websocketService.disconnect();
     clearToken();
-    localStorage.removeItem('currentUser');
-    router.push('/');
+    clearUser();
+    router.push("/");
   };
 
   const handleProfileClick = () => {
@@ -131,7 +141,7 @@ const GameLobby: React.FC = () => {
   };
 
   if (isLoading) {
-    return <div style={{ backgroundColor: '#0F2149', color: '#FFD700', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Loading...</div>;
+    return <div style={{ color: 'white' }}>Loading lobby...</div>;
   }
 
   return (
