@@ -32,7 +32,9 @@ const Login: React.FC = () => {
       // 获取当前用户信息
       const users = await apiService.get<UserListGetDTO[]>("/users");
       const me = users.find((u) => u.username === values.username);
-  
+      if (me) {
+        setCurrentUser(me); // 存入 localStorage
+      }
       if (!me) throw new Error("未找到用户信息");
   
       // 👇 确保用户信息写入 localStorage

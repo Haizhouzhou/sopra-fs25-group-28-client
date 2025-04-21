@@ -1,7 +1,6 @@
-// src/hooks/useWebSocket.ts
 import { useEffect, useState } from "react";
 import { getApiWsDomain } from '@/utils/domain';
-import useLocalStorage from "@/hooks/useLocalStorage"; 
+import useLocalStorage from "@/hooks/useLocalStorage";
 
 export type WebSocketMessage = {
   type: string;
@@ -29,7 +28,8 @@ class WebSocketService {
   private connectionListeners: ((connected: boolean) => void)[] = [];
   private sessionId?: string;
   private userId?: number | string;
-  private username?: string;
+  private username?: string;       // 登录名
+  private displayName?: string;    // 昵称（name）
   private ready: boolean = false;
 
   private constructor() {}
@@ -42,50 +42,50 @@ class WebSocketService {
   }
 
   async connect(token?: string): Promise<boolean> {
+    console.log("[WebSocket] ⏳ Starting connection...");
+
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem("currentUser") : null;
+    const localUser = userStr ? JSON.parse(userStr) : null;
+
+    this.userId = localUser?.id || `guest-${Date.now()}`;
+    this.username = localUser?.username || `guest-${Date.now()}`;
+    this.displayName = localUser?.name || 'Guest';
+    this.sessionId = `user-${this.userId}-${Date.now()}`;
+
+    const wsToken = token || localStorage.getItem("token") || `guest-${Date.now()}`;
+    const wsUrl = `${getApiWsDomain()}/WebServer/${wsToken}`;
+    this.socket = new WebSocket(wsUrl);
+
     return new Promise((resolve) => {
-      const userStr = typeof window !== 'undefined' ? localStorage.getItem("currentUser") : null;
-      const user = userStr ? JSON.parse(userStr) : null;
-      this.userId = user?.id || `guest-${Date.now()}`;
-      this.username = user?.name || 'Guest';
-  
-      if (!this.sessionId) {
-        this.sessionId = `user-${this.userId}-${Date.now()}`;
-      }
-  
-      const wsToken = token || localStorage.getItem("token") || `guest-${Date.now()}`;
-      const wsUrl = `${getApiWsDomain()}/WebServer/${wsToken}`;
-      this.socket = new WebSocket(wsUrl);
-  
-      this.socket.onopen = () => {
-        console.log('[WebSocket] Connected');
+      this.socket!.onopen = () => {
+        console.log('[WebSocket] ✅ Connected as', this.displayName);
         this.ready = true;
         this.notifyConnectionListeners(true);
         resolve(true);
       };
-  
-      this.socket.onclose = () => {
-        console.log('[WebSocket] Disconnected');
+
+      this.socket!.onclose = () => {
+        console.log('[WebSocket] ❌ Disconnected');
         this.ready = false;
         this.notifyConnectionListeners(false);
       };
-  
-      this.socket.onerror = (error) => {
-        console.error('[WebSocket] Error:', error);
+
+      this.socket!.onerror = (error) => {
+        console.error('[WebSocket] 🛑 Error:', error);
         this.ready = false;
         resolve(false);
       };
-  
-      this.socket.onmessage = (event) => {
+
+      this.socket!.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data) as WebSocketMessage;
           this.notifyMessageListeners(message);
         } catch (err) {
-          console.error('[WebSocket] Message parse error:', err);
+          console.error('[WebSocket] ❓ Message parse error:', err);
         }
       };
     });
   }
-  
 
   disconnect(): void {
     if (this.socket) {
@@ -101,7 +101,10 @@ class WebSocketService {
         type: message.type,
         roomId: message.roomId || null,
         sessionId: this.sessionId || String(this.userId || ""),
-        content: message.content || null
+        content: {
+          ...message.content,
+          displayName: this.displayName  // ✅ 改为 displayName
+        }
       };
       this.socket.send(JSON.stringify(fullMessage));
     } else {

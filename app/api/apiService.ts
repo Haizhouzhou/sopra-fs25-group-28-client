@@ -98,18 +98,28 @@ export class ApiService {
    * @param data - The payload to update.
    * @returns JSON data of type T.
    */
-  public async put<T>(endpoint: string, data: unknown): Promise<T> {
+  public async put<T>(
+    endpoint: string,
+    data: unknown,
+    customHeaders?: Record<string, string>
+  ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     const res = await fetch(url, {
       method: "PUT",
-      headers: this.defaultHeaders,
+      headers: {
+        ...this.defaultHeaders,
+        ...customHeaders, // 合并 Authorization header
+      },
       body: JSON.stringify(data),
     });
     return this.processResponse<T>(
       res,
-      "An error occurred while updating the data.\n",
+      "An error occurred while updating the data.\n"
     );
   }
+  
+  
+  
 
   /**
    * DELETE request.

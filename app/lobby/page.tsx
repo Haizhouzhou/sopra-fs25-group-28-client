@@ -60,8 +60,12 @@ const GameLobby: React.FC = () => {
     const message: WebSocketMessage = {
       type: "GET_ROOMS",
       roomId: "LOBBY",
-      sessionId: currentUser.id.toString(), // ✅ 必须加上
-      content: {}
+      sessionId: currentUser.id.toString(),
+      content: {
+        username: currentUser.name,
+        userId: localUser.id,
+        avatar: currentUser.avatar
+      }
     };
   
     console.log("[WebSocket] sending GET_ROOMS", message);
@@ -73,6 +77,7 @@ const GameLobby: React.FC = () => {
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
+      console.log("[Lobby] localUser =", localUser);
       try {
         if (token === "" || !localUser) return;
         console.log("[Lobby] token =", token);
@@ -89,6 +94,7 @@ const GameLobby: React.FC = () => {
 
         // Fix: only pass token into WebSocket connect method
         const connected = await websocketService.connect(token);
+
         setIsConnected(connected);
 
         websocketService.addMessageListener(handleWebSocketMessage);
