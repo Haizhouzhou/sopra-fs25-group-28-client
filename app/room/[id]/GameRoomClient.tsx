@@ -34,7 +34,10 @@ const GameRoomClient = () => {
   const apiService = useApi();
 
   const rawName = searchParams.get("name");
-  const roomName = rawName && !rawName.startsWith("Room #") ? rawName : `Room #${roomId}`;
+  // 修改为使用 state 变量
+  const [roomName, setRoomName] = useState(
+    rawName && !rawName.startsWith("Room #") ? rawName : `Room #${roomId}`
+  );
 
   const { value: token } = useLocalStorage<string>("token", "");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -48,6 +51,7 @@ const GameRoomClient = () => {
   const [isLoading, setIsLoading] = useState(true);
   const hasConnected = useRef(false);
   const currentUserRef = useRef<User | null>(null);
+
   
   // Update currentUserRef when currentUser changes
   useEffect(() => {
@@ -62,6 +66,12 @@ const GameRoomClient = () => {
   if (msg.type === "ROOM_STATE") {
     try {
       console.log("处理ROOM_STATE消息:", msg);
+      
+      // 更新房间名称（如果服务器提供了）
+      if (msg.roomName) {
+        console.log("收到房间名称:", msg.roomName);
+        setRoomName(msg.roomName);
+      }
       
       // 解析玩家数据
       const rawPlayers = (msg as any).players || [];
@@ -116,9 +126,23 @@ const GameRoomClient = () => {
       const chatMsg = {
         player: msg.content.player || "Anonymous",
         text: msg.content.text || "",
-        timestamp: Date.now()
+        timestamp: msg.content.timestamp || Date.now()
       };
-      setMessages(prev => [...prev, chatMsg]);
+      
+      // 检查是否已存在相同消息
+      setMessages(prev => {
+        // 检查是否已经有相同内容和时间的消息
+        const isDuplicate = prev.some(existingMsg => 
+          existingMsg.player === chatMsg.player && 
+          existingMsg.text === chatMsg.text &&
+          Math.abs(existingMsg.timestamp - chatMsg.timestamp) < 3000 // 3秒内认为是同一条消息
+        );
+        
+        if (isDuplicate) {
+          return prev; // 不添加重复消息
+        }
+        return [...prev, chatMsg];
+      });
     }
   }, [roomId]);
 

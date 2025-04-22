@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getApiWsDomain } from "@/utils/domain";
 import useLocalStorage from "@/hooks/useLocalStorage";
 
@@ -7,9 +7,10 @@ export type WebSocketMessage = {
   roomId?: string;
   sessionId?: string;
   content?: any;
-  players?: any[]; // 添加这一行
-  ownerId?: number | string; // 可能也需要这个
-  ownerName?: string; // 可能也需要这个
+  players?: any[]; 
+  ownerId?: number | string;
+  ownerName?: string;
+  roomName?: string; // 添加roomName字段
 };
 
 export type RoomInfo = {
@@ -45,8 +46,16 @@ class WebSocketService {
     }
     return WebSocketService.instance;
   }
-
+  
+  // 在 connect 方法中添加检查
   async connect(token?: string): Promise<boolean> {
+    // 如果已经有连接且状态正常，直接返回
+    if (this.socket && 
+        (this.socket.readyState === WebSocket.OPEN || 
+         this.socket.readyState === WebSocket.CONNECTING)) {
+      console.log("[WebSocket] Already connected or connecting");
+      return this.ready;
+    }
     console.log("[WebSocket] ⏳ Starting connection...");
 
     const userStr = typeof window !== 'undefined' ? localStorage.getItem("currentUser") : null;
@@ -189,56 +198,60 @@ class WebSocketService {
   }
 }
 
+// 修改useWebSocket钩子
 export function useWebSocket(sessionId: string, onMessage?: (msg: WebSocketMessage) => void) {
   const { value: token } = useLocalStorage<string>("token", "");
   const [connected, setConnected] = useState(false);
   const webSocketService = WebSocketService.getInstance();
+  const onMessageRef = useRef(onMessage);
+  
+  // 更新引用，避免不必要的重连
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
 
+  // 只在组件挂载和token/sessionId变化时连接
   useEffect(() => {
     if (!token) return;
-
+    
+    console.log("准备连接WebSocket，sessionId:", sessionId);
+    
+    let isActive = true; // 跟踪此效果是否活跃
     webSocketService.setSessionId(sessionId);
     
     const connectWebSocket = async () => {
-      const success = await webSocketService.connect(token);
-      setConnected(success);
+      if (webSocketService.isConnected()) {
+        console.log("WebSocket已连接，不需要重新连接");
+        setConnected(true);
+        return;
+      }
       
-      if (success) {
-        console.log("WebSocket connection established with session ID:", sessionId);
-      } else {
-        console.error("WebSocket connection failed");
+      const success = await webSocketService.connect(token);
+      if (isActive) {
+        setConnected(success);
       }
     };
     
     connectWebSocket();
 
-    const handler = (msg: WebSocketMessage) => {
-      console.log("WebSocket message received in hook:", msg.type);
-      onMessage?.(msg);
+    const handleMessage = (msg: WebSocketMessage) => {
+      if (isActive && onMessageRef.current) {
+        onMessageRef.current(msg);
+      }
     };
     
-    const connHandler = (isConn: boolean) => {
-      console.log("WebSocket connection status changed:", isConn);
-      setConnected(isConn);
-    };
-
-    webSocketService.addMessageListener(handler);
-    webSocketService.addConnectionListener(connHandler);
+    webSocketService.addMessageListener(handleMessage);
 
     return () => {
-      console.log("Cleaning up WebSocket listeners");
-      webSocketService.removeMessageListener(handler);
-      webSocketService.removeConnectionListener(connHandler);
+      isActive = false;
+      console.log("移除WebSocket监听器:", sessionId);
+      webSocketService.removeMessageListener(handleMessage);
+      // 注意：不要在这里关闭连接，因为其他组件可能正在使用它
     };
-  }, [sessionId, token, onMessage]);
-
-  const sendMessageWithLogging = (msg: Omit<WebSocketMessage, "sessionId">) => {
-    console.log("Sending message via useWebSocket hook:", msg);
-    webSocketService.sendMessage(msg);
-  };
+  }, [sessionId, token]); // 移除不必要的依赖
 
   return {
-    sendMessage: sendMessageWithLogging,
+    sendMessage: webSocketService.sendMessage.bind(webSocketService),
     connected,
     webSocketService
   };

@@ -1,10 +1,11 @@
 "use client";
-if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-  require("./mocks/mockWS.js");
-}
+// if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+//   require("./mocks/mockWS.js");
+// }
 import { useState, useEffect, useRef } from "react";
-import { use } from 'react';
-import { useRouter } from "next/navigation";
+import { useParams } from 'next/navigation';
+import { useWebSocket, WebSocketMessage } from "@/hooks/useWebSocket"; // 确保路径正确
+
 
 
 // Card Type
@@ -76,9 +77,12 @@ const CountdownTimer = ({ initialSeconds = 30 }: { initialSeconds?: number }) =>
   );
 };
 
-export default function GamePage({ params }: { params: { id: string } }) {
-  const gameId = params.id;
-  const router = useRouter();
+export default function GamePage() {
+  const params = useParams();
+  const gameId = params.id as string;
+  const sessionId = `game-${gameId}-${Date.now()}`;
+  const [pendingGameState, setPendingGameState] = useState<any>(null);
+  
   const [showChat, setShowChat] = useState(false);
   const [chatNotify, setChatNotify] = useState(false);
 
@@ -99,15 +103,309 @@ export default function GamePage({ params }: { params: { id: string } }) {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newChat, setNewChat] = useState("");
-  const [wsConnected, setWsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
+  
+  // 使用useWebSocket钩子替代直接创建WebSocket
+  const { sendMessage, connected: wsConnected } = useWebSocket(sessionId, handleWebSocketMessage);
+  
+  // 卡牌和贵族数据
+  const [cardsData, setCardsData] = useState([]);
+  const [noblesData, setNoblesData] = useState([]);
+
+  // for AI hint
+  const [hintMessage, setHintMessage] = useState("");
+  const [hintLoading, setHintLoading] = useState(false);
+  const [hintCount, setHintCount] = useState(0); // 可以限制每场游戏使用次数
+
+  const [roomName, setRoomName] = useState("Test name");
 
   const currentUser =
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("currentUser") || "{}")
       : {};
 
-  // 新增函数：检查用户是否有足够资源购买卡牌
+  // WebSocket消息处理函数
+  function handleWebSocketMessage(msg: WebSocketMessage) {
+    console.log("收到游戏消息类型:", msg.type, "内容:", msg.content);
+    
+    switch (msg.type) {
+      case "GAME_STATE":
+        if (cardsData.length > 0 && noblesData.length > 0) {
+          if (!msg.content) {
+            console.warn("收到空的GAME_STATE内容，可能是后端错误");
+            return;
+          }
+          
+          console.log("处理游戏状态数据:", msg.content);
+          const gameStateData = transformGameState(msg.content, cardsData, noblesData);
+          if (gameStateData) {
+            console.log("转换后的游戏状态:", gameStateData);
+            setGameState(gameStateData);
+          } else {
+            console.error("转换游戏状态失败");
+          }
+        } else {
+          console.warn("卡牌或贵族数据尚未加载完成，延迟处理GAME_STATE");
+          // 保存消息，等数据加载完成后处理
+          setPendingGameState(msg.content);
+        }
+        break;
+        
+      case "ROOM_STATE":
+        console.log("接收到ROOM_STATE消息:", msg);
+        // 处理房间状态更新
+        if (msg.roomName) {
+          setRoomName(msg.roomName);
+        }
+        break;
+        
+      case "CHAT_MESSAGE":
+        // 处理聊天消息
+        if (msg.content) {
+          let playerName = "玩家";
+          let messageText = "";
+          
+          if (typeof msg.content === 'object') {
+            playerName = msg.content.player || playerName;
+            messageText = msg.content.text || JSON.stringify(msg.content);
+          } else {
+            messageText = msg.content.toString();
+          }
+          
+          const chatMsg: ChatMessage = {
+            player: playerName,
+            text: messageText,
+            timestamp: Date.now()
+          };
+          setChatMessages(prev => [...prev, chatMsg]);
+          
+          // 如果聊天窗口没有打开，显示通知
+          if (!showChat) {
+            setChatNotify(true);
+          }
+        }
+        break;
+        
+      case "AI_HINT":
+        // 处理AI提示
+        if (msg.content) {
+          const hintText = typeof msg.content === 'object' 
+            ? msg.content.message || JSON.stringify(msg.content)
+            : msg.content.toString();
+          setHintMessage(hintText);
+          setHintLoading(false);
+        }
+        break;
+    }
+  }
+  
+  // 在连接成功后发送加入房间消息
+  useEffect(() => {
+    if (wsConnected) {
+      console.log("WebSocket连接成功，发送加入房间消息");
+      sendMessage({
+        type: "JOIN_ROOM",
+        roomId: gameId
+      });
+    }
+  }, [wsConnected, gameId]);
+  
+  // 加载卡牌和贵族数据
+  useEffect(() => {
+    console.log("开始加载卡牌和贵族数据...");
+    
+    // 使用绝对路径
+    Promise.all([
+      fetch('/cards.json').then(response => {
+        console.log("卡牌数据响应:", response.status);
+        if (!response.ok) {
+          throw new Error(`加载卡牌数据失败: ${response.status}`);
+        }
+        return response.json();
+      }),
+      fetch('/noblemen.json').then(response => {
+        console.log("贵族数据响应:", response.status);
+        if (!response.ok) {
+          throw new Error(`加载贵族数据失败: ${response.status}`);
+        }
+        return response.json();
+      })
+    ])
+    .then(([cards, nobles]) => {
+      console.log("卡牌数据加载完成，共", cards.length, "张卡牌");
+      console.log("贵族数据加载完成，共", nobles.length, "个贵族");
+      setCardsData(cards);
+      setNoblesData(nobles);
+    })
+    .catch(error => {
+      console.error("加载游戏数据失败:", error);
+    });
+  }, []);
+
+  // 监听卡牌和贵族数据加载
+  useEffect(() => {
+    if (cardsData.length > 0 && noblesData.length > 0 && pendingGameState) {
+      console.log("卡牌和贵族数据加载完成，处理待处理的游戏状态");
+      const gameStateData = transformGameState(pendingGameState, cardsData, noblesData);
+      if (gameStateData) {
+        setGameState(gameStateData);
+        setPendingGameState(null);
+      }
+    }
+  }, [cardsData, noblesData, pendingGameState]);
+
+  // 转换游戏状态函数
+  function transformGameState(data: any, cardsData: any[], noblesData: any[]): GameState | null {
+    if (!data) {
+      console.warn("收到空的游戏状态数据");
+      return null;
+    }
+    
+    console.log("转换前的游戏状态数据:", JSON.stringify(data));
+    
+    // 检查关键字段是否存在
+    if (!data.playerSnapshots) {
+      console.warn("游戏状态数据中缺少 playerSnapshots 字段");
+    }
+    if (!data.availableGems) {
+      console.warn("游戏状态数据中缺少 availableGems 字段");
+    }
+    if (!data.visibleLevel1cardIds) {
+      console.warn("游戏状态数据中缺少 visibleLevel1cardIds 字段");
+    }
+    
+    // 获取卡牌详情的辅助函数
+    const getCardById = (id: number): Card | null => {
+      const card = cardsData.find(c => c.id === id);
+      if (!card) return null;
+      
+      // 转换为前端期望的卡牌格式
+      return {
+        uuid: card.id.toString(),
+        level: `level${card.tier}`,
+        color: mapColorToFrontend(card.color),
+        points: card.points,
+        cost: transformCost(card.cost)
+      };
+    };
+    
+    // 获取贵族详情的辅助函数
+    const getNobleById = (id: number): Noble | null => {
+      const noble = noblesData.find(n => n.id === id);
+      if (!noble) return null;
+      
+      // 转换为前端期望的贵族格式
+      return {
+        uuid: noble.id.toString(),
+        points: noble.influence,
+        requirement: transformCost(noble.cost)
+      };
+    };
+    
+    // 颜色映射函数
+    const mapColorToFrontend = (color: string): string => {
+      const colorMap: Record<string, string> = {
+        'BLACK': 'u',
+        'BLUE': 'b',
+        'GREEN': 'g',
+        'RED': 'r',
+        'WHITE': 'w',
+        'GOLD': '*'
+      };
+      return colorMap[color] || color;
+    };
+    
+    // 宝石花费转换函数
+    const transformCost = (cost: Record<string, number> | undefined): Record<string, number> => {
+      if (!cost) return {};
+      
+      const result: Record<string, number> = {};
+      // 将后端的 GemColor 枚举映射到前端的颜色代码
+      Object.entries(cost).forEach(([color, count]) => {
+        const frontendColor = mapColorToFrontend(color);
+        result[frontendColor] = count;
+      });
+      
+      return result;
+    };
+    
+    // 转换宝石数据
+    const transformGems = (gems: Record<string, number> | undefined): Record<string, number> => {
+      if (!gems) return {};
+      
+      const result: Record<string, number> = {};
+      Object.entries(gems).forEach(([color, count]) => {
+        const frontendColor = mapColorToFrontend(color);
+        result[frontendColor] = count;
+      });
+      
+      return result;
+    };
+    
+    // 构建玩家数据
+    const players = (data.playerSnapshots || []).map((player: any) => {
+      // 获取玩家拥有的卡牌
+      // 注意：后端目前没有直接提供玩家拥有的卡牌，这部分可能需要补充
+      const playerCards: {[level: string]: Card[]} = {
+        level1: [],
+        level2: [],
+        level3: []
+      };
+      
+      // 获取玩家预留的卡牌
+      const reservedCards = (player.reservedCardIds || [])
+        .map((id: number) => getCardById(id))
+        .filter(Boolean) as Card[];
+      
+      return {
+        id: player.userId,
+        uuid: player.userId.toString(),
+        name: player.name || `Player${player.userId}`,
+        score: player.victoryPoints || 0,
+        cards: playerCards,
+        gems: transformGems(player.gems || {}),
+        nobles: [], // 后端目前没有提供玩家拥有的贵族信息
+        reserved: reservedCards
+      };
+    });
+    
+    // 构建卡牌数据
+    const cards: {[level: string]: Card[]} = {
+      level1: (data.visibleLevel1cardIds || [])
+        .map((id: number) => getCardById(id))
+        .filter(Boolean) as Card[],
+      level2: (data.visibleLevel2cardIds || [])
+        .map((id: number) => getCardById(id))
+        .filter(Boolean) as Card[],
+      level3: (data.visibleLevel3cardIds || [])
+        .map((id: number) => getCardById(id))
+        .filter(Boolean) as Card[]
+    };
+    
+    // 构建贵族数据
+    const nobles = (data.visibleNobleIds || [])
+      .map((id: number) => getNobleById(id))
+      .filter(Boolean) as Noble[];
+    
+    const result = {
+      players,
+      gems: transformGems(data.availableGems || {}),
+      cards,
+      nobles,
+      decks: {
+        level1: data.visibleLevel1cardIds?.length || 0,
+        level2: data.visibleLevel2cardIds?.length || 0,
+        level3: data.visibleLevel3cardIds?.length || 0
+      },
+      turn: data.currentPlayerIndex || 0,
+      log: [],
+      winner: null
+    };
+    
+    console.log("转换后的游戏状态:", result);
+    return result;
+  }
+
+  // 检查用户是否有足够资源购买卡牌
   const canAffordCard = (card: Card): boolean => {
     if (!gameState) return false;
     
@@ -210,99 +508,61 @@ export default function GamePage({ params }: { params: { id: string } }) {
     }
   };
 
-  //for AI hint
-  const [hintMessage, setHintMessage] = useState("");
-  const [hintLoading, setHintLoading] = useState(false);
-  const [hintCount, setHintCount] = useState(0); // 可以限制每场游戏使用次数
-
-  const [roomName] = "Test name"
-
   const requestAiHint = () => {
     if (!isPlayerTurn() || hintCount >= 1) return; // 限制使用1次
     
     setHintLoading(true);
     setHintMessage("");
     
-    // 向后端发送请求
-    if (wsRef.current && wsConnected) {
-      const message = { 
-        action: "ai_hint", 
-        target: "", 
-        token: currentUser.token 
-      };
-      wsRef.current.send(JSON.stringify(message));
-    }
+    // 发送AI提示请求
+    sendMessage({
+      type: "AI_HINT",
+      roomId: gameId,
+      content: { target: "" }
+    });
     
     // 增加使用次数
     setHintCount(prev => prev + 1);
   };
 
-
-
-  useEffect(() => {
-    if (!gameId) return;
-
-    const wsUrl = `wss://yourserver.com/ws?gid=${gameId}&pid=${currentUser.id || 0}&uuid=${currentUser.uuid || ""}`;
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      console.log("WebSocket connected");
-      setWsConnected(true);
-    };
-    ws.onmessage = (event) => {
-      try {
-        const msg: WSMessage = JSON.parse(event.data);
-        switch (msg.type) {
-          case "state":
-            setGameState(msg.payload);
-            break;
-          case "chat":
-            setChatMessages((prev) =>
-              Array.isArray(msg.payload) ? [...prev, ...msg.payload] : [...prev, msg.payload]
-            );
-            if (!showChat) {
-              setChatNotify(true);
-            }
-            break;
-          case "start":
-            console.log("Game started!");
-            break;
-          case "error":
-            alert("Error: " + msg.payload);
-            break;
-          case "info":
-            console.log("Hint: " + msg.payload);
-            break;
-          case "ai_hint":
-            setHintMessage(msg.payload);
-            setHintLoading(false);
-            break;
-          default:
-            break;
-        }
-      } catch (e) {
-        console.error("Failed to parse WebSocket message:", e);
-      }
-    };
-
-    ws.onclose = () => {
-      console.log("WebSocket disconnected");
-      setWsConnected(false);
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [gameId, currentUser]);
-
-  const sendAction = (action: string, target: string, extraData?: any) => {
-    if (wsRef.current && wsConnected) {
-      const message = { action, target, token: currentUser.token, ...(extraData || {}) };
-      wsRef.current.send(JSON.stringify(message));
-    } else {
-      console.warn("WebSocket is not connected yet");
+  // 发送动作到WebSocket
+  const sendAction = (action: string, target: string, extraData: Record<string, any> = {}) => {
+    if (!wsConnected) {
+      console.warn("WebSocket尚未连接");
+      return;
     }
+    
+    // 映射前端动作到后端动作类型
+    let messageType;
+    switch (action) {
+      case "buy":
+        messageType = "BUY_CARD";
+        break;
+      case "reserve":
+        messageType = "RESERVE_CARD";
+        break;
+      case "take":
+        messageType = "TAKE_GEM";
+        break;
+      case "chat":
+        messageType = "PLAYER_MESSAGE";
+        break;
+      case "next":
+        messageType = "END_TURN";
+        break;
+      default:
+        messageType = action.toUpperCase();
+    }
+    
+    sendMessage({
+      type: messageType,
+      roomId: gameId,
+      content: {
+        userId: currentUser.id,
+        target,
+        ...extraData
+      }
+    });
   };
 
   const handleSendChat = (e: React.FormEvent) => {
