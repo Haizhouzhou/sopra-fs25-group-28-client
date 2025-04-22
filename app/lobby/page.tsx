@@ -18,7 +18,6 @@ interface GameRoom {
 const GameLobby: React.FC = () => {
   const router = useRouter();
   const apiService = useApi();
-
   const { value: token, clear: clearToken } = useLocalStorage<string>("token", "");
   const { value: localUser, clear: clearUser } = useLocalStorage<UserListGetDTO>("currentUser", {} as UserListGetDTO);
 
@@ -30,10 +29,7 @@ const GameLobby: React.FC = () => {
 
   const websocketService = WebSocketService.getInstance();
 
-  // Handle messages
   const handleWebSocketMessage = useCallback((message: WebSocketMessage) => {
-    console.log('📩 Received WebSocket message:', message);
-
     if (message.type === 'ROOM_LIST') {
       const roomInfos = message.content || [];
       const parsedRooms: GameRoom[] = roomInfos.map((room: any) => ({
@@ -47,60 +43,38 @@ const GameLobby: React.FC = () => {
     }
 
     if (message.type === 'ROOM_JOINED') {
-      if (message.roomId) {
-        router.push(`/room/${message.roomId}`);
+      const joinedRoomId = message.roomId || message.content?.roomId;
+      if (joinedRoomId) {
+        router.push(`/room/${joinedRoomId}`);
       }
     }
   }, [router]);
 
-  // Fetch game rooms
   const fetchGameRooms = useCallback(() => {
     if (!isConnected || !currentUser) return;
-  
-    const message: WebSocketMessage = {
+    websocketService.sendMessage({
       type: "GET_ROOMS",
       roomId: "LOBBY",
       sessionId: currentUser.id.toString(),
       content: {
-        username: currentUser.name,
-        userId: localUser.id,
-        avatar: currentUser.avatar
+        userId: currentUser.id,
+        displayName: currentUser.name
       }
-    };
-  
-    console.log("[WebSocket] sending GET_ROOMS", message);
-    websocketService.sendMessage(message);
+    });
   }, [isConnected, currentUser]);
-  
 
-  // Connect WebSocket
   useEffect(() => {
     const initialize = async () => {
+      if (!token || !localUser?.id) return;
       setIsLoading(true);
-      console.log("[Lobby] localUser =", localUser);
       try {
-        if (token === "" || !localUser) return;
-        console.log("[Lobby] token =", token);
-        console.log("[Lobby] localUser =", localUser);
-        if (!token || !localUser?.id) {
-          console.warn("Missing token or user, redirecting...");
-          router.push("/");
-          return;
-        }
-
         setCurrentUser(localUser);
-
         websocketService.setSessionId(localUser.id.toString());
-
-        // Fix: only pass token into WebSocket connect method
         const connected = await websocketService.connect(token);
-
         setIsConnected(connected);
-
         websocketService.addMessageListener(handleWebSocketMessage);
-
         if (connected) {
-          setTimeout(fetchGameRooms, 300); // wait a bit
+          setTimeout(fetchGameRooms, 300);
         }
       } catch (err) {
         console.error("WebSocket connection error:", err);
@@ -110,11 +84,7 @@ const GameLobby: React.FC = () => {
     };
 
     initialize();
-
-    return () => {
-      websocketService.removeMessageListener(handleWebSocketMessage);
-    };
-  }, [token, localUser, fetchGameRooms, handleWebSocketMessage, router]);
+  }, [token, localUser, fetchGameRooms, handleWebSocketMessage]);
 
   const handleJoinGame = () => {
     if (!selectedRoom || !isConnected || !currentUser) return;
@@ -168,7 +138,7 @@ const GameLobby: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '20px' }}>
             {currentUser && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <img src={`/avatar/${currentUser.avatar}`} alt="Avatar" style={{ width: 60, height: 60, borderRadius: '50%', border: '3px solid #FFD700' }} />
+                <img src={`/avatar/${currentUser.avatar || 'a_01.png'}`} alt="Avatar" style={{ width: 60, height: 60, borderRadius: '50%', border: '3px solid #FFD700' }} />
                 <span style={{ color: '#FFD700', fontWeight: 'bold', fontSize: '1.3rem' }}>{currentUser.name}</span>
               </div>
             )}
@@ -192,18 +162,52 @@ const GameLobby: React.FC = () => {
           </div>
 
           {gameRooms.length > 0 ? gameRooms.map((room) => (
-            <div key={room.id} onClick={() => setSelectedRoom(room.id)} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '12px 0', color: 'white', backgroundColor: selectedRoom === room.id ? 'rgba(255, 215, 0, 0.1)' : 'transparent', cursor: 'pointer' }}>
+            <div key={room.id} onClick={() => setSelectedRoom(room.id)} style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              padding: '12px 0',
+              color: 'white',
+              backgroundColor: selectedRoom === room.id ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
+              cursor: 'pointer',
+              alignItems: 'center'
+            }}>
               <div>{room.id}</div>
               <div>{room.name}</div>
               <div>{room.owner}</div>
               <div>{room.players}</div>
             </div>
-          )) : <div style={{ padding: 20, textAlign: 'center', color: 'white' }}>No rooms available. Create a new game!</div>}
+          )) : (
+            <div style={{ padding: 20, textAlign: 'center', color: 'white' }}>
+              No rooms available. Create a new game!
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
-          <button onClick={handleJoinGame} disabled={!selectedRoom || !isConnected} style={{ backgroundColor: '#0F2149', border: '2px solid #FFD700', color: '#FFD700', padding: '12px 30px', borderRadius: '4px', fontWeight: 'bold', cursor: (!selectedRoom || !isConnected) ? 'not-allowed' : 'pointer', opacity: (!selectedRoom || !isConnected) ? 0.7 : 1 }}>JOIN GAME</button>
-          <button onClick={handleCreateGame} disabled={!isConnected} style={{ backgroundColor: '#0F2149', border: '2px solid #FFD700', color: '#FFD700', padding: '12px 30px', borderRadius: '4px', fontWeight: 'bold', cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.7 }}>CREATE NEW GAME</button>
+          <button onClick={handleJoinGame} disabled={!selectedRoom || !isConnected} style={{
+            backgroundColor: '#0F2149',
+            border: '2px solid #FFD700',
+            color: '#FFD700',
+            padding: '12px 30px',
+            borderRadius: '4px',
+            fontWeight: 'bold',
+            cursor: (!selectedRoom || !isConnected) ? 'not-allowed' : 'pointer',
+            opacity: (!selectedRoom || !isConnected) ? 0.7 : 1
+          }}>
+            JOIN GAME
+          </button>
+          <button onClick={handleCreateGame} disabled={!isConnected} style={{
+            backgroundColor: '#0F2149',
+            border: '2px solid #FFD700',
+            color: '#FFD700',
+            padding: '12px 30px',
+            borderRadius: '4px',
+            fontWeight: 'bold',
+            cursor: isConnected ? 'pointer' : 'not-allowed',
+            opacity: isConnected ? 1 : 0.7
+          }}>
+            CREATE NEW GAME
+          </button>
         </div>
       </div>
     </div>

@@ -40,6 +40,10 @@ const Login: React.FC = () => {
       // 👇 确保用户信息写入 localStorage
       setCurrentUser(me);
       setUsername(me.username);
+
+      setTimeout(() => {
+        router.push("/lobby");
+      }, 100);
   
       // ✅ 跳转前做一次确认（可选）
       console.log("[Login] 设置成功，跳转 /lobby");

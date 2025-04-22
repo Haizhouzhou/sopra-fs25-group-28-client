@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getApiWsDomain } from '@/utils/domain';
+import { getApiWsDomain } from "@/utils/domain";
 import useLocalStorage from "@/hooks/useLocalStorage";
 
 export type WebSocketMessage = {
@@ -7,6 +7,9 @@ export type WebSocketMessage = {
   roomId?: string;
   sessionId?: string;
   content?: any;
+  players?: any[]; // 添加这一行
+  ownerId?: number | string; // 可能也需要这个
+  ownerName?: string; // 可能也需要这个
 };
 
 export type RoomInfo = {
@@ -19,6 +22,8 @@ export type RoomInfo = {
 export type PlayerInfo = {
   name: string;
   room_status: boolean;
+  avatar?: string;
+  userId?: string | number;
 };
 
 class WebSocketService {
@@ -28,8 +33,8 @@ class WebSocketService {
   private connectionListeners: ((connected: boolean) => void)[] = [];
   private sessionId?: string;
   private userId?: number | string;
-  private username?: string;       // 登录名
-  private displayName?: string;    // 昵称（name）
+  private username?: string;       // 登录用用户名
+  private displayName?: string;    // 显示名（昵称）
   private ready: boolean = false;
 
   private constructor() {}
@@ -52,7 +57,8 @@ class WebSocketService {
     this.displayName = localUser?.name || 'Guest';
     this.sessionId = `user-${this.userId}-${Date.now()}`;
 
-    const wsToken = token || localStorage.getItem("token") || `guest-${Date.now()}`;
+    const rawToken = token || localStorage.getItem("token") || "";
+    const wsToken = typeof rawToken === "string" ? rawToken.replace(/"/g, "") : "";
     const wsUrl = `${getApiWsDomain()}/WebServer/${wsToken}`;
     this.socket = new WebSocket(wsUrl);
 
@@ -78,10 +84,12 @@ class WebSocketService {
 
       this.socket!.onmessage = (event) => {
         try {
+          console.log('[WebSocket] Received raw message:', event.data.substring(0, 200));
           const message = JSON.parse(event.data) as WebSocketMessage;
+          console.log('[WebSocket] Parsed message:', message);
           this.notifyMessageListeners(message);
         } catch (err) {
-          console.error('[WebSocket] ❓ Message parse error:', err);
+          console.error('[WebSocket] Message parse error:', err, 'Raw data:', event.data.substring(0, 200));
         }
       };
     });
@@ -96,16 +104,44 @@ class WebSocketService {
   }
 
   sendMessage(message: Partial<WebSocketMessage> & { type: string }): void {
+    if (!message.type) {
+      console.error("Cannot send message without type:", message);
+      return;
+    }
+    
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      // 处理PLAYER_STATUS消息
+      if (message.type === "PLAYER_STATUS") {
+        const content = message.content || {};
+        const statusMessage = {
+          type: message.type,
+          roomId: message.roomId,
+          sessionId: this.sessionId,
+          content: {
+            userId: content.userId,     // 保持在content中
+            status: content.status,     // 保持在content中
+            displayName: this.displayName,
+            avatar: this.getAvatar()
+          }
+        };
+        console.log("Sending PLAYER_STATUS message:", statusMessage);
+        this.socket.send(JSON.stringify(statusMessage));
+        return;
+      }
+      
+      // For all other message types
+      const baseContent = message.content || {};
       const fullMessage = {
         type: message.type,
         roomId: message.roomId || null,
         sessionId: this.sessionId || String(this.userId || ""),
         content: {
-          ...message.content,
-          displayName: this.displayName  // ✅ 改为 displayName
+          ...baseContent,
+          displayName: this.displayName,
+          avatar: this.getAvatar()
         }
       };
+      console.log("Sending WebSocket message:", fullMessage);
       this.socket.send(JSON.stringify(fullMessage));
     } else {
       console.warn("[WebSocket] Not connected");
@@ -145,6 +181,12 @@ class WebSocketService {
   private notifyConnectionListeners(connected: boolean): void {
     this.connectionListeners.forEach(listener => listener(connected));
   }
+
+  private getAvatar(): string {
+    const userStr = typeof window !== 'undefined' ? localStorage.getItem("currentUser") : null;
+    const localUser = userStr ? JSON.parse(userStr) : null;
+    return localUser?.avatar || 'a_01.png';
+  }
 }
 
 export function useWebSocket(sessionId: string, onMessage?: (msg: WebSocketMessage) => void) {
@@ -156,22 +198,47 @@ export function useWebSocket(sessionId: string, onMessage?: (msg: WebSocketMessa
     if (!token) return;
 
     webSocketService.setSessionId(sessionId);
-    webSocketService.connect(token).then(setConnected);
+    
+    const connectWebSocket = async () => {
+      const success = await webSocketService.connect(token);
+      setConnected(success);
+      
+      if (success) {
+        console.log("WebSocket connection established with session ID:", sessionId);
+      } else {
+        console.error("WebSocket connection failed");
+      }
+    };
+    
+    connectWebSocket();
 
-    const handler = (msg: WebSocketMessage) => onMessage?.(msg);
-    const connHandler = (isConn: boolean) => setConnected(isConn);
+    const handler = (msg: WebSocketMessage) => {
+      console.log("WebSocket message received in hook:", msg.type);
+      onMessage?.(msg);
+    };
+    
+    const connHandler = (isConn: boolean) => {
+      console.log("WebSocket connection status changed:", isConn);
+      setConnected(isConn);
+    };
 
     webSocketService.addMessageListener(handler);
     webSocketService.addConnectionListener(connHandler);
 
     return () => {
+      console.log("Cleaning up WebSocket listeners");
       webSocketService.removeMessageListener(handler);
       webSocketService.removeConnectionListener(connHandler);
     };
   }, [sessionId, token, onMessage]);
 
+  const sendMessageWithLogging = (msg: Omit<WebSocketMessage, "sessionId">) => {
+    console.log("Sending message via useWebSocket hook:", msg);
+    webSocketService.sendMessage(msg);
+  };
+
   return {
-    sendMessage: (msg: Omit<WebSocketMessage, "sessionId">) => webSocketService.sendMessage(msg),
+    sendMessage: sendMessageWithLogging,
     connected,
     webSocketService
   };
