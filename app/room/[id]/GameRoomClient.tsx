@@ -5,6 +5,8 @@ import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import WebSocketService, { WebSocketMessage } from "@/hooks/useWebSocket";
+import { useGameState } from '@/hooks/useGameStateContext';
+
 
 interface Player {
   id: string;
@@ -32,6 +34,9 @@ const GameRoomClient = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const apiService = useApi();
+
+  const { saveGameState } = useGameState();
+
 
   const rawName = searchParams.get("name");
   // 修改为使用 state 变量
@@ -62,89 +67,94 @@ const GameRoomClient = () => {
   const handleWebSocketMessage = useCallback((msg: WebSocketMessage) => {
     console.log("WS MSG:", msg.type, msg.content ? JSON.stringify(msg.content).substring(0, 100) : "undefined");
     
-  // 在handleWebSocketMessage中处理ROOM_STATE消息
-  if (msg.type === "ROOM_STATE") {
-    try {
-      console.log("处理ROOM_STATE消息:", msg);
-      
-      // 更新房间名称（如果服务器提供了）
-      if (msg.roomName) {
-        console.log("收到房间名称:", msg.roomName);
-        setRoomName(msg.roomName);
-      }
-      
-      // 解析玩家数据
-      const rawPlayers = (msg as any).players || [];
-      
-      if (!Array.isArray(rawPlayers)) {
-        console.error("players不是数组:", rawPlayers);
-        return;
-      }
-      
-      const updatedPlayers = rawPlayers.map((p: any) => ({
-        id: String(p.userId || ''),
-        name: p.name || 'Unknown',
-        isReady: Boolean(p.room_status), // 确保这里正确获取准备状态
-        isOwner: Boolean(p.isOwner),
-        avatar: p.avatar || "a_01.png",
-      }));
-      
-      console.log("处理后的players:", updatedPlayers);
-      
-      // 设置玩家列表
-      setPlayers(updatedPlayers);
-      
-      // 更新当前用户状态
-      const user = currentUserRef.current;
-      if (user?.id) {
-        const me = updatedPlayers.find(p => String(p.id) === String(user.id));
-        console.log("找到当前用户:", me);
+    // 在handleWebSocketMessage中处理ROOM_STATE消息·
+    if (msg.type === "ROOM_STATE") {
+      try {
+        console.log("处理ROOM_STATE消息:", msg);
         
-        if (me) {
-          console.log("更新UI状态 - isReady:", me.isReady);
-          setIsReady(me.isReady); // 确保这行生效
-          setIsOwner(me.isOwner || false);
+        // 更新房间名称（如果服务器提供了）
+        if (msg.roomName) {
+          console.log("收到房间名称:", msg.roomName);
+          setRoomName(msg.roomName);
         }
+        
+        // 解析玩家数据
+        const rawPlayers = (msg as any).players || [];
+        
+        if (!Array.isArray(rawPlayers)) {
+          console.error("players不是数组:", rawPlayers);
+          return;
+        }
+        
+        const updatedPlayers = rawPlayers.map((p: any) => ({
+          id: String(p.userId || ''),
+          name: p.name || 'Unknown',
+          isReady: Boolean(p.room_status), // 确保这里正确获取准备状态
+          isOwner: Boolean(p.isOwner),
+          avatar: p.avatar || "a_01.png",
+        }));
+        
+        console.log("处理后的players:", updatedPlayers);
+        
+        // 设置玩家列表
+        setPlayers(updatedPlayers);
+        
+        // 更新当前用户状态
+        const user = currentUserRef.current;
+        if (user?.id) {
+          const me = updatedPlayers.find(p => String(p.id) === String(user.id));
+          console.log("找到当前用户:", me);
+          
+          if (me) {
+            console.log("更新UI状态 - isReady:", me.isReady);
+            setIsReady(me.isReady); // 确保这行生效
+            setIsOwner(me.isOwner || false);
+          }
+        }
+        
+        // 更新全体准备状态
+        const nonOwners = updatedPlayers.filter(p => !p.isOwner);
+        const allReady = nonOwners.length > 0 && nonOwners.every(p => p.isReady);
+        setAllPlayersReady(allReady);
+        
+      } catch (err) {
+        console.error("处理ROOM_STATE消息出错:", err);
+      }
+    }
+      
+      // 处理其他消息...
+      if (msg.type === "GAME_STATE") {
+
+        console.log("收到游戏状态，保存到全局状态并跳转", msg.content);
+        // 保存游戏状态到全局上下文
+        saveGameState(msg.content);
+
+        router.push(`/game/${roomId}`);
       }
       
-      // 更新全体准备状态
-      const nonOwners = updatedPlayers.filter(p => !p.isOwner);
-      const allReady = nonOwners.length > 0 && nonOwners.every(p => p.isReady);
-      setAllPlayersReady(allReady);
-      
-    } catch (err) {
-      console.error("处理ROOM_STATE消息出错:", err);
-    }
-  }
-    
-    // 处理其他消息...
-    if (msg.type === "GAME_STATE") {
-      router.push(`/game/${roomId}`);
-    }
-    
-    if (msg.type === "CHAT_MESSAGE" && msg.content) {
-      const chatMsg = {
-        player: msg.content.player || "Anonymous",
-        text: msg.content.text || "",
-        timestamp: msg.content.timestamp || Date.now()
-      };
-      
-      // 检查是否已存在相同消息
-      setMessages(prev => {
-        // 检查是否已经有相同内容和时间的消息
-        const isDuplicate = prev.some(existingMsg => 
-          existingMsg.player === chatMsg.player && 
-          existingMsg.text === chatMsg.text &&
-          Math.abs(existingMsg.timestamp - chatMsg.timestamp) < 3000 // 3秒内认为是同一条消息
-        );
+      if (msg.type === "CHAT_MESSAGE" && msg.content) {
+        const chatMsg = {
+          player: msg.content.player || "Anonymous",
+          text: msg.content.text || "",
+          timestamp: msg.content.timestamp || Date.now()
+        };
         
-        if (isDuplicate) {
-          return prev; // 不添加重复消息
-        }
-        return [...prev, chatMsg];
-      });
-    }
-  }, [roomId]);
+        // 检查是否已存在相同消息
+        setMessages(prev => {
+          // 检查是否已经有相同内容和时间的消息
+          const isDuplicate = prev.some(existingMsg => 
+            existingMsg.player === chatMsg.player && 
+            existingMsg.text === chatMsg.text &&
+            Math.abs(existingMsg.timestamp - chatMsg.timestamp) < 3000 // 3秒内认为是同一条消息
+          );
+          
+          if (isDuplicate) {
+            return prev; // 不添加重复消息
+          }
+          return [...prev, chatMsg];
+        });
+      }
+    }, [roomId, saveGameState]);
 
   // Component initialization
   useEffect(() => {

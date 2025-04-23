@@ -1,12 +1,9 @@
 "use client";
-// if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-//   require("./mocks/mockWS.js");
-// }
+
 import { useState, useEffect, useRef } from "react";
 import { useParams } from 'next/navigation';
-import { useWebSocket, WebSocketMessage } from "@/hooks/useWebSocket"; // 确保路径正确
-
-
+import { useWebSocket, WebSocketMessage } from "@/hooks/useWebSocket"; 
+import { useGameState } from '@/hooks/useGameStateContext';
 
 // Card Type
 interface Card {
@@ -26,8 +23,10 @@ interface Noble {
 
 // Player
 interface Player {
+  userId: number | string;
+  name?: string;
+  status?: boolean;
   id: number;
-  name: string;
   uuid: string;
   score: number;
   cards: { [level: string]: Card[] };
@@ -55,6 +54,15 @@ interface ChatMessage {
   timestamp: number;
 }
 
+interface PlayerSnapshot {
+  userId: number | string;
+  name?: string;
+  victoryPoints?: number;
+  gems?: Record<string, number>;
+  bonusGems?: Record<string, number>;
+  reservedCardIds?: number[];
+}
+
 type WSMessageType = "state" | "chat" | "start" | "error" | "info" | "ai_hint";
 interface WSMessage {
   type: WSMessageType;
@@ -77,6 +85,22 @@ const CountdownTimer = ({ initialSeconds = 30 }: { initialSeconds?: number }) =>
   );
 };
 
+// 颜色映射函数
+const mapColorToFrontend = (color: string): string => {
+  const colorMap: Record<string, string> = {
+    'BLACK': 'u', // 应该返回 'u' 而不是 'black'
+    'BLUE': 'b',  // 应该返回 'b' 而不是 'blue'
+    'GREEN': 'g', // 应该返回 'g' 而不是 'green'
+    'RED': 'r',   // 应该返回 'r' 而不是 'red'
+    'WHITE': 'w', // 应该返回 'w' 而不是 'white'
+    'GOLD': 'x'   // 应该返回 '*' 而不是 'gold'
+  };
+  
+  // 返回对应的颜色代码，如果找不到则返回小写的颜色名
+  const result = colorMap[color?.toUpperCase()] || color?.toLowerCase() || 'u';
+  return result;
+};
+
 export default function GamePage() {
   const params = useParams();
   const gameId = params.id as string;
@@ -88,6 +112,13 @@ export default function GamePage() {
 
   const [seconds, setSeconds] = useState(30);
   const [isTimeUp, setIsTimeUp] = useState(false);
+
+  const stableGameId = useRef(params.id as string).current;
+  const stableSessionId = useRef(`game-${stableGameId}-${Date.now()}`).current;
+
+  const { lastGameState, clearGameState } = useGameState();
+
+
   useEffect(() => {
     if (seconds <= 0) {
       setIsTimeUp(true);
@@ -105,7 +136,7 @@ export default function GamePage() {
   const [newChat, setNewChat] = useState("");
   
   // 使用useWebSocket钩子替代直接创建WebSocket
-  const { sendMessage, connected: wsConnected } = useWebSocket(sessionId, handleWebSocketMessage);
+  const { sendMessage, connected: wsConnected } = useWebSocket(stableSessionId, handleWebSocketMessage);
   
   // 卡牌和贵族数据
   const [cardsData, setCardsData] = useState([]);
@@ -123,38 +154,179 @@ export default function GamePage() {
       ? JSON.parse(localStorage.getItem("currentUser") || "{}")
       : {};
 
+  const hasJoinedRef = useRef(false);
+
+
   // WebSocket消息处理函数
   function handleWebSocketMessage(msg: WebSocketMessage) {
     console.log("收到游戏消息类型:", msg.type, "内容:", msg.content);
-    
-    switch (msg.type) {
-      case "GAME_STATE":
-        if (cardsData.length > 0 && noblesData.length > 0) {
-          if (!msg.content) {
-            console.warn("收到空的GAME_STATE内容，可能是后端错误");
-            return;
+
+    if (msg.content) {
+      // 如果内容是字符串，尝试解析为JSON
+      if (typeof msg.content === 'string') {
+        try {
+          const parsedContent = JSON.parse(msg.content);
+          console.log("解析后的消息内容:", parsedContent);
+          
+          // 检查解析后的内容中是否有房间名称
+          if (parsedContent.roomName) {
+            console.log("从解析后的内容获取到房间名称:", parsedContent.roomName);
+            setRoomName(parsedContent.roomName);
           }
           
-          console.log("处理游戏状态数据:", msg.content);
-          const gameStateData = transformGameState(msg.content, cardsData, noblesData);
-          if (gameStateData) {
-            console.log("转换后的游戏状态:", gameStateData);
-            setGameState(gameStateData);
-          } else {
-            console.error("转换游戏状态失败");
-          }
-        } else {
-          console.warn("卡牌或贵族数据尚未加载完成，延迟处理GAME_STATE");
-          // 保存消息，等数据加载完成后处理
-          setPendingGameState(msg.content);
+          msg.content = parsedContent;
+        } catch (e) {
+          console.error("解析JSON失败:", e);
         }
+      }
+      // 如果已经是对象
+      else if (typeof msg.content === 'object') {
+        console.log("消息内容(对象):", msg.content);
+        
+        // 检查对象中是否有房间名称
+        if (msg.content.roomName) {
+          console.log("从对象内容获取到房间名称:", msg.content.roomName);
+          setRoomName(msg.content.roomName);
+        }
+      }
+    }
+
+    switch (msg.type) {
+      case "GAME_STATE":
+        console.log("收到GAME_STATE消息:", msg);
+        
+        if (typeof msg.content === 'string') {
+          try {
+            msg.content = JSON.parse(msg.content);
+            console.log("解析后的消息内容:", msg.content);
+          } catch (e) {
+            console.error("解析 JSON 失败:", e);
+          }
+        }
+        
+        if (!msg.content) {
+          console.warn("收到空的游戏状态内容");
+          return;
+        }
+        
+        if (cardsData.length > 0 && noblesData.length > 0) {
+            console.log("游戏ID:", msg.content.gameId);
+            console.log("可见卡牌:", 
+              msg.content.visibleLevel1cardIds?.length,
+              msg.content.visibleLevel2cardIds?.length,
+              msg.content.visibleLevel3cardIds?.length
+            );
+            
+            try {
+              const gameStateData = transformGameState(msg.content, cardsData, noblesData);
+              
+              if (gameStateData) {
+                console.log("转换后的游戏卡牌数量:", 
+                  gameStateData.cards.level1.length,
+                  gameStateData.cards.level2.length,
+                  gameStateData.cards.level3.length
+                );
+                setGameState(gameStateData);
+              } else {
+                console.warn("游戏状态转换结果为null");
+              }
+            } catch (error) {
+              console.error("转换游戏状态失败:", error);
+            }
+          } else {
+            console.warn("卡牌或贵族数据尚未加载完成");
+            setPendingGameState(msg.content);
+          }
         break;
         
-      case "ROOM_STATE":
-        console.log("接收到ROOM_STATE消息:", msg);
-        // 处理房间状态更新
-        if (msg.roomName) {
-          setRoomName(msg.roomName);
+        case "ROOM_STATE":
+          console.log("收到ROOM_STATE消息:", msg);
+          
+          // 尝试获取房间名称
+          if (typeof msg.content === 'object' && msg.content) {
+            // ✅ 设置房间名称
+            if (msg.content.roomName) {
+              console.log("从ROOM_STATE获取到房间名称:", msg.content.roomName);
+              setRoomName(msg.content.roomName);
+            }
+        
+            // ✅ 设置玩家信息
+            if (msg.content.players && Array.isArray(msg.content.players)) {
+              console.log("房间中的玩家列表:", msg.content.players);
+        
+              const userMap: Record<string | number, { name: string }> = {};
+              msg.content.players.forEach((player: Player) => {
+                if (player && player.userId !== undefined && player.name) {
+                  userMap[player.userId] = { name: player.name };
+                  console.log(`保存玩家信息: ID ${player.userId}, 名称 ${player.name}`);
+                }
+              });
+        
+              if (Object.keys(userMap).length > 0) {
+                try {
+                  const existingUsers = JSON.parse(localStorage.getItem('users') || '{}');
+                  const updatedUsers = { ...existingUsers, ...userMap };
+                  localStorage.setItem('users', JSON.stringify(updatedUsers));
+                  console.log("已更新localStorage中的用户信息:", updatedUsers);
+                } catch (e) {
+                  console.error("保存用户信息到localStorage失败:", e);
+                }
+              }
+            }
+          }
+          break;
+        
+      
+      case "GAME_STATE":
+        console.log("收到GAME_STATE消息:", msg);
+        
+        // 如果收到游戏状态且包含玩家数据
+        if (typeof msg.content === 'object' && msg.content && msg.content.playerSnapshots) {
+          const playerSnapshots = msg.content.playerSnapshots;
+          console.log("游戏中的玩家数据:", playerSnapshots);
+          
+          // 从localStorage获取玩家名称信息
+          try {
+            const userMap = JSON.parse(localStorage.getItem('users') || '{}');
+            console.log("从localStorage获取的用户信息:", userMap);
+            
+            let needToUpdateBackend = false;
+            
+            // 为每个playerSnapshot添加名称(如果可能)
+            playerSnapshots.forEach((player: PlayerSnapshot) => {
+              // 确保player和userId存在
+              if (player && player.userId !== undefined) {
+                // 如果player没有名称但userMap中有
+                if (!player.name && userMap[player.userId] && userMap[player.userId].name) {
+                  console.log(`为玩家ID ${player.userId} 添加名称: ${userMap[player.userId].name}`);
+                  player.name = userMap[player.userId].name;
+                  needToUpdateBackend = true;
+                }
+              }
+            });
+            
+            if (needToUpdateBackend) {
+              console.log("已为玩家添加名称信息，可能需要更新后端");
+            }
+            
+            // 继续处理游戏状态...
+            if (cardsData.length > 0 && noblesData.length > 0) {
+              try {
+                const gameStateData = transformGameState(msg.content, cardsData, noblesData);
+                if (gameStateData) {
+                  setGameState(gameStateData);
+                }
+              } catch (error) {
+                console.error("转换游戏状态失败:", error);
+              }
+            } else {
+              console.warn("卡牌或贵族数据尚未加载完成");
+              setPendingGameState(msg.content);
+            }
+            
+          } catch (e) {
+            console.error("从localStorage获取用户信息失败:", e);
+          }
         }
         break;
         
@@ -197,17 +369,43 @@ export default function GamePage() {
         break;
     }
   }
+
+  // 调试函数：验证颜色格式
+function checkColorFormat(obj: any, path: string = 'root') {
+  if (!obj) return;
   
+  if (typeof obj === 'object') {
+    // 检查是否有颜色相关的字段
+    if (obj.color) {
+      console.log(`路径 ${path}.color 的值为: ${obj.color}, 类型: ${typeof obj.color}`);
+    }
+    
+    // 检查是否有cost字段
+    if (obj.cost && typeof obj.cost === 'object') {
+      console.log(`路径 ${path}.cost 包含颜色:`, Object.keys(obj.cost).join(', '));
+    }
+    
+    // 递归检查所有字段
+    Object.entries(obj).forEach(([key, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        checkColorFormat(value, `${path}.${key}`);
+      }
+    });
+  }
+}
+
   // 在连接成功后发送加入房间消息
   useEffect(() => {
-    if (wsConnected) {
+    if (wsConnected && !hasJoinedRef.current) {
       console.log("WebSocket连接成功，发送加入房间消息");
       sendMessage({
         type: "JOIN_ROOM",
         roomId: gameId
       });
+      hasJoinedRef.current = true; // 确保只发一次
     }
-  }, [wsConnected, gameId]);
+  }, [wsConnected, gameId, sendMessage]);
+
   
   // 加载卡牌和贵族数据
   useEffect(() => {
@@ -235,116 +433,159 @@ export default function GamePage() {
       console.log("贵族数据加载完成，共", nobles.length, "个贵族");
       setCardsData(cards);
       setNoblesData(nobles);
+      
+      // 处理任何待处理的游戏状态
+      if (pendingGameState) {
+        try {
+          console.log("处理待处理的游戏状态:", pendingGameState);
+          const gameStateData = transformGameState(pendingGameState, cards, nobles);
+          if (gameStateData) {
+            setGameState(gameStateData);
+            setPendingGameState(null);
+          }
+        } catch (error) {
+          console.error("处理待处理游戏状态时出错:", error);
+        }
+      }
     })
     .catch(error => {
       console.error("加载游戏数据失败:", error);
     });
-  }, []);
+  }, [pendingGameState]);
+
+  function inspectObject(obj: any, label: string = "") {
+    if (!obj) {
+      console.log(`${label} 是 null 或 undefined`);
+      return;
+    }
+    
+    console.log(`${label} 类型: ${typeof obj}`);
+    console.log(`${label} 属性列表: ${Object.keys(obj).join(", ")}`);
+    
+    // 针对GameState消息特别处理
+    if (obj.visibleLevel1cardIds) {
+      console.log(`Level1卡牌ID: ${obj.visibleLevel1cardIds.join(", ")}`);
+    }
+  }
 
   // 监听卡牌和贵族数据加载
   useEffect(() => {
-    if (cardsData.length > 0 && noblesData.length > 0 && pendingGameState) {
-      console.log("卡牌和贵族数据加载完成，处理待处理的游戏状态");
-      const gameStateData = transformGameState(pendingGameState, cardsData, noblesData);
-      if (gameStateData) {
-        setGameState(gameStateData);
-        setPendingGameState(null);
+    if (lastGameState && cardsData.length > 0 && noblesData.length > 0) {
+      console.log("从全局状态加载游戏数据:", lastGameState);
+      try {
+        const gameStateData = transformGameState(lastGameState, cardsData, noblesData);
+        if (gameStateData) {
+          setGameState(gameStateData);
+        }
+      } catch (error) {
+        console.error("转换游戏状态失败:", error);
       }
     }
-  }, [cardsData, noblesData, pendingGameState]);
+  }, [lastGameState, cardsData, noblesData]);
 
-  // 转换游戏状态函数
+  // 转换游戏状态函数 - 改进版本
   function transformGameState(data: any, cardsData: any[], noblesData: any[]): GameState | null {
+    console.log("正在转换游戏状态:", data);
+    
     if (!data) {
       console.warn("收到空的游戏状态数据");
       return null;
     }
     
-    console.log("转换前的游戏状态数据:", JSON.stringify(data));
-    
-    // 检查关键字段是否存在
-    if (!data.playerSnapshots) {
-      console.warn("游戏状态数据中缺少 playerSnapshots 字段");
-    }
-    if (!data.availableGems) {
-      console.warn("游戏状态数据中缺少 availableGems 字段");
-    }
-    if (!data.visibleLevel1cardIds) {
-      console.warn("游戏状态数据中缺少 visibleLevel1cardIds 字段");
-    }
-    
-    // 获取卡牌详情的辅助函数
+    // 查找卡牌的辅助函数
     const getCardById = (id: number): Card | null => {
-      const card = cardsData.find(c => c.id === id);
-      if (!card) return null;
+      if (!id) return null;
       
-      // 转换为前端期望的卡牌格式
+      const card = cardsData.find(c => c.id === id);
+      if (!card) {
+        console.warn(`未找到ID为 ${id} 的卡牌`);
+        return null;
+      }
+      
+      // 为调试添加日志
+      console.log(`找到卡牌ID ${id}:`, card);
+      
+      // 直接使用原始颜色名称，不进行转换
       return {
         uuid: card.id.toString(),
         level: `level${card.tier}`,
-        color: mapColorToFrontend(card.color),
-        points: card.points,
-        cost: transformCost(card.cost)
+        color: mapColorToFrontend(card.color), 
+        points: card.points || 0,
+        cost: transformCost(card.cost) 
       };
     };
     
-    // 获取贵族详情的辅助函数
+    // 查找贵族的辅助函数
     const getNobleById = (id: number): Noble | null => {
-      const noble = noblesData.find(n => n.id === id);
-      if (!noble) return null;
+      if (!id) return null;
       
-      // 转换为前端期望的贵族格式
+      const noble = noblesData.find(n => n.id === id);
+      if (!noble) {
+        console.warn(`未找到ID为 ${id} 的贵族`);
+        return null;
+      }
+      
+      // 直接使用原始数据
       return {
         uuid: noble.id.toString(),
-        points: noble.influence,
-        requirement: transformCost(noble.cost)
+        points: noble.influence || 3,
+        requirement: transformCost(noble.cost || {}) // 直接使用原始成本对象
       };
     };
     
-    // 颜色映射函数
-    const mapColorToFrontend = (color: string): string => {
-      const colorMap: Record<string, string> = {
-        'BLACK': 'u',
-        'BLUE': 'b',
-        'GREEN': 'g',
-        'RED': 'r',
-        'WHITE': 'w',
-        'GOLD': '*'
-      };
-      return colorMap[color] || color;
-    };
+
     
-    // 宝石花费转换函数
+    // 转换花费到前端格式
     const transformCost = (cost: Record<string, number> | undefined): Record<string, number> => {
       if (!cost) return {};
       
       const result: Record<string, number> = {};
-      // 将后端的 GemColor 枚举映射到前端的颜色代码
       Object.entries(cost).forEach(([color, count]) => {
-        const frontendColor = mapColorToFrontend(color);
-        result[frontendColor] = count;
+        if (count && count > 0) {
+          // 确保这里返回的是不带引号的颜色代码
+          const frontendColor = mapColorToFrontend(color);
+          result[frontendColor] = count;
+        }
       });
       
       return result;
     };
     
-    // 转换宝石数据
+    // 转换宝石到前端格式
     const transformGems = (gems: Record<string, number> | undefined): Record<string, number> => {
       if (!gems) return {};
-      
       const result: Record<string, number> = {};
       Object.entries(gems).forEach(([color, count]) => {
         const frontendColor = mapColorToFrontend(color);
         result[frontendColor] = count;
       });
-      
       return result;
     };
     
     // 构建玩家数据
-    const players = (data.playerSnapshots || []).map((player: any) => {
-      // 获取玩家拥有的卡牌
-      // 注意：后端目前没有直接提供玩家拥有的卡牌，这部分可能需要补充
+    const players = (data.playerSnapshots || []).map((player: PlayerSnapshot, index: number) => {
+
+      let playerName = player.name; // 首先尝试使用PlayerSnapshot中的name
+  
+      if (!playerName) {
+        // 如果没有名称但有userId，尝试从localStorage获取
+        if (player.userId !== undefined) {
+          try {
+            const userMap = JSON.parse(localStorage.getItem('users') || '{}');
+            if (userMap[player.userId] && userMap[player.userId].name) {
+              playerName = userMap[player.userId].name;
+            }
+          } catch (e) {
+            console.error("获取用户名称失败:", e);
+          }
+        }
+        
+        // 如果仍然没有名称，使用默认名称
+        if (!playerName) {
+          playerName = `Player ${index + 1}`;
+        }
+      }      
+      // 初始化各个级别的空卡牌集合
       const playerCards: {[level: string]: Card[]} = {
         level1: [],
         level2: [],
@@ -358,8 +599,8 @@ export default function GamePage() {
       
       return {
         id: player.userId,
-        uuid: player.userId.toString(),
-        name: player.name || `Player${player.userId}`,
+        uuid: String(player.userId),
+        name: playerName,
         score: player.victoryPoints || 0,
         cards: playerCards,
         gems: transformGems(player.gems || {}),
@@ -368,18 +609,33 @@ export default function GamePage() {
       };
     });
     
-    // 构建卡牌数据
+    // 按级别构建卡牌数据，确保没有空值
     const cards: {[level: string]: Card[]} = {
-      level1: (data.visibleLevel1cardIds || [])
-        .map((id: number) => getCardById(id))
-        .filter(Boolean) as Card[],
-      level2: (data.visibleLevel2cardIds || [])
-        .map((id: number) => getCardById(id))
-        .filter(Boolean) as Card[],
-      level3: (data.visibleLevel3cardIds || [])
-        .map((id: number) => getCardById(id))
-        .filter(Boolean) as Card[]
+      level1: [],
+      level2: [],
+      level3: []
     };
+    
+    // 处理level 1卡牌
+    if (data.visibleLevel1cardIds && Array.isArray(data.visibleLevel1cardIds)) {
+      cards.level1 = data.visibleLevel1cardIds
+        .map((id: number) => getCardById(id))
+        .filter(Boolean) as Card[];
+    }
+    
+    // 处理level 2卡牌
+    if (data.visibleLevel2cardIds && Array.isArray(data.visibleLevel2cardIds)) {
+      cards.level2 = data.visibleLevel2cardIds
+        .map((id: number) => getCardById(id))
+        .filter(Boolean) as Card[];
+    }
+    
+    // 处理level 3卡牌
+    if (data.visibleLevel3cardIds && Array.isArray(data.visibleLevel3cardIds)) {
+      cards.level3 = data.visibleLevel3cardIds
+        .map((id: number) => getCardById(id))
+        .filter(Boolean) as Card[];
+    }
     
     // 构建贵族数据
     const nobles = (data.visibleNobleIds || [])
@@ -392,9 +648,9 @@ export default function GamePage() {
       cards,
       nobles,
       decks: {
-        level1: data.visibleLevel1cardIds?.length || 0,
-        level2: data.visibleLevel2cardIds?.length || 0,
-        level3: data.visibleLevel3cardIds?.length || 0
+        level1: 40 - (cards.level1.length || 0),
+        level2: 30 - (cards.level2.length || 0),
+        level3: 20 - (cards.level3.length || 0)
       },
       turn: data.currentPlayerIndex || 0,
       log: [],
@@ -402,6 +658,13 @@ export default function GamePage() {
     };
     
     console.log("转换后的游戏状态:", result);
+    console.log("各级别卡牌数量:", {
+      level1: result.cards.level1.length,
+      level2: result.cards.level2.length,
+      level3: result.cards.level3.length
+    });
+    
+    checkColorFormat(result, 'gameState');
     return result;
   }
 
@@ -410,7 +673,7 @@ export default function GamePage() {
     if (!gameState) return false;
     
     // 找到当前玩家
-    const currentPlayer = gameState.players.find(p => p.uuid === currentUser.uuid);
+    const currentPlayer = gameState.players.find(p => p.id === currentUser.id);
     if (!currentPlayer) return false;
     
     // 如果不是当前玩家的回合，不允许购买
@@ -464,9 +727,9 @@ export default function GamePage() {
     if (!gameState) return;
     
     // 找到当前玩家
-    const currentPlayer = gameState.players.find(p => p.uuid === currentUser.uuid);
+    const currentPlayer = gameState.players.find(p => p.id === currentUser.id);
     if (!currentPlayer) {
-      console.warn("Cannot find current player data");
+      console.warn("找不到当前玩家数据");
       return;
     }
     
@@ -488,7 +751,7 @@ export default function GamePage() {
     }
     
     if (!targetCard) {
-      console.warn("Card not found:", cardUuid);
+      console.warn("未找到卡牌:", cardUuid);
       return;
     }
     
@@ -496,12 +759,12 @@ export default function GamePage() {
       if (canAffordCard(targetCard)) {
         sendAction("buy", cardUuid);
       } else {
-        alert("You don't have enough gems to buy this card!");
+        alert("您没有足够的宝石购买此卡!");
       }
     } else if (action === "reserve") {
       // 检查是否已经有3张预留卡牌
       if (currentPlayer.reserved.length >= 3) {
-        alert("You already have 3 reserved cards!");
+        alert("您已经有3张预留卡牌了!");
       } else {
         sendAction("reserve", cardUuid);
       }
@@ -509,7 +772,7 @@ export default function GamePage() {
   };
 
   const requestAiHint = () => {
-    if (!isPlayerTurn() || hintCount >= 1) return; // 限制使用1次
+    if (!isPlayerTurn() || hintCount >= 3) return; // 限制使用3次
     
     setHintLoading(true);
     setHintMessage("");
@@ -586,6 +849,15 @@ export default function GamePage() {
     return gameState.turn === currentUser.id;
   };
 
+  const colorToChip: Record<string, string> = {
+    r: "red",
+    g: "green",
+    b: "blue",
+    u: "black",
+    w: "white",
+    "*": "gold",
+  };
+  
   return (
     <div id="game-board" style={{
       backgroundImage: "url('/gamesource/tile_background.png')",
@@ -662,7 +934,7 @@ export default function GamePage() {
                   <div className="requirement">
                     {Object.entries(noble.requirement).map(([color, count]) =>
                       count > 0 ? (
-                        <div key={color} className={`requires ${color}`}>
+                        <div key={color} className={`requires ${mapColorToFrontend(color)}`}>
                           {count}
                         </div>
                       ) : null
@@ -732,55 +1004,46 @@ export default function GamePage() {
                 </div>
               
                 {/* 翻开的卡牌 */}
-                <div className={`c_${level} face-up-cards`} style={{
-                  display: "flex",
-                  gap: "15px",
-                  flexWrap: "nowrap"
-                }}>
-                  <div className="cards-inner flex gap-4 flex-nowrap overflow-x-auto">
-                    {gameState?.cards?.[level]?.map((card) => {
-                      const affordable = canAffordCard(card);
-                      return (
+                <div className={`c_${level} face-up-cards`}>
+                  <div className="cards-inner flex-nowrap overflow-x-auto">
+                  {gameState?.cards?.[level]?.map((card) => (
+                    <div
+                      key={card.uuid}
+                      className={`card card-${card.color.toLowerCase()} card-${card.level}`}
+                      onClick={() => handleCardAction("buy", card.uuid)}
+                    >
                         <div
-                          key={card.uuid}
-                          className={`card card-${card.color} card-${card.level} w-[280px] h-[400px] ${affordable ? 'affordable' : 'not-affordable'}`}
-                          onClick={() => handleCardAction("buy", card.uuid)}
+                          className={`reserve ${isPlayerTurn() ? 'active' : 'inactive'}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isPlayerTurn()) {
+                              handleCardAction("reserve", card.uuid);
+                            }
+                          }}
                         >
-                          <div
-                            className={`reserve ${isPlayerTurn() ? 'active' : 'inactive'}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (isPlayerTurn()) {
-                                handleCardAction("reserve", card.uuid);
-                              } else {
-                                alert("It's not your turn!");
-                              }
-                            }}
-                          >
-                            <img
-                              className="floppy"
-                              src="/gamesource/game_page/floppy.png"
-                              alt="reserve"
-                            />
-                          </div>
-                          <div className={`overlay ${affordable ? 'affordable' : 'not-affordable'}`}></div>
-                          <div className="underlay"></div>
-                          <div className="header">
-                            <div className={`color ${card.color}gem`}></div>
-                            <div className="points">{card.points > 0 ? card.points : ""}</div>
-                          </div>
-                          <div className="costs">
-                            {Object.entries(card.cost).map(([color, count]) =>
-                              count > 0 ? (
-                                <div key={color} className={`cost ${color}`}>
-                                  {count}
-                                </div>
-                              ) : null
-                            )}
-                          </div>
+                          <img
+                            className="floppy"
+                            src="/gamesource/game_page/floppy.png"
+                            alt="reserve"
+                          />
                         </div>
-                      );
-                    })}
+                        <div className={`overlay ${canAffordCard(card) ? 'affordable' : 'not-affordable'}`}></div>
+                        <div className="underlay"></div>
+                        <div className="header">
+                          <div className={`color ${card.color.toLowerCase()}gem`}></div>
+                          <div className="points">{card.points > 0 ? card.points : ""}</div>
+                        </div>
+                        <div className="costs">
+                          {Object.entries(card.cost).map(([costColor, count]) =>
+                            count > 0 ? (
+                              <div key={costColor} className={`cost ${mapColorToFrontend(costColor)}`}>
+                                {count}
+                              </div>
+                            ) : null
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>            
@@ -797,7 +1060,24 @@ export default function GamePage() {
           }}>
             {gameState?.gems &&
               Object.entries(gameState.gems).map(([color, count]) => {
-                const chipClass = color === "*" ? "schip" : `${color}chip`;
+                const lowerColor = color.toLowerCase(); 
+                let chipClass = `${mapColorToFrontend(color)}chip`;
+                if (lowerColor === "gold") {
+                  chipClass = "schip";
+                } else if (lowerColor === "black") {
+                  chipClass = "uchip";
+                } else if (lowerColor === "blue") {
+                  chipClass = "bchip";
+                } else if (lowerColor === "red") {
+                  chipClass = "rchip";
+                } else if (lowerColor === "green") {
+                  chipClass = "gchip";
+                } else if (lowerColor === "white") {
+                  chipClass = "wchip";
+                } else {
+                  chipClass = `${lowerColor}chip`; // fallback
+                }
+              
                 return (
                   <div
                     key={color}
@@ -954,69 +1234,48 @@ export default function GamePage() {
                   </div>
   
                   {/* Reserved Cards */}
-                  <div className="reserveCards" style={{
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: "5px"
-                  }}>
+                  <div className="reserveCards">
                     {[0, 1, 2].map((i) => {
                       const card = player.reserved[i];
-                      const isCurrentPlayer = player.uuid === currentUser.uuid;
-                      const affordable = card && isCurrentPlayer ? canAffordCard(card) : false;
                       
-                      return card ? (
-                        <div 
-                          key={card.uuid} 
-                          className={`card card-sm card-${card.color} ${affordable ? 'affordable' : 'not-affordable'}`}
-                          onClick={() => {
-                            if (isCurrentPlayer && isPlayerTurn()) {
-                              handleCardAction("buy", card.uuid);
-                            }
-                          }}
-                          style={{ 
-                            width: "32%", 
-                            aspectRatio: "0.7", // 固定宽高比 (7:10是标准纸牌比例)
-                            position: "relative",
-                            overflow: "hidden"
-                          }}
-                        >
-                          <div className="points">{card.points}</div>
-                          <div className={`overlay ${affordable ? 'affordable' : 'not-affordable'}`}></div>
-                          <div className="costs" style={{ 
-                            position: "absolute",
-                            bottom: "5px",
-                            left: "5px",
-                            right: "5px"
-                          }}>
-                            {Object.entries(card.cost).map(([color, count]) =>
-                              count > 0 ? (
-                                <div key={color} className={`cost ${color}`} style={{ 
-                                  width: "16px", 
-                                  height: "16px", 
-                                  fontSize: "0.9em",
-                                  fontWeight: "bold",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  margin: "1px",
-                                  borderRadius: "50%"
-                                }}>
-                                  {count}
-                                </div>
-                              ) : null
-                            )}
+                      if (card) {
+                        return (
+                          <div 
+                            key={card.uuid} 
+                            className={`card card-${card.color} ${card.level}`}
+                            onClick={() => {
+                              if (player.id === currentUser.id && isPlayerTurn()) {
+                                handleCardAction("buy", card.uuid);
+                              }
+                            }}
+                          >
+                            <div className="points">{card.points}</div>
+                            <div className="overlay"></div>
+                            <div className="costs">
+                              {Object.entries(card.cost).map(([color, count]) =>
+                                count > 0 ? (
+                                  <div key={color} className={`cost ${color}`}>
+                                    {count}
+                                  </div>
+                                ) : null
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div key={i} style={{ 
-                          width: "32%",
-                          aspectRatio: "0.7", 
-                          border: "1px dashed rgba(255,255,255,0.3)",
-                          borderRadius: "4px",
-                          backgroundColor: "rgba(0,0,0,0.1)"
-                        }} />
-                      );
+                        );
+                      } else {
+                        return (
+                          <div 
+                            key={`reserved-empty-${i}`}
+                            style={{ 
+                              width: "32%",
+                              aspectRatio: "0.7", 
+                              border: "1px dashed rgba(255,255,255,0.3)",
+                              borderRadius: "4px",
+                              backgroundColor: "rgba(0,0,0,0.1)"
+                            }} 
+                          />
+                        );
+                      }
                     })}
                   </div>
                 </div>

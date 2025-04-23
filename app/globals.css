@@ -805,6 +805,14 @@ body {
     background-image: -webkit-radial-gradient(20px 20px, circle cover, darkred, orangered);
     background-image: radial-gradient(20px 20px 45deg, circle cover, darkred 0%, orangered 100%, firebrick 95%);
   }
+
+.cost.r { background-color: #f00; }
+.cost.g { background-color: #0f0; }
+.cost.b { background-color: #00f; }
+.cost.u { background-color: #000; }
+.cost.w { background-color: #fff; color: #000; }
+.cost.x { background-color: #ffd700; } /* gold */
+
   
   .gem {
     margin-top: 2%;
@@ -1119,9 +1127,18 @@ body {
     width: 100%;
   }
 
+  .requires.r { background-color: #f00; }
+  .requires.g { background-color: #0f0; }
+  .requires.b { background-color: #00f; }
+  .requires.u { background-color: #000; }
+  .requires.w { background-color: #fff; color: #000; }
+  .requires.x { background-color: #ffd700; } /* gold */
+
 
   @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
   }
+
+  
