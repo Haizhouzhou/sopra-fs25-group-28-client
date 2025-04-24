@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from 'next/navigation';
 import { useWebSocket, WebSocketMessage } from "@/hooks/useWebSocket"; 
 import { useGameState } from '@/hooks/useGameStateContext';
@@ -45,6 +45,8 @@ interface GameState {
   turn: number;
   log: string[];
   winner: number | null;
+  roomName: string;
+  currentPlayerId: number;
 }
 
 // Chat Message
@@ -110,7 +112,7 @@ export default function GamePage() {
   const [showChat, setShowChat] = useState(false);
   const [chatNotify, setChatNotify] = useState(false);
 
-  const [seconds, setSeconds] = useState(30);
+  const [seconds, setSeconds] = useState(300);
   const [isTimeUp, setIsTimeUp] = useState(false);
 
   const stableGameId = useRef(params.id as string).current;
@@ -148,11 +150,12 @@ export default function GamePage() {
   const [hintCount, setHintCount] = useState(0); // 可以限制每场游戏使用次数
 
   const [roomName, setRoomName] = useState("Test name");
+  const [userMap, setUserMap] = useState<Record<string | number, { name: string }>>({});
 
   const currentUser =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("currentUser") || "{}")
-      : {};
+  typeof window !== "undefined"
+    ? JSON.parse(localStorage.getItem("currentUser") || "{}")
+    : {};
 
   const hasJoinedRef = useRef(false);
 
@@ -193,142 +196,54 @@ export default function GamePage() {
 
     switch (msg.type) {
       case "GAME_STATE":
-        console.log("收到GAME_STATE消息:", msg);
-        
-        if (typeof msg.content === 'string') {
-          try {
-            msg.content = JSON.parse(msg.content);
-            console.log("解析后的消息内容:", msg.content);
-          } catch (e) {
-            console.error("解析 JSON 失败:", e);
-          }
-        }
-        
-        if (!msg.content) {
-          console.warn("收到空的游戏状态内容");
-          return;
-        }
-        
+        console.log("游戏状态原始数据:", msg.content);
+        console.log("当前玩家索引:", msg.content.currentPlayerIndex);
+        console.log("玩家顺序:", msg.content.playerOrder);
+        console.log("计算得到的当前玩家ID:", msg.content.playerOrder?.[msg.content.currentPlayerIndex]);        
+        // 处理游戏状态更新
         if (cardsData.length > 0 && noblesData.length > 0) {
-            console.log("游戏ID:", msg.content.gameId);
-            console.log("可见卡牌:", 
-              msg.content.visibleLevel1cardIds?.length,
-              msg.content.visibleLevel2cardIds?.length,
-              msg.content.visibleLevel3cardIds?.length
-            );
-            
-            try {
-              const gameStateData = transformGameState(msg.content, cardsData, noblesData);
-              
-              if (gameStateData) {
-                console.log("转换后的游戏卡牌数量:", 
-                  gameStateData.cards.level1.length,
-                  gameStateData.cards.level2.length,
-                  gameStateData.cards.level3.length
-                );
-                setGameState(gameStateData);
-              } else {
-                console.warn("游戏状态转换结果为null");
-              }
-            } catch (error) {
-              console.error("转换游戏状态失败:", error);
+          try {
+            console.log("数据已就绪，处理游戏状态");
+            const gameStateData = transformGameState(msg.content, cardsData, noblesData, userMap);
+            if (gameStateData) {
+              console.log("设置新游戏状态:", gameStateData);
+              setGameState(gameStateData);
+              setPendingGameState(null); // 清除缓存
             }
-          } else {
-            console.warn("卡牌或贵族数据尚未加载完成");
-            setPendingGameState(msg.content);
+          } catch (err) {
+            console.error("转换游戏状态失败:", err);
+            setPendingGameState(msg.content); // 出错时保留缓存
           }
+        } else {
+          console.log("🕓 数据未就绪，缓存GAME_STATE");
+          setPendingGameState(msg.content);
+        }
         break;
+
+      
         
         case "ROOM_STATE":
           console.log("收到ROOM_STATE消息:", msg);
-          
-          // 尝试获取房间名称
-          if (typeof msg.content === 'object' && msg.content) {
-            // ✅ 设置房间名称
-            if (msg.content.roomName) {
-              console.log("从ROOM_STATE获取到房间名称:", msg.content.roomName);
-              setRoomName(msg.content.roomName);
+
+          const roomContent = msg.content;
+          if (roomContent) {
+            // ✅ 更新房间名
+            if (roomContent.roomName || roomContent.name) {
+              setRoomName(roomContent.roomName || roomContent.name);
             }
-        
-            // ✅ 设置玩家信息
-            if (msg.content.players && Array.isArray(msg.content.players)) {
-              console.log("房间中的玩家列表:", msg.content.players);
-        
-              const userMap: Record<string | number, { name: string }> = {};
-              msg.content.players.forEach((player: Player) => {
-                if (player && player.userId !== undefined && player.name) {
+
+            // ✅ 保存玩家名称映射
+            if (Array.isArray(roomContent.players)) {
+              const userMap: Record<string, { name: string }> = {};
+              roomContent.players.forEach((player: PlayerSnapshot) => {
+                if (player?.userId && player?.name) {
                   userMap[player.userId] = { name: player.name };
-                  console.log(`保存玩家信息: ID ${player.userId}, 名称 ${player.name}`);
                 }
               });
-        
-              if (Object.keys(userMap).length > 0) {
-                try {
-                  const existingUsers = JSON.parse(localStorage.getItem('users') || '{}');
-                  const updatedUsers = { ...existingUsers, ...userMap };
-                  localStorage.setItem('users', JSON.stringify(updatedUsers));
-                  console.log("已更新localStorage中的用户信息:", updatedUsers);
-                } catch (e) {
-                  console.error("保存用户信息到localStorage失败:", e);
-                }
-              }
+              setUserMap(userMap);
             }
           }
           break;
-        
-      
-      case "GAME_STATE":
-        console.log("收到GAME_STATE消息:", msg);
-        
-        // 如果收到游戏状态且包含玩家数据
-        if (typeof msg.content === 'object' && msg.content && msg.content.playerSnapshots) {
-          const playerSnapshots = msg.content.playerSnapshots;
-          console.log("游戏中的玩家数据:", playerSnapshots);
-          
-          // 从localStorage获取玩家名称信息
-          try {
-            const userMap = JSON.parse(localStorage.getItem('users') || '{}');
-            console.log("从localStorage获取的用户信息:", userMap);
-            
-            let needToUpdateBackend = false;
-            
-            // 为每个playerSnapshot添加名称(如果可能)
-            playerSnapshots.forEach((player: PlayerSnapshot) => {
-              // 确保player和userId存在
-              if (player && player.userId !== undefined) {
-                // 如果player没有名称但userMap中有
-                if (!player.name && userMap[player.userId] && userMap[player.userId].name) {
-                  console.log(`为玩家ID ${player.userId} 添加名称: ${userMap[player.userId].name}`);
-                  player.name = userMap[player.userId].name;
-                  needToUpdateBackend = true;
-                }
-              }
-            });
-            
-            if (needToUpdateBackend) {
-              console.log("已为玩家添加名称信息，可能需要更新后端");
-            }
-            
-            // 继续处理游戏状态...
-            if (cardsData.length > 0 && noblesData.length > 0) {
-              try {
-                const gameStateData = transformGameState(msg.content, cardsData, noblesData);
-                if (gameStateData) {
-                  setGameState(gameStateData);
-                }
-              } catch (error) {
-                console.error("转换游戏状态失败:", error);
-              }
-            } else {
-              console.warn("卡牌或贵族数据尚未加载完成");
-              setPendingGameState(msg.content);
-            }
-            
-          } catch (e) {
-            console.error("从localStorage获取用户信息失败:", e);
-          }
-        }
-        break;
         
       case "CHAT_MESSAGE":
         // 处理聊天消息
@@ -433,20 +348,6 @@ function checkColorFormat(obj: any, path: string = 'root') {
       console.log("贵族数据加载完成，共", nobles.length, "个贵族");
       setCardsData(cards);
       setNoblesData(nobles);
-      
-      // 处理任何待处理的游戏状态
-      if (pendingGameState) {
-        try {
-          console.log("处理待处理的游戏状态:", pendingGameState);
-          const gameStateData = transformGameState(pendingGameState, cards, nobles);
-          if (gameStateData) {
-            setGameState(gameStateData);
-            setPendingGameState(null);
-          }
-        } catch (error) {
-          console.error("处理待处理游戏状态时出错:", error);
-        }
-      }
     })
     .catch(error => {
       console.error("加载游戏数据失败:", error);
@@ -473,7 +374,7 @@ function checkColorFormat(obj: any, path: string = 'root') {
     if (lastGameState && cardsData.length > 0 && noblesData.length > 0) {
       console.log("从全局状态加载游戏数据:", lastGameState);
       try {
-        const gameStateData = transformGameState(lastGameState, cardsData, noblesData);
+        const gameStateData = transformGameState(lastGameState, cardsData, noblesData, userMap);
         if (gameStateData) {
           setGameState(gameStateData);
         }
@@ -483,15 +384,45 @@ function checkColorFormat(obj: any, path: string = 'root') {
     }
   }, [lastGameState, cardsData, noblesData]);
 
+  
+// 添加这个useEffect专门处理pendingGameState
+useEffect(() => {
+  if (pendingGameState && cardsData.length > 0 && noblesData.length > 0) {
+    console.log("数据已就绪，处理缓存的游戏状态");
+    try {
+      const gameStateData = transformGameState(
+        pendingGameState, 
+        cardsData, 
+        noblesData, 
+        userMap
+      );
+      if (gameStateData) {
+        console.log("从缓存设置游戏状态:", gameStateData);
+        setGameState(gameStateData);
+        setPendingGameState(null);
+      }
+    } catch (error) {
+      console.error("处理缓存游戏状态失败:", error);
+    }
+  }
+}, [pendingGameState, cardsData, noblesData, userMap]);
+  
+  
+
   // 转换游戏状态函数 - 改进版本
-  function transformGameState(data: any, cardsData: any[], noblesData: any[]): GameState | null {
+  function transformGameState(data: any, cardsData: any[], noblesData: any[], userMap: Record<string | number, { name: string }>): GameState | null {    console.log("正在转换游戏状态:", data);
     console.log("正在转换游戏状态:", data);
-    
+    console.log("当前玩家索引:", data.currentPlayerIndex);
+    console.log("玩家顺序:", data.playerOrder);
+    console.log("计算的当前玩家ID:", data.playerOrder?.[data.currentPlayerIndex]);
+
     if (!data) {
       console.warn("收到空的游戏状态数据");
       return null;
     }
-    
+
+
+      
     // 查找卡牌的辅助函数
     const getCardById = (id: number): Card | null => {
       if (!id) return null;
@@ -503,7 +434,7 @@ function checkColorFormat(obj: any, path: string = 'root') {
       }
       
       // 为调试添加日志
-      console.log(`找到卡牌ID ${id}:`, card);
+      // console.log(`找到卡牌ID ${id}:`, card);
       
       // 直接使用原始颜色名称，不进行转换
       return {
@@ -515,6 +446,18 @@ function checkColorFormat(obj: any, path: string = 'root') {
       };
     };
     
+    const transformCost = (cost: Record<string, number> | undefined): Record<string, number> => {
+      if (!cost) return {};
+      const result: Record<string, number> = {};
+      Object.entries(cost).forEach(([color, count]) => {
+        if (count && count > 0) {
+          const frontendColor = mapColorToFrontend(color);
+          result[frontendColor] = count;
+        }
+      });
+      return result;
+    };
+
     // 查找贵族的辅助函数
     const getNobleById = (id: number): Noble | null => {
       if (!id) return null;
@@ -528,27 +471,9 @@ function checkColorFormat(obj: any, path: string = 'root') {
       // 直接使用原始数据
       return {
         uuid: noble.id.toString(),
-        points: noble.influence || 3,
+        points: noble.influence ?? 3,
         requirement: transformCost(noble.cost || {}) // 直接使用原始成本对象
       };
-    };
-    
-
-    
-    // 转换花费到前端格式
-    const transformCost = (cost: Record<string, number> | undefined): Record<string, number> => {
-      if (!cost) return {};
-      
-      const result: Record<string, number> = {};
-      Object.entries(cost).forEach(([color, count]) => {
-        if (count && count > 0) {
-          // 确保这里返回的是不带引号的颜色代码
-          const frontendColor = mapColorToFrontend(color);
-          result[frontendColor] = count;
-        }
-      });
-      
-      return result;
     };
     
     // 转换宝石到前端格式
@@ -565,26 +490,26 @@ function checkColorFormat(obj: any, path: string = 'root') {
     // 构建玩家数据
     const players = (data.playerSnapshots || []).map((player: PlayerSnapshot, index: number) => {
 
-      let playerName = player.name; // 首先尝试使用PlayerSnapshot中的name
-  
+      let playerName = player.name;
+      const isDefaultName = typeof playerName === 'string' && playerName.startsWith("Player ");
+
+      const userIdKey = String(player.userId); // 强制转字符串
+      const mappedName = userMap[userIdKey]?.name;
+
+
+       // ✅ 使用提前读取的 userMap
+       if (!playerName || isDefaultName) {
+        playerName = mappedName || `Player ${index + 1}`;
+      }
+
       if (!playerName) {
-        // 如果没有名称但有userId，尝试从localStorage获取
-        if (player.userId !== undefined) {
-          try {
-            const userMap = JSON.parse(localStorage.getItem('users') || '{}');
-            if (userMap[player.userId] && userMap[player.userId].name) {
-              playerName = userMap[player.userId].name;
-            }
-          } catch (e) {
-            console.error("获取用户名称失败:", e);
-          }
-        }
-        
-        // 如果仍然没有名称，使用默认名称
-        if (!playerName) {
-          playerName = `Player ${index + 1}`;
-        }
-      }      
+        playerName = `Player ${index + 1}`;
+      }
+
+      // 如果仍然没有，就用默认
+      if (!playerName) {
+        playerName = `Player ${index + 1}`;
+      }
       // 初始化各个级别的空卡牌集合
       const playerCards: {[level: string]: Card[]} = {
         level1: [],
@@ -654,17 +579,22 @@ function checkColorFormat(obj: any, path: string = 'root') {
       },
       turn: data.currentPlayerIndex || 0,
       log: [],
-      winner: null
+      winner: null,
+      roomName: data.roomName || "Unknown Room",
+      currentPlayerId: Number(data.playerOrder?.[data.currentPlayerIndex]) || 0,
     };
     
-    console.log("转换后的游戏状态:", result);
-    console.log("各级别卡牌数量:", {
-      level1: result.cards.level1.length,
-      level2: result.cards.level2.length,
-      level3: result.cards.level3.length
-    });
+    // console.log("转换后的游戏状态:", result);
+    // console.log("各级别卡牌数量:", {
+    //   level1: result.cards.level1.length,
+    //   level2: result.cards.level2.length,
+    //   level3: result.cards.level3.length
+    // });
     
-    checkColorFormat(result, 'gameState');
+    console.log("转换后的结果 - turn:", result.turn);
+    console.log("转换后的结果 - currentPlayerId:", result.currentPlayerId);
+
+    // checkColorFormat(result, 'gameState');
     return result;
   }
 
@@ -677,7 +607,7 @@ function checkColorFormat(obj: any, path: string = 'root') {
     if (!currentPlayer) return false;
     
     // 如果不是当前玩家的回合，不允许购买
-    if (gameState.turn !== currentPlayer.id) {
+    if (gameState.currentPlayerId !== currentUser.id) {
       return false;
     }
 
@@ -843,11 +773,14 @@ function checkColorFormat(obj: any, path: string = 'root') {
     setNewChat("");
   };
 
-  // 检查是否是当前玩家的回合
-  const isPlayerTurn = (): boolean => {
+  const isPlayerTurn = useCallback((): boolean => {
     if (!gameState) return false;
-    return gameState.turn === currentUser.id;
-  };
+    
+    // 避免不必要的多次调用
+    const result = gameState.currentPlayerId === currentUser.id;
+    return result;
+  }, [gameState, currentUser.id]);
+
 
   const colorToChip: Record<string, string> = {
     r: "red",
@@ -855,7 +788,7 @@ function checkColorFormat(obj: any, path: string = 'root') {
     b: "blue",
     u: "black",
     w: "white",
-    "*": "gold",
+    x: "gold",
   };
   
   return (
@@ -898,7 +831,7 @@ function checkColorFormat(obj: any, path: string = 'root') {
           color: "#FFD700", // Gold color
           textShadow: "2px 2px 4px rgba(0,0,0,0.5)"
         }}>
-          Room: {roomName}
+          Room: {gameState?.roomName || roomName}
         </div>
       </div>
 
@@ -1059,24 +992,27 @@ function checkColorFormat(obj: any, path: string = 'root') {
             marginTop: "5px" 
           }}>
             {gameState?.gems &&
-              Object.entries(gameState.gems).map(([color, count]) => {
-                const lowerColor = color.toLowerCase(); 
-                let chipClass = `${mapColorToFrontend(color)}chip`;
-                if (lowerColor === "gold") {
-                  chipClass = "schip";
-                } else if (lowerColor === "black") {
-                  chipClass = "uchip";
-                } else if (lowerColor === "blue") {
-                  chipClass = "bchip";
-                } else if (lowerColor === "red") {
-                  chipClass = "rchip";
-                } else if (lowerColor === "green") {
-                  chipClass = "gchip";
-                } else if (lowerColor === "white") {
-                  chipClass = "wchip";
-                } else {
-                  chipClass = `${lowerColor}chip`; // fallback
-                }
+              Object.entries(gameState.gems)
+                .sort(([colorA], [colorB]) => {
+                  return colorA === 'x' ? 1 : colorB === 'x' ? -1 : 0;
+                })
+                .map(([color, count]) => {
+                  const lowerColor = color.toLowerCase(); 
+                  let chipClass = `${mapColorToFrontend(color)}chip`;
+
+                  if (lowerColor === "x" || color === "x") {
+                    chipClass = "xchip";
+                  } else if (lowerColor === "u") {
+                    chipClass = "uchip";
+                  } else if (lowerColor === "b") {
+                    chipClass = "bchip";
+                  } else if (lowerColor === "r") {
+                    chipClass = "rchip";
+                  } else if (lowerColor === "g") {
+                    chipClass = "gchip";
+                  } else if (lowerColor === "w") {
+                    chipClass = "wchip";
+                  }
               
                 return (
                   <div
@@ -1173,7 +1109,7 @@ function checkColorFormat(obj: any, path: string = 'root') {
                   }}>
                     <span>{player.name}</span>
                     <span>Score: {player.score}</span>
-                    {gameState.turn === player.id && <span className="turnIndicator">←</span>}
+                    {gameState.currentPlayerId === player.id && <span className="turnIndicator">←</span>}
                   </div>
   
                   {/* Nobles */}
@@ -1199,38 +1135,42 @@ function checkColorFormat(obj: any, path: string = 'root') {
                     marginBottom: "10px",
                     width: "100%"
                   }}>
-                    {Object.entries(player.gems).map(([color, count]) => {
-                      const normalizedColor = color.toLowerCase();
-                      
-                      const cardCount = Object.values(player.cards || {})
-                        .flat()
-                        .filter((card) => card.color.toLowerCase() === normalizedColor).length;
-  
-                      // 确定颜色
-                      const chipColor = color === 'r' ? 'red' : 
-                                        color === 'g' ? 'green' : 
-                                        color === 'b' ? 'blue' : 
-                                        color === 'u' ? 'black' : 
-                                        color === 'w' ? 'white' : 
-                                        color === '*' ? 'gold' : 'black';
-  
-                      return (
-                        <div key={color} className="statSet" style={{ 
-                          margin: "0",
-                          minWidth: "auto", // 移除最小宽度
-                          textAlign: "center"
-                        }}>
-                          <div className="stat" style={{ 
-                            fontSize: "0.8em", 
-                            padding: "2px 4px"
-                          }}>{count}/{cardCount}</div>
-                          <div className={`chip chip-${chipColor}`} style={{
-                            width: "30px", // 缩小宝石图标
-                            height: "30px"
-                          }} />
-                        </div>
-                      );
-                    })}
+                    {Object.entries(player.gems)
+                      .sort(([colorA], [colorB]) => {
+                        return colorA === "x" ? 1 : colorB === "x" ? -1 : 0;
+                      })
+                      .map(([color, count]) => {
+                        const normalizedColor = color.toLowerCase();
+
+                        const cardCount = Object.values(player.cards || {})
+                          .flat()
+                          .filter((card) => card.color.toLowerCase() === normalizedColor).length;
+
+                        const chipColor = color === 'r' ? 'red' :
+                                          color === 'g' ? 'green' :
+                                          color === 'b' ? 'blue' :
+                                          color === 'u' ? 'black' :
+                                          color === 'w' ? 'white' :
+                                          color === 'x' ? 'gold' : 'black';
+
+                        return (
+                          <div key={color} className="statSet" style={{ 
+                            margin: "0",
+                            minWidth: "auto", 
+                            textAlign: "center"
+                          }}>
+                            <div className="stat" style={{ 
+                              fontSize: "0.8em", 
+                              padding: "2px 4px"
+                            }}>{count}/{cardCount}</div>
+                            <div className={`chip chip-${chipColor}`} style={{
+                              width: "30px",
+                              height: "30px"
+                            }} />
+                          </div>
+                        );
+                      })}
+
                   </div>
   
                   {/* Reserved Cards */}

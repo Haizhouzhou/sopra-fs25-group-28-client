@@ -870,8 +870,20 @@ body {
       0 0 12px rgba(255, 215, 0, 0.7),
       0 0 18px rgba(255, 215, 0, 0.6);
   }
+
+  .xchip:hover {
+    box-shadow:
+      0 0 6px rgba(255, 215, 0, 0.8),
+      0 0 12px rgba(255, 215, 0, 0.7),
+      0 0 18px rgba(255, 215, 0, 0.6);
+  }
   
-  
+  .chip-gold:hover {
+    box-shadow:
+      0 0 6px rgba(255, 215, 0, 0.8),
+      0 0 12px rgba(255, 215, 0, 0.7),
+      0 0 18px rgba(255, 215, 0, 0.6);
+  }
   
   
   #log-box, #chat-box {
@@ -1049,6 +1061,12 @@ body {
     background: url('/gamesource/game_page/chips.jpg') 100% 0;
     background-size: 600% 100%;
   }
+
+  .xchip {
+    background: url('/gamesource/game_page/chips.jpg') 100% 0;
+    background-size: 600% 100%;
+  }
+  
   
   .bubble {
     border-radius: 50%;
