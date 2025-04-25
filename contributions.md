@@ -81,9 +81,14 @@ reason).
 
 ---
 
-## Contributions Week 4 - [Begin Date] to [End Date]
+## Contributions Week 4 - 2025-04-15 to 2025-04-25
 
-_Continue with the same table format as above._
+| **Student**                    | **Date**  | **Link to Commit**                                           | **Description**                                              | **Relevance**                                        |
+| ------------------------------ | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------- |
+| **Zizhou Luo (@Skiingseason)** | 2025.4.17 | [5016498](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/5016498587de07ccf8788c0e125c1b1c9f46535a) | #2, #7, #9 complete user system: user can now edit their profile| user system is fundemental to application, but still needs refinement |
+|                                | 2025.4.23 | [e8bd7db](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/e8bd7db5338aa3a707716a47b4cd5dee83e973d2) | #36 implement interface for generating AI hint | implement external API feature, need to finetune prompt |
+|                                | 2025.4.25 | [53d1bbe](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/53d1bbecf5a6c565b6c7e2ce2c8e3c5e7656acd4) | implement test case for `Game`, `GameRoom`, `GameRoomManager`, `WebsocketServer` and other classes    | imporve code coverage and make sure these component works properly |
+|                                | 2025.4.25 | [c5c5683](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/c5c5683740bcbb362778b34015e9b58e699961b3) | fixed sonarQube code coverage display issue and error of deploying websocket to Google Cloud | code coverage is a importance metrics for assess code quality. And several setting needs to be modified to make websocket work when deploying to google cloud |
 
 ---
 
