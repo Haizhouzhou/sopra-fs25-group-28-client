@@ -22,5 +22,5 @@ export function getApiDomain(): string {
 }
 
 export function getApiWsDomain(): string {
-  return "wss://tactile-anthem-453521-p3.oa.r.appspot.com/websocket"; 
+  return "wss://tactile-anthem-453521-p3.oa.r.appspot.com"; 
 }
