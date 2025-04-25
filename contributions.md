@@ -103,6 +103,8 @@ reason).
 |                                | 2025.4.24 | [880b755](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/880b7551aae606c0e4e08bca2010752c5b72f6f0) | #4, #18, #19, #20, #21, #22, #23, #24 finish game page actions connection with backend | fully implements game logic on frontend |
 |                                | 2025.4.25 | [bcf9918](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/bcf991888974b486bb02d2fefecc0833789dc224) | #25 implement AI advice function, fix bugs | based on previous version, implenment AI hint function into game page(external API function) |
 |                                | 2025.4.25 | [e48e4bd](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/e48e4bdff36ce021759dc4ed81925237d95d2c26) | #21 fix card purchase logic and deploy error | allows using gold gems properly, fixing key game rules |
+| **Haizhou Zhou (@Haizhouzhou)** | 2025.4.25 | [8a2c044](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/8a2c044a69e52bd6fa4e2f6a2876b9a23378a38d) | #15 modify tutorial page players mode tutorial | adjusted tutorial logic and UI for different player modes |
+|                                 | 2025.4.25 | [2e7958b](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/2e7958b1940fd4d84f7fcd2c91d83b29c6f9b529) | #15 Add rule description page | added full rule description display to tutorial section |
 
 ---
 
