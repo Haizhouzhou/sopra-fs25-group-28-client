@@ -10,7 +10,7 @@ export default function TutorialPage() {
 
   const handleStartTutorial = () => setStep(2);
 
-  const handleReadRules = () => router.push("/rules");
+  const handleReadRules = () => router.push("/tutorial/rules");
 
   const handlePlayerSelect = (count: number) => setPlayerCount(count);
 
@@ -92,21 +92,24 @@ export default function TutorialPage() {
             </div>
           )}
 
-          {/* Step 2：选择玩家数 */}
-          {step >= 2 && (
+           {/* Step 2 */}
+           {step >= 2 && (
             <>
-              <h2 style={{ fontSize: "2rem", marginTop: "3rem" }}>How many merchants are playing today?</h2>
+              <h2 style={{ fontSize: "2rem", marginTop: 48 }}>How many merchants are playing today?</h2>
               <p style={{ fontSize: "1.2rem" }}>Select the number of players to set up the game.</p>
-              <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "center", gap: "20px" }}>
+              <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 20 }}>
                 {[2, 3, 4].map((count) => (
                   <button
                     key={count}
+                    onClick={() => handlePlayerSelect(count)}
+                    //disabled={count !== 4} // 禁用 2、3 人按钮
                     style={{
                       ...buttonStyle,
-                      backgroundColor: playerCount === count ? "#FFD700" : "#0F2149",
-                      color: playerCount === count ? "#0F2149" : "#FFD700",
+                      // 被禁用时半透明
+                      //opacity: count !== 4 ? 0.5 : 1,
+                      // 只有 4 人按钮加上 pulse 动画
+                      //animation: count === 4 ? "pulse 1.5s ease-in-out infinite" : undefined,
                     }}
-                    onClick={() => handlePlayerSelect(count)}
                   >
                     {count} Players
                   </button>

@@ -18,69 +18,87 @@ interface Noble {
 }
 
 type TutorialStep =
-  | "PreHighlightGem" | "PreHighlightCard" | "PreHighlightNoble"
-  | "PreHighlightGold" | "PreHighlightPanel" | "DialogTryCollectGems"
-  | "GemCollectDiff" | "EndRoundAfterGemDiff" | "AutoUpdatePlayers"
-  | "DialogGemCollectSame" | "GemCollectSame" | "EndRoundAfterGemSame"
-  | "ModalLearnBuyCard" | "CardBuyActive" | "EndRoundAfterBuy"
-  | "ModalLearnReserve" | "ReserveActive" | "EndRoundAfterReserve"
+  | "PreHighlightGem"
+  | "PreHighlightCard"
+  | "PreHighlightNoble"
+  | "PreHighlightGold"
+  | "PreHighlightPanel"
+  | "DialogTryCollectGems"
+  | "GemCollectDiff"
+  | "EndRoundAfterGemDiff"
+  | "AutoUpdatePlayers"
+  | "DialogGemCollectSame"
+  | "GemCollectSame"
+  | "EndRoundAfterGemSame"
+  | "ModalLearnBuyCard"
+  | "CardBuyActive"
+  | "EndRoundAfterBuy"
+  | "ModalLearnReserve"
+  | "ReserveActive"
+  | "EndRoundAfterReserve"
   | "Completed";
 
 // --- 步骤提示文案 ---
 const stepMessages: Record<TutorialStep, string> = {
-  PreHighlightGem:      "This is the Gem area. Gems are resources you can collect and use for actions.",
-  PreHighlightCard:     "This is the Card area. Development cards give you bonuses and prestige. They are purchased here.",
-  PreHighlightNoble:    "This is the Noble area. Nobles visit you when you have enough bonuses, granting extra prestige.",
-  PreHighlightGold:     "This is the Gold area. Gold tokens are obtained when you reserve a card and act as wild tokens.",
-  PreHighlightPanel:    "This is the Player Panel. It shows your current gems, cards, and reserved cards.",
+  PreHighlightGem: "This is the Gem area. Gems are resources you can collect and use for actions.",
+  PreHighlightCard: "This is the Card area. Development cards give you bonuses and prestige. They are purchased here.",
+  PreHighlightNoble: "This is the Noble area. Nobles visit you when you have enough bonuses, granting extra prestige.",
+  PreHighlightGold: "This is the Gold area. Gold tokens are obtained when you reserve a card and act as wild tokens.",
+  PreHighlightPanel: "This is the Player Panel. It shows your current gems, cards, and reserved cards.",
   DialogTryCollectGems: "Let's try to collect Gems, you can: 1. Collect 3 different color gems 2. Collect 2 same color gems",
-  GemCollectDiff:       "",
+  GemCollectDiff: "",
   EndRoundAfterGemDiff: "End Round. Click OK to finish this round.",
-  AutoUpdatePlayers:    "Waiting for other players...",
+  AutoUpdatePlayers: "Waiting for other players...",
   DialogGemCollectSame: "Click on 2 of the same color (if there are at least 4 left) gem tokens to collect them.",
-  GemCollectSame:       "",
+  GemCollectSame: "",
   EndRoundAfterGemSame: "End Round. Click OK to finish this round.",
-  ModalLearnBuyCard:    "Click on the card to buy development Card.",
-  CardBuyActive:        "",
-  EndRoundAfterBuy:     "End Round. Click OK to finish this round.",
-  ModalLearnReserve:    "Click the floppy icon on the card to reserve it.",
-  ReserveActive:        "",
+  ModalLearnBuyCard: "Click on the card to buy development Card.",
+  CardBuyActive: "",
+  EndRoundAfterBuy: "End Round. Click OK to finish this round.",
+  ModalLearnReserve: "Click the floppy icon on the card to reserve it.",
+  ReserveActive: "",
   EndRoundAfterReserve: "End Round. Click OK to finish this round.",
-  Completed:            "Congratulations! You’ve completed the tutorial.",
+  Completed: "Congratulations! You’ve completed the tutorial.",
 };
 
 // --- 步骤顺序映射 ---
 const nextStep: Partial<Record<TutorialStep, TutorialStep>> = {
-  PreHighlightGem:      "PreHighlightCard",
-  PreHighlightCard:     "PreHighlightNoble",
-  //PreHighlightNoble:    "PreHighlightGold",
-  //PreHighlightGold:     "PreHighlightPanel",
-  PreHighlightNoble:     "PreHighlightPanel",
-  PreHighlightPanel:    "DialogTryCollectGems",
+  PreHighlightGem: "PreHighlightCard",
+  PreHighlightCard: "PreHighlightNoble",
+  PreHighlightNoble: "PreHighlightGold",
+  PreHighlightGold: "PreHighlightPanel",
+  PreHighlightPanel: "DialogTryCollectGems",
   DialogTryCollectGems: "GemCollectDiff",
   EndRoundAfterGemDiff: "AutoUpdatePlayers",
-  AutoUpdatePlayers:    "DialogGemCollectSame",
+  AutoUpdatePlayers: "DialogGemCollectSame",
   DialogGemCollectSame: "GemCollectSame",
   EndRoundAfterGemSame: "ModalLearnBuyCard",
-  ModalLearnBuyCard:    "CardBuyActive",
-  EndRoundAfterBuy:     "ModalLearnReserve",
-  ModalLearnReserve:    "ReserveActive",
+  ModalLearnBuyCard: "CardBuyActive",
+  EndRoundAfterBuy: "ModalLearnReserve",
+  ModalLearnReserve: "ReserveActive",
   EndRoundAfterReserve: "Completed",
 };
 
 // 颜色顺序
-const COLOR_ORDER = ["r","g","b","u","w","x"];
+const COLOR_ORDER = ["r", "g", "b", "u", "w", "x"];
 
 // --- Helper: 根据 shortColor 返回实际 CSS 颜色 ---
 function getGemColor(shortColor: string): string {
   switch (shortColor) {
-    case "r": return "crimson";
-    case "g": return "green";
-    case "b": return "blue";
-    case "u": return "black";
-    case "w": return "white";
-    case "x": return "gold";
-    default:  return "gray";
+    case "r":
+      return "crimson";
+    case "g":
+      return "green";
+    case "b":
+      return "blue";
+    case "u":
+      return "black";
+    case "w":
+      return "white";
+    case "x":
+      return "gold";
+    default:
+      return "gray";
   }
 }
 
@@ -91,32 +109,42 @@ const TutorialModal: React.FC<{
   buttonText?: string;
   overlay?: boolean;
 }> = ({ message, onOk, buttonText = "OK", overlay = true }) => (
-  <div style={{
-    position: "fixed", top: 0, left: 0,
-    width: "100%", height: "100%",
-    backgroundColor: overlay ? "rgba(0,0,0,0.6)" : "transparent",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    zIndex: 1000
-  }}>
-    <div style={{
-      backgroundColor: "white",
-      padding: "20px",
-      borderRadius: "8px",
-      maxWidth: "400px",
-      textAlign: "center"
-    }}>
-      <p style={{ marginBottom: "20px", fontSize: "18px", color: "black" }}>
-        {message}
-      </p>
-      <button onClick={onOk} style={{
-        padding: "10px 20px",
-        fontSize: "16px",
-        backgroundColor: "#ff6a00",
-        color: "white",
-        border: "none",
-        borderRadius: "4px",
-        cursor: "pointer"
-      }}>
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      backgroundColor: overlay ? "rgba(0,0,0,0.6)" : "transparent",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 1000,
+    }}
+  >
+    <div
+      style={{
+        backgroundColor: "white",
+        padding: "20px",
+        borderRadius: "8px",
+        maxWidth: "400px",
+        textAlign: "center",
+      }}
+    >
+      <p style={{ marginBottom: "20px", fontSize: "18px", color: "black" }}>{message}</p>
+      <button
+        onClick={onOk}
+        style={{
+          padding: "10px 20px",
+          fontSize: "16px",
+          backgroundColor: "#ff6a00",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+        }}
+      >
         {buttonText}
       </button>
     </div>
@@ -125,13 +153,13 @@ const TutorialModal: React.FC<{
 
 // --- 判断区域可交互 ---
 function isAreaActive(step: TutorialStep, area: "gem" | "card" | "reserve") {
-  if (area === "gem")    return step === "GemCollectDiff" || step === "GemCollectSame";
-  if (area === "card")   return step === "CardBuyActive";
-  if (area === "reserve")return step === "ReserveActive";
+  if (area === "gem") return step === "GemCollectDiff" || step === "GemCollectSame";
+  if (area === "card") return step === "CardBuyActive";
+  if (area === "reserve") return step === "ReserveActive";
   return false;
 }
 
-// --- 主组件 ---  
+// --- 主组件 ---
 export default function TutorialPage() {
   const [step, setStep] = useState<TutorialStep>("PreHighlightGem");
   const [diffSelected, setDiffSelected] = useState<string[]>([]);
@@ -143,10 +171,11 @@ export default function TutorialPage() {
     gems: availableGems,
     cards: tutorialCards,
     nobles: tutorialNobles,
-    currentPlayerId
+    decks,
+    currentPlayerId,
   } = tutorialGameState;
 
-  const currentPlayer = players.find(p => p.userId === currentPlayerId)!;
+  const currentPlayer = players.find((p) => p.userId === currentPlayerId)!;
   const playerGems = currentPlayer.gems;
   const playerCardsCount = Object.values(currentPlayer.cards)
     .flat()
@@ -154,7 +183,7 @@ export default function TutorialPage() {
       acc[c.color] = (acc[c.color] || 0) + 1;
       return acc;
     }, {});
-  
+
   // 点击 Modal OK
   const handleNext = () => {
     if (step === "Completed") {
@@ -207,8 +236,11 @@ export default function TutorialPage() {
 
   // 判断是否在前置高亮阶段（只影响 Modal overlay）
   const isPreHighlight = [
-    "PreHighlightGem","PreHighlightCard","PreHighlightNoble",
-    "PreHighlightGold","PreHighlightPanel"
+    "PreHighlightGem",
+    "PreHighlightCard",
+    "PreHighlightNoble",
+    "PreHighlightGold",
+    "PreHighlightPanel",
   ].includes(step);
 
   return (
@@ -290,7 +322,7 @@ export default function TutorialPage() {
         {noble.points}
       </div>
 
-      {/* Requirement 左下角 */}
+                  {/* Requirement 左下角 */}
 <div
   className="requirements"
   style={{
@@ -309,9 +341,9 @@ export default function TutorialPage() {
       <div
         key={col}
         style={{
-          width: "18px",
-          height: "24px",
-          
+          width: "24px",
+          height: "18px",
+          borderRadius: "4px", // ✅ 圆角小一点，变成矩形小块
           backgroundColor: getGemColor(col),
           color: col === "w" ? "black" : "white",
           fontSize: "12px",
@@ -325,30 +357,37 @@ export default function TutorialPage() {
     ) : null
   )}
 </div>
-
-    </div>
-  ))}
-</div>
-
+                </div>
+              ))}
+            </div>
 
             {/* Card 区 */}
             <div
               id="level-area"
               style={{
                 padding: "10px",
-                boxShadow: step === "PreHighlightCard" ? "0 0 15px 4px gold" : undefined,
+                boxShadow:
+                  step === "PreHighlightCard" ? "0 0 15px 4px gold" : undefined,
                 borderRadius: step === "PreHighlightCard" ? "6px" : undefined,
               }}
             >
               {(["level1", "level2", "level3"] as const).map((level) => (
-                <div key={level} style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
-                  <div className={`deck ${level}`} />
-
+                <div
+                  key={level}
+                  style={{ display: "flex", gap: "10px", marginBottom: "12px" }}
+                >
+                  {/* 牌堆 */}
+                  <div
+                    className={`deck ${level}`}
+                    data-count={decks[level]}
+                  />
 
                   <div style={{ display: "flex", gap: "8px" }}>
                     {tutorialCards[level].slice(0, 4).map((card) => {
-                      const buyActive = isAreaActive(step, "card") && card.uuid === "I009";
-                      const resActive = isAreaActive(step, "reserve") && card.uuid === "I033";
+                      const buyActive =
+                        isAreaActive(step, "card") && card.uuid === "I009";
+                      const resActive =
+                        isAreaActive(step, "reserve") && card.uuid === "I033";
                       return (
                         <div
                           key={card.uuid}
@@ -357,7 +396,9 @@ export default function TutorialPage() {
                             "card",
                             `card-${card.color}`,
                             `card-${card.level}`,
-                            buyActive || resActive ? "highlight-active highlight-pulse" : "",
+                            buyActive || resActive
+                              ? "highlight-active highlight-pulse"
+                              : "",
                             (isAreaActive(step, "card") && !buyActive) ||
                             (isAreaActive(step, "reserve") && !resActive)
                               ? "disabled"
@@ -386,7 +427,11 @@ export default function TutorialPage() {
                               position: "absolute",
                               top: "4px",
                               right: "4px",
-                              opacity: isAreaActive(step, "reserve") ? (resActive ? 1 : 0.3) : 0,
+                              opacity: isAreaActive(step, "reserve")
+                                ? resActive
+                                  ? 1
+                                  : 0.3
+                                : 0,
                             }}
                           >
                             <img
@@ -398,45 +443,58 @@ export default function TutorialPage() {
                           </div>
                           {/* 点数 */}
                           {card.points > 0 && (
-                            <div className="points" style={{ fontSize: "32px", margin: "6px" }}>
-                              {card.points}
-                            </div>
-                          )}
-                          {/* 花费 cost */}
-                          <div
-                            className="costs"
-                            style={{
-                              display: "flex",
-                              gap: "4px",
-                              flexWrap: "wrap",
-                              justifyContent: "flex-start",
-                              position: "absolute",
-                              bottom: "-80px",
-                              left: "6px",
-                            }}
-                          >
+  <div
+    className="points"
+    style={{
+      position: "absolute",   // 必须绝对定位
+      top: "2px",              // 距离顶部
+      left: "2px",             // 距离左边
+      fontSize: "32px",        // 字体适中，不要太大
+      fontWeight: "bold",
+      color: "white",           // 可以突出一点
+      textShadow: "1px 1px 2px black", // 加阴影提高可读性
+      zIndex: 2,               // 保证盖在最上层
+    }}
+  >
+    {card.points}
+  </div>
+)}
 
-                            {Object.entries(card.cost).map(([col, cnt]) =>
-                              cnt > 0 ? (
-                                <div
-                                  key={col}
-                                  style={{
-                                    width: "20px",
-                                    height: "20px",
-                                    borderRadius: "50%",
-                                    backgroundColor: getGemColor(col),
-                                    color: col === "w" ? "black" : "white",
-                                    fontSize: "12px",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  {cnt}
-                                </div>
-                              ) : null
-                            )}
-                          </div>
+<div
+  className="costs"
+  style={{
+    position: "absolute",
+    bottom: "8px",            // 距离底部8px
+    left: "8px",              // 左对齐
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "4px",
+    alignItems: "flex-end",
+  }}
+>
+  {Object.entries(card.cost).map(([col, cnt]) =>
+    cnt > 0 && (
+      <div
+        key={col}
+        style={{
+          width: "18px",
+          height: "18px",
+          borderRadius: "50%",   // 小圆圈
+          backgroundColor: getGemColor(col),
+          color: col === "w" ? "black" : "white",
+          fontSize: "20px",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {cnt}
+      </div>
+    )
+  )}
+</div>
+
                         </div>
                       );
                     })}
@@ -444,52 +502,55 @@ export default function TutorialPage() {
                 </div>
               ))}
             </div>
-            {/* Gem 区 */}
-          <div
-            id="gem-area"
-            style={{
-              padding: "10px",
-              boxShadow: step === "PreHighlightGem" ? "0 0 15px 4px gold" : undefined,
-              borderRadius: step === "PreHighlightGem" ? "6px" : undefined,
-            }}
-          >
-            {COLOR_ORDER.map((col) => {
-              const hlGold = step === "PreHighlightGold" && col === "x";
-              const activeDiff = step === "GemCollectDiff";
-              const activeSame = step === "GemCollectSame";
-              return (
-                <div
-                  key={col}
-                  onClick={() => {
-                    if (activeDiff) handleGemDiff(col);
-                    if (activeSame) handleGemSame(col);
-                  }}
-                  className={[
-                    "gem",
-                    `${col}chip`,
-                    hlGold ? "highlight-active" : "",
-                    activeDiff || activeSame ? "" : "disabled",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  style={{ cursor: activeDiff || activeSame ? "pointer" : "default" }}
-                >
-                  {/* 数量泡泡 */}
-                  <div className="bubble">{availableGems[col]}</div>
-                  {/* 选中态 */}
-                  {step === "GemCollectDiff" && diffSelected.includes(col) && (
-                    <div className="highlight-selected" />
-                  )}
-                  {step === "GemCollectSame" && sameColor === col && (
-                    <div className="highlight-count">{sameCount}</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          </div>
 
-          
+            {/* Gem 区 */}
+            <div
+              id="gem-area"
+              style={{
+                padding: "10px",
+                boxShadow:
+                  step === "PreHighlightGem" ? "0 0 15px 4px gold" : undefined,
+                borderRadius: step === "PreHighlightGem" ? "6px" : undefined,
+              }}
+            >
+              {COLOR_ORDER.map((col) => {
+                const hlGold = step === "PreHighlightGold" && col === "x";
+                const activeDiff = step === "GemCollectDiff";
+                const activeSame = step === "GemCollectSame";
+                return (
+                  <div
+                    key={col}
+                    onClick={() => {
+                      if (activeDiff) handleGemDiff(col);
+                      if (activeSame) handleGemSame(col);
+                    }}
+                    className={[
+                      "gem",
+                      col === "x" ? "schip" : `${col}chip`,
+
+                      hlGold ? "highlight-active" : "",
+                      activeDiff || activeSame ? "" : "disabled",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    style={{
+                      cursor: activeDiff || activeSame ? "pointer" : "default",
+                    }}
+                  >
+                    {/* 数量泡泡 */}
+                    <div className="bubble">{availableGems[col]}</div>
+                    {/* 选中态 */}
+                    {step === "GemCollectDiff" && diffSelected.includes(col) && (
+                      <div className="highlight-selected" />
+                    )}
+                    {step === "GemCollectSame" && sameColor === col && (
+                      <div className="highlight-count">{sameCount}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
           {/* 右侧玩家面板 */}
           <div
@@ -498,13 +559,20 @@ export default function TutorialPage() {
               backgroundColor: "rgba(0,0,0,0.3)",
               padding: "10px",
               borderRadius: "8px",
-              boxShadow: step === "PreHighlightPanel" ? "0 0 15px 4px gold" : undefined,
+              boxShadow:
+                step === "PreHighlightPanel" ? "0 0 15px 4px gold" : undefined,
             }}
           >
             <div style={{ color: "#90ee90", fontWeight: "bold", marginBottom: "8px" }}>
               {currentPlayer.name} (Score: {currentPlayer.score})
             </div>
-            <div style={{ display: "flex", justifyContent: "space-around", marginBottom: "8px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-around",
+                marginBottom: "8px",
+              }}
+            >
               {Object.entries(playerGems).map(([c, cnt]) => (
                 <div key={c} style={{ textAlign: "center" }}>
                   <div style={{ fontSize: "14px" }}>
@@ -540,7 +608,7 @@ export default function TutorialPage() {
         </div>
       </div>
 
-      {/* 呼吸发光动画 */}
+      {/* 样式 */}
       <style jsx>{`
         @keyframes pulseGlow {
           0% {
@@ -558,6 +626,25 @@ export default function TutorialPage() {
         }
         .highlight-pulse {
           animation: pulseGlow 1.5s infinite ease-in-out;
+        }
+        .deck {
+          width: 100px;
+          height: 140px;
+          background-image: url('/gamesource/game_page/deck.jpg');
+          background-size: cover;
+          position: relative;
+        }
+        .deck::after {
+          content: attr(data-count);
+          position: absolute;
+          top: 4px;
+          right: 6px;
+          background: gold;
+          color: black;
+          padding: 2px 4px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: bold;
         }
       `}</style>
     </>

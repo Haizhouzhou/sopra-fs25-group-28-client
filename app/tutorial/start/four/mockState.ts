@@ -118,9 +118,10 @@ const cards: { level1: Card[]; level2: Card[]; level3: Card[] } = {
 // 教程演示用的贵族
 const nobles: Noble[] = [
   { uuid: "N001", points: 3, requirement: { r: 3, g: 3, b: 0, u: 0, w: 0 } },
-  { uuid: "N002", points: 3, requirement: { g: 3, b: 3, r: 0, u: 0, w: 0 } },
-  { uuid: "N003", points: 3, requirement: { b: 3, u: 3, r: 0, g: 0, w: 0 } },
-  { uuid: "N004", points: 3, requirement: { u: 3, w: 3, r: 0, g: 0, b: 0 } },
+  { uuid: "N002", points: 3, requirement: { g: 0, b: 3, r: 4, u: 0, w: 0 } },
+  { uuid: "N003", points: 3, requirement: { b: 0, u: 3, r: 0, g: 0, w: 3 } },
+  { uuid: "N004", points: 3, requirement: { u: 0, w: 3, r: 0, g: 0, b: 2 } },
+  { uuid: "N005", points: 3, requirement: { u: 0, w: 0, r: 0, g: 4, b: 2 } },
 ];
 
 // 卡堆剩余计数

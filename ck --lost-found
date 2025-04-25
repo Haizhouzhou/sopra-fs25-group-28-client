@@ -1,0 +1,142 @@
+[1mdiff --git a/app/game/[id]/mocks/mockWS.js b/app/game/[id]/mocks/mockWS.js[m
+[1mindex 21258b0..bb7a4e6 100644[m
+[1m--- a/app/game/[id]/mocks/mockWS.js[m
+[1m+++ b/app/game/[id]/mocks/mockWS.js[m
+[36m@@ -184,10 +184,10 @@[m [mexport class MockWebSocket {[m
+           gems: { r: 4, g: 4, b: 4, u: 4, w: 4, "*": 5 },[m
+           cards: {[m
+             level1: [[m
+[31m-              { uuid: "l1c1", level: "level1", color: "r", points: 0, cost: { r: 1, g: 1, b: 1, u: 1, w: 1 } },[m
+[31m-              { uuid: "l1c2", level: "level1", color: "g", points: 0, cost: { r: 2, g: 0, b: 2, u: 0, w: 1 } },[m
+[31m-              { uuid: "l1c3", level: "level1", color: "b", points: 0, cost: { r: 0, g: 1, b: 2, u: 1, w: 1 } },[m
+[31m-              { uuid: "l1c4", level: "level1", color: "w", points: 0, cost: { r: 1, g: 1, b: 0, u: 2, w: 1 } }[m
+[32m+[m[32m              { uuid: "I001", level: "level1", color: "w", points: 0, cost: { r: 0, g: 0, b: 3, u: 0, w: 0 } },[m
+[32m+[m[32m              { uuid: "I009", level: "level1", color: "b", points: 0, cost: { r: 0, g: 0, b: 0, u: 2, w: 1 } },[m
+[32m+[m[32m              { uuid: "I019", level: "level1", color: "g", points: 0, cost: { r: 1, g: 0, b: 1, u: 1, w: 1 } },[m
+[32m+[m[32m              { uuid: "I033", level: "level1", color: "u", points: 0, cost: { r: 1, g: 2, b: 0, u: 0, w: 0 } }[m
+             ],[m
+             level2: [[m
+               { uuid: "l2c1", level: "level2", color: "r", points: 1, cost: { r: 2, g: 2, b: 2, u: 0, w: 1 } },[m
+[36m@@ -208,7 +208,7 @@[m [mexport class MockWebSocket {[m
+             level3: 12[m
+           },[m
+           nobles: [[m
+[31m-            { uuid: "n1", points: 3, requirement: { r: 3, g: 3, b: 3, u: 0, w: 0 } },[m
+[32m+[m[32m            { uuid: "N001", points: 3, requirement: { r: 0, g: 0, b: 3, u: 3, w: 3 } },[m
+             { uuid: "n2", points: 3, requirement: { r: 0, g: 0, b: 4, u: 4, w: 0 } },[m
+             { uuid: "n3", points: 3, requirement: { r: 4, g: 0, b: 0, u: 4, w: 0 } },[m
+             { uuid: "n4", points: 3, requirement: { r: 0, g: 4, b: 4, u: 0, w: 0 } },[m
+[36m@@ -255,10 +255,10 @@[m [mexport class MockWebSocket {[m
+ if (typeof window !== "undefined") {[m
+   window.WebSocket = MockWebSocket;[m
+ }[m
+[31m-********************************************************************/[m
+[32m+[m[32m/********************************************************************/[m
+ [m
+ //3 Players Initial State[m
+[31m-/************************************************************************/[m
+[32m+[m[32m/************************************************************************[m
+ export class MockWebSocket {[m
+     constructor(url) {[m
+       this.url = url;[m
+[36m@@ -352,4 +352,97 @@[m [mexport class MockWebSocket {[m
+     window.WebSocket = MockWebSocket;[m
+   }[m
+   [m
+[31m-/***********************************************************************/[m
+\ No newline at end of file[m
+[32m+[m[32m***********************************************************************/[m
+[32m+[m[32mimport { cards, nobles } from "../../../allCards";[m
+[32m+[m
+[32m+[m[32mexport class MockWebSocket {[m
+[32m+[m[32m  constructor(url) {[m
+[32m+[m[32m    this.url = url;[m
+[32m+[m[32m    this.readyState = 1;[m
+[32m+[m[32m    this.onopen = null;[m
+[32m+[m[32m    this.onmessage = null;[m
+[32m+[m[32m    this.onclose = null;[m
+[32m+[m
+[32m+[m[32m    setTimeout(() => {[m
+[32m+[m[32m      if (this.onopen) this.onopen();[m
+[32m+[m
+[32m+[m[32m      // 预定义需要展示的 uuid 列表[m
+[32m+[m[32m      const level1Uuids = ["I001", "I009", "I019", "I033"];[m
+[32m+[m[32m      const level2Uuids = ["II013", "II022", "II024", "II030"];[m
+[32m+[m[32m      const level3Uuids = ["III002", "III004", "III006", "III008"];[m
+[32m+[m[32m      const nobleUuids = ["N001", "N002", "N004", "N005", "N009"];[m
+[32m+[m
+[32m+[m[32m      // 使用预定义的 uuid 查找 allCards.js 数据源中的对象[m
+[32m+[m[32m      const getCardByUuid = (uuid) => {[m
+[32m+[m[32m        const card = cards.find((c) => c.uuid === uuid);[m
+[32m+[m[32m        if (!card) console.warn(`Card with uuid ${uuid} not found`);[m
+[32m+[m[32m        return card;[m
+[32m+[m[32m      };[m
+[32m+[m[32m      const getNobleByUuid = (uuid) => {[m
+[32m+[m[32m        const noble = nobles.find((n) => n.uuid === uuid);[m
+[32m+[m[32m        if (!noble) console.warn(`Noble with uuid ${uuid} not found`);[m
+[32m+[m[32m        return noble;[m
+[32m+[m[32m      };[m
+[32m+[m
+[32m+[m[32m      this.sendMockMessage({[m
+[32m+[m[32m        type: "state",[m
+[32m+[m[32m        payload: {[m
+[32m+[m[32m          players: [[m
+[32m+[m[32m            { id: 1, name: "Alice", uuid: "p1", score: 0, cards: {}, reserved: [], gems: { r: 0, g: 0, b: 0, u: 0, w: 0, "*": 0 }, nobles: [] },[m
+[32m+[m[32m            { id: 2, name: "Bob", uuid: "p2", score: 0, cards: {}, reserved: [], gems: { r: 0, g: 0, b: 0, u: 0, w: 0, "*": 0 }, nobles: [] },[m
+[32m+[m[32m            { id: 3, name: "Charlie", uuid: "p3", score: 0, cards: {}, reserved: [], gems: { r: 0, g: 0, b: 0, u: 0, w: 0, "*": 0 }, nobles: [] },[m
+[32m+[m[32m            { id: 4, name: "David", uuid: "p4", score: 0, cards: {}, reserved: [], gems: { r: 0, g: 0, b: 0, u: 0, w: 0, "*": 0 }, nobles: [] }[m
+[32m+[m[32m          ],[m
+[32m+[m[32m          gems: { r: 7, g: 7, b: 7, u: 7, w: 7, "*": 5 },[m
+[32m+[m[32m          cards: {[m
+[32m+[m[32m            level1: level1Uuids.map(getCardByUuid),[m
+[32m+[m[32m            level2: level2Uuids.map(getCardByUuid),[m
+[32m+[m[32m            level3: level3Uuids.map(getCardByUuid)[m
+[32m+[m[32m          },[m
+[32m+[m[32m          decks: {[m
+[32m+[m[32m            level1: cards.filter(card => card.level === "level1").length - level1Uuids.length,[m
+[32m+[m[32m            level2: cards.filter(card => card.level === "level2").length - level2Uuids.length,[m
+[32m+[m[32m            level3: cards.filter(card => card.level === "level3").length - level3Uuids.length,[m
+[32m+[m[32m          },[m
+[32m+[m[32m          nobles: nobleUuids.map(getNobleByUuid),[m
+[32m+[m[32m          turn: 0,[m
+[32m+[m[32m          log: [],[m
+[32m+[m[32m          winner: null[m
+[32m+[m[32m        }[m
+[32m+[m[32m      });[m
+[32m+[m[32m    }, 500);[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  sendMockMessage(message) {[m
+[32m+[m[32m    setTimeout(() => {[m
+[32m+[m[32m      if (this.onmessage) {[m
+[32m+[m[32m        this.onmessage({ data: JSON.stringify(message) });[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }, 1000);[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  send(data) {[m
+[32m+[m[32m    console.log("MockWebSocket sent:", data);[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  close() {[m
+[32m+[m[32m    this.readyState = 3;[m
+[32m+[m[32m    if (this.onclose) this.onclose();[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  addEventListener(type, listener) {[m
+[32m+[m[32m    if (type === "open") this.onopen = listener;[m
+[32m+[m[32m    else if (type === "message") this.onmessage = listener;[m
+[32m+[m[32m    else if (type === "close") this.onclose = listener;[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  removeEventListener(type, listener) {[m
+[32m+[m[32m    if (type === "open" && this.onopen === listener) this.onopen = null;[m
+[32m+[m[32m    else if (type === "message" && this.onmessage === listener) this.onmessage = null;[m
+[32m+[m[32m    else if (type === "close" && this.onclose === listener) this.onclose = null;[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mif (typeof window !== "undefined") {[m
+[32m+[m[32m  window.WebSocket = MockWebSocket;[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
