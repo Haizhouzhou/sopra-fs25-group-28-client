@@ -9,7 +9,7 @@ const CreateGame: React.FC = () => {
   const router = useRouter();
   const apiService = useApi();
   const [roomName, setRoomName] = useState("");
-  const [playerCount, setPlayerCount] = useState(4);
+  const [playerCount, setPlayerCount] = useState(2);
   const [error, setError] = useState("");
   const [isConnected, setIsConnected] = useState(false);
 

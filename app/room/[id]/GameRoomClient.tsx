@@ -235,14 +235,10 @@ const GameRoomClient = () => {
               }
             });
             
-            // Request room state after a delay
-            setTimeout(() => {
-              console.log("Requesting room state");
               ws.sendMessage({
                 type: "GET_ROOM_STATE",
                 roomId
               });
-            }, 1000);
           }
         }
       } catch (err) {

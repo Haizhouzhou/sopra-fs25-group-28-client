@@ -146,7 +146,7 @@ export default function GamePage() {
   const [showChat, setShowChat] = useState(false);
   const [chatNotify, setChatNotify] = useState(false);
 
-  const [seconds, setSeconds] = useState(30); //自动 passturn 倒计时, 需要同步修改effect
+  const [seconds, setSeconds] = useState(59); //自动 passturn 倒计时, 需要同步修改effect
   const [isTimeUp, setIsTimeUp] = useState(false);
 
   const stableGameId = useRef(params.id as string).current;
@@ -187,48 +187,48 @@ export default function GamePage() {
     : {};
 
   const hasJoinedRef = useRef(false);
-  const [lastHandledTurnId, setLastHandledTurnId] = useState<number | null>(null);
   const [lastHandledPlayerId, setLastHandledPlayerId] = useState<number | null>(null);
+
+  const aiActiveRef = useRef(false); // 表示当前是否在等待 AI
+
 
 
 
 
   useEffect(() => {
-    if (seconds <= 0) {
-      setIsTimeUp(true);
-      if (gameState && gameState.currentPlayerId === currentUser.id) {
-        console.log("Time out, PASS TURN");
-        sendMessage({
-          type: "END_TURN",
-          roomId: gameId,
-          sessionId: stableSessionId,
-          content: {
-            userId: currentUser.id,
-            target: ""
-          }
-        });
-      }
-      return;
-    }
+    if (seconds <= 0 || aiActiveRef.current) return; // ⛔ AI active 时暂停
   
     const timer = setInterval(() => {
-      setSeconds((prev) => prev - 1);
+      setSeconds((prev) => {
+        if (prev <= 1) {
+          setIsTimeUp(true);
+  
+          // 自动结束回合
+          if (gameState && gameState.currentPlayerId === currentUser.id) {
+            sendMessage({
+              type: "END_TURN",
+              roomId: gameId,
+              sessionId: stableSessionId,
+              content: {
+                userId: currentUser.id,
+                target: ""
+              }
+            });
+          }
+  
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
   
     return () => clearInterval(timer);
-  }, [
-    seconds,
-    gameState,
-    currentUser.id,
-    gameId,
-    stableSessionId,
-    sendMessage,
-    lastHandledPlayerId
-  ]);
+  }, [seconds, gameState, currentUser.id, gameId, stableSessionId, sendMessage]);
+  
 
   useEffect(() => {
     if (gameState && gameState.currentPlayerId === currentUser.id) {
-      setSeconds(30);
+      setSeconds(59);
       setIsTimeUp(false); 
       setLastHandledPlayerId(null);
     }
@@ -349,16 +349,25 @@ export default function GamePage() {
         }
         break;
         
-      case "AI_HINT":
-        // 处理AI提示
-        if (msg.content) {
-          const hintText = typeof msg.content === 'object' 
-            ? msg.content.message || JSON.stringify(msg.content)
-            : msg.content.toString();
-          setHintMessage(hintText);
-          setHintLoading(false);
-        }
-        break;
+        case "AI_HINT":
+          if (msg.content) {
+            let parsedContent = msg.content;
+        
+            // 尝试解析字符串
+            if (typeof msg.content === 'string') {
+              try {
+                parsedContent = JSON.parse(msg.content);
+              } catch (e) {
+                console.warn("AI_HINT 内容不是 JSON 字符串:", msg.content);
+              }
+            }
+        
+            const hintText = parsedContent?.hint || parsedContent?.message || JSON.stringify(parsedContent);
+            setHintMessage(hintText);
+            setHintLoading(false);
+            aiActiveRef.current = false;
+          }
+          break;
 
         case "GAME_OVER":
           console.log("Game Over data received:", msg.content);
@@ -519,6 +528,12 @@ const mapFrontendToBackendGemColor = (shortCode: string): string => {
 
 //action logic
 const handleGemSelect = (color: string) => {
+
+  if (hintLoading) {
+    alert("Please wait for the AI advice to complete.");
+    return;
+  }
+
   if (selectedGems.includes(color)) {
     setSelectedGems(selectedGems.filter(c => c !== color));
   } else {
@@ -529,6 +544,12 @@ const handleGemSelect = (color: string) => {
 };
 
 const handleConfirmGems = () => {
+
+  if (hintLoading) {
+    alert("Please wait for the AI advice to complete.");
+    return;
+  }
+
   const publicGems = gameState?.gems || {};
 
   // 玩家选了两个相同颜色的宝石
@@ -846,6 +867,12 @@ const handleConfirmGems = () => {
 
   // 处理卡牌操作的函数
   const handleCardAction = (cardUuid: string) => {
+
+    if (hintLoading) {
+      alert("Please wait for the AI advice to complete.");
+      return;
+    }
+
     if (!gameState) return;
   
     // Ensure the player has selected an action
@@ -913,6 +940,9 @@ const handleConfirmGems = () => {
     setHintLoading(true);
     setHintMessage("");
     
+    aiActiveRef.current = true; // 标记 AI 开始
+    setSeconds(0); // 停止倒计时
+
     // 发送AI提示请求
     sendMessage({
       type: "AI_HINT",
@@ -1003,6 +1033,12 @@ const handleConfirmGems = () => {
     u: "black",
     w: "white",
     x: "gold",
+  };
+
+  const cancelHint = () => {
+    setHintLoading(false);
+    aiActiveRef.current = false; 
+    setHintMessage("AI request canceled.");
   };
   
   const GameOverModal = () => {
@@ -1600,8 +1636,6 @@ const handleConfirmGems = () => {
                           ? card.color 
                           : (colorMap[card.color] || 'u');
 
-                        console.log(`🧩 渲染 reserved 卡 slot ${i} ID: ${card.uuid}`, card);
-
                         return (
                           <div
                             key={card.uuid}
@@ -1644,82 +1678,129 @@ const handleConfirmGems = () => {
                       }
                     })}
                   </div>
-
-
-
-
                 </div>
               );
             })}
           </div>
           
           {/* AI Assistant Area */}
-          <div id="ai-hint-area" style={{
+          <div id="ai-hint-content" style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.3)",
+            borderRadius: "5px",
+            padding: "10px",
+            marginBottom: "10px",
+            minHeight: "80px",
             width: "100%",
-            maxWidth: "800px",
-            minHeight: "160px",
-            backgroundColor: "rgba(20, 10, 80, 0.8)",
-            border: "2px solid #6644ff",
-            borderRadius: "8px",
-            padding: "15px",
+            fontSize: "20px",
+            fontWeight: "bold",
+            color: "#FFD700",
+            border: "2px solid #FFD700",
+            boxShadow: "0 0 20px rgba(255, 215, 0, 0.4)",
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 0 15px rgba(102, 68, 255, 0.5)"
+            textAlign: "center"
           }}>
-            <h3 style={{
-              color: "#ffffff",
-              marginBottom: "15px",
-              fontSize: "20px",
-              textAlign: "center"
-            }}>AI Strategic Advisor</h3>
-            
-            <div id="ai-hint-content" style={{
-              flex: 1,
-              backgroundColor: "rgba(0, 0, 0, 0.3)",
-              borderRadius: "5px",
-              padding: "10px",
-              marginBottom: "10px",
-              minHeight: "80px",
-              width: "100%",
-              fontSize: "14px",
-              overflow: "auto"
-            }}>
-              {hintMessage ? (
-                <div>{hintMessage}</div>
-              ) : (
-                <div style={{ opacity: 0.7, textAlign: "center", marginTop: "30px" }}>
-                  Click the button below for AI strategy advice
-                </div>
-              )}
-            </div>
-            
-            <button 
-              onClick={requestAiHint}
-              disabled={hintLoading || !isPlayerTurn()}
-              style={{
-                padding: "8px 15px",
-                backgroundColor: isPlayerTurn() ? "rgba(0, 100, 255, 0.7)" : "rgba(100, 100, 100, 0.5)",
+            {hintMessage ? (
+              <div style={{
+                backgroundColor: "#cc0000",
                 color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: isPlayerTurn() ? "pointer" : "not-allowed",
                 fontWeight: "bold",
+                padding: "6px 10px",
+                border: "none",
+                borderRadius: "6px",
                 fontSize: "14px",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}
-            >
-              {hintLoading ? (
-                <span>Thinking...</span>
-              ) : (
-                <span>Get AI Advice {hintCount > 0 ? `(${hintCount}/3 used)` : ""}</span>
-              )}
-            </button>
+                cursor: "pointer",
+                boxShadow: "0 0 8px rgba(255, 0, 0, 0.5)",
+                transition: "all 0.2s ease"
+              }}>{hintMessage}</div>
+            ) : (
+              <div style={{ opacity: 0.7 }}>
+                Click the button below for AI strategy advice
+              </div>
+            )}
           </div>
+
+
+         {/* 主按钮 & 取消按钮区域 */}
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              marginTop: "6px",
+              paddingLeft: "15px"
+            }}
+          >
+            {hintLoading ? (
+              <>
+                <button
+                  disabled
+                  style={{
+                    padding: "8px 24px",
+                    fontWeight: "bold",
+                    fontSize: "18px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: "rgba(0, 100, 255, 0.9)", // 蓝色
+                    color: "white",
+                    boxShadow: "0 0 10px rgba(0, 100, 255, 0.6)",
+                  }}
+                >
+                  Thinking...
+                </button>
+
+                <button
+                  onClick={() => {
+                    setHintLoading(false);
+                    setHintMessage("AI request canceled.");
+                  }}
+                  style={{
+                    padding: "8px 24px",
+                    fontWeight: "bold",
+                    fontSize: "18px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: "crimson", // 红色
+                    color: "white",
+                    boxShadow: "0 0 10px rgba(255, 0, 0, 0.6)",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={requestAiHint}
+                disabled={!isPlayerTurn()}
+                style={{
+                  padding: "8px 24px",
+                  fontWeight: "bold",
+                  fontSize: "18px",
+                  borderRadius: "8px",
+                  border: "none",
+                  backgroundColor: isPlayerTurn()
+                    ? "rgba(0, 100, 255, 0.9)"
+                    : "rgba(100, 100, 100, 0.5)",
+                  color: "white",
+                  cursor: isPlayerTurn() ? "pointer" : "not-allowed",
+                  boxShadow: isPlayerTurn()
+                    ? "0 0 10px rgba(0, 100, 255, 0.6)"
+                    : "none",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                Get AI Advice {hintCount > 0 ? `(${hintCount}/3 used)` : ""}
+              </button>
+            )}
+          </div>
+
+
+
+
 
           {isPlayerTurn() && (
             <div style={{
@@ -1847,6 +1928,10 @@ const handleConfirmGems = () => {
               opacity: isPlayerTurn() ? 1 : 0.5
             }}
             onClick={() => {
+              if (hintLoading) {
+                alert("Please wait for the AI advice to complete.");
+                return;
+              }
               if (isPlayerTurn()) {
                 setSeconds(0); //倒计时归零
                 sendAction("next", "");
