@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import WebSocketService, { WebSocketMessage } from '@/hooks/useWebSocket';
 import type { UserListGetDTO } from "@/types/user";
@@ -17,7 +16,6 @@ interface GameRoom {
 
 const GameLobby: React.FC = () => {
   const router = useRouter();
-  const apiService = useApi();
   const { value: token, clear: clearToken } = useLocalStorage<string>("token", "");
   const { value: localUser, clear: clearUser } = useLocalStorage<UserListGetDTO>("currentUser", {} as UserListGetDTO);
 

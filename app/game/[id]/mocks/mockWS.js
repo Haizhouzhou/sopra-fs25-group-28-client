@@ -480,5 +480,5 @@ export class MockWebSocket {
 }
 
 if (typeof window !== "undefined") {
-  window.WebSocket = MockWebSocket;
+  globalThis.WebSocket = MockWebSocket;
 }

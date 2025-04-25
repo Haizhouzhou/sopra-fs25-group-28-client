@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // 定义游戏状态的类型
-type GameState = any; // 这里可以用你实际的GameState类型替换
+type GameState = Record<string, unknown>;
 
 // 定义Context的类型
 type GameStateContextType = {

@@ -1,6 +1,6 @@
 // app/api/game.ts
 
-export async function fetchGameState(gameId: string) {
+export function fetchGameState(gameId: string) {
     console.log(`📥 Fetching game state for ID: ${gameId}`);
   
     // Return mock data directly
@@ -48,7 +48,8 @@ export async function fetchGameState(gameId: string) {
     };
   }
   
-  export async function performAction(gameId: string, action: any) {
+  type GameAction = Record<string, unknown>;
+  export function performAction(gameId: string, action: GameAction) {
     console.log(`⚙️ Performing action "${action}" for game: ${gameId}`);
     // Simply return the same mock data again (no change)
     return fetchGameState(gameId);

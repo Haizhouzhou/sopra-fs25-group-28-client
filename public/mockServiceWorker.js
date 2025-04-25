@@ -128,7 +128,7 @@ async function handleRequest(event, requestId) {
   // Ensure MSW is active and ready to handle the message, otherwise
   // this message will pend indefinitely.
   if (client && activeClientIds.has(client.id)) {
-    ;(async function () {
+    ;(function () {
       const responseClone = response.clone()
 
       sendToClient(
@@ -287,7 +287,7 @@ function sendToClient(client, message, transferrables = []) {
   })
 }
 
-async function respondWithMock(response) {
+function respondWithMock(response) {
   // Setting response status code to 0 is a no-op.
   // However, when responding with a "Response.error()", the produced Response
   // instance will have status code set to 0. Since it's not possible to create

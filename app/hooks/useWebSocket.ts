@@ -57,6 +57,7 @@ class WebSocketService {
       return this.ready;
     }
     console.log("[WebSocket] ⏳ Starting connection...");
+    await Promise.resolve();
 
     const userStr = typeof window !== 'undefined' ? localStorage.getItem("currentUser") : null;
     const localUser = userStr ? JSON.parse(userStr) : null;

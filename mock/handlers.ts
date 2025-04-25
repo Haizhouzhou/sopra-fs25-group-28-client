@@ -52,7 +52,6 @@ export const handlers = [
 
   // 模拟获取初始状态接口
   rest.get('/stat/:id', (req, res, ctx) => {
-    const { id } = req.params;
     const pid = req.url.searchParams.get('pid');
     const uuid = req.url.searchParams.get('uuid');
     console.log('[MSW] GET /stat/:id matched!', req.url.toString());

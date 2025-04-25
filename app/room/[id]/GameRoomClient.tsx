@@ -53,7 +53,7 @@ const GameRoomClient = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
   const hasConnected = useRef(false);
   const currentUserRef = useRef<User | null>(null);
 

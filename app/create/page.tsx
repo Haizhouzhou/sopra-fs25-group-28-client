@@ -2,12 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useApi } from "@/hooks/useApi";
-import WebSocketService, { useWebSocket, WebSocketMessage } from "@/hooks/useWebSocket";
+import { useWebSocket, WebSocketMessage } from "@/hooks/useWebSocket";
 
 const CreateGame: React.FC = () => {
   const router = useRouter();
-  const apiService = useApi();
   const [roomName, setRoomName] = useState("");
   const [playerCount, setPlayerCount] = useState(2);
   const [error, setError] = useState("");
@@ -41,7 +39,7 @@ const CreateGame: React.FC = () => {
     setIsConnected(connected);
   }, [connected]);
 
-  const handleCreateGame = async (e: React.FormEvent) => {
+  const handleCreateGame = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!roomName.trim()) {

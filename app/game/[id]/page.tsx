@@ -86,23 +86,6 @@ interface WSMessage {
 
 const COLOR_ORDER = ["r", "g", "b", "u", "w", "x"];
 
-
-const CountdownTimer = ({ initialSeconds = 30 }: { initialSeconds?: number }) => {
-  const [seconds, setSeconds] = useState(initialSeconds);
-  useEffect(() => {
-    if (seconds <= 0) return;
-    const timer = setInterval(() => {
-      setSeconds((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [seconds]);
-  return (
-    <div style={{ fontSize: "24px", fontWeight: "bold", margin: "10px" }}>
-      {seconds > 0 ? `Time remaining: ${seconds}s` : "Time's up!"}
-    </div>
-  );
-};
-
 // 颜色映射函数
 const mapColorToFrontend = (color: string): string => {
   const colorMap: Record<string, string> = {
@@ -140,7 +123,6 @@ const buttonStyle: React.CSSProperties = {
 export default function GamePage() {
   const params = useParams();
   const gameId = params.id as string;
-  const sessionId = `game-${gameId}-${Date.now()}`;
   const [pendingGameState, setPendingGameState] = useState<any>(null);
   
   const [showChat, setShowChat] = useState(false);
@@ -149,10 +131,9 @@ export default function GamePage() {
   const [seconds, setSeconds] = useState(59); //自动 passturn 倒计时, 需要同步修改effect
   const [isTimeUp, setIsTimeUp] = useState(false);
 
-  const stableGameId = useRef(params.id as string).current;
-  const stableSessionId = useRef(`game-${stableGameId}-${Date.now()}`).current;
+  const stableSessionId = useRef(getStableSessionId(gameId)).current;
 
-  const { lastGameState, clearGameState } = useGameState();
+  const { lastGameState} = useGameState();
 
   const [currentAction, setCurrentAction] = useState<"take" | "buy" | "reserve" | null>(null);
   const [selectedGems, setSelectedGems] = useState<string[]>([]);
@@ -187,7 +168,7 @@ export default function GamePage() {
     : {};
 
   const hasJoinedRef = useRef(false);
-  const [lastHandledPlayerId, setLastHandledPlayerId] = useState<number | null>(null);
+  const [_lastHandledPlayerId, setLastHandledPlayerId] = useState<number | null>(null);
 
   const aiActiveRef = useRef(false); // 表示当前是否在等待 AI
 
@@ -235,7 +216,20 @@ export default function GamePage() {
   }, [gameState?.currentPlayerId, currentUser.id]);
   
   
+  //持久化sessionId
+  function getStableSessionId(gameId: string): string {
+    if (typeof window === "undefined") return "";
+  
+    const key = `stable-session-${gameId}`;
+    const existing = localStorage.getItem(key);
+    if (existing) return existing;
+  
+    const newSessionId = `game-${gameId}-${Date.now()}`;
+    localStorage.setItem(key, newSessionId);
+    return newSessionId;
+  }
 
+  
 
   // WebSocket消息处理函数
   function handleWebSocketMessage(msg: WebSocketMessage) {
@@ -299,7 +293,7 @@ export default function GamePage() {
 
       
         
-        case "ROOM_STATE":
+        case "ROOM_STATE":{
           console.log("收到ROOM_STATE消息:", msg);
 
           const roomContent = msg.content;
@@ -320,7 +314,7 @@ export default function GamePage() {
               setUserMap(userMap);
             }
           }
-          break;
+          break;}
         
       case "CHAT_MESSAGE":
         // 处理聊天消息
@@ -355,11 +349,7 @@ export default function GamePage() {
         
             // 尝试解析字符串
             if (typeof msg.content === 'string') {
-              try {
                 parsedContent = JSON.parse(msg.content);
-              } catch (e) {
-                console.warn("AI_HINT 内容不是 JSON 字符串:", msg.content);
-              }
             }
         
             const hintText = parsedContent?.hint || parsedContent?.message || JSON.stringify(parsedContent);
@@ -460,20 +450,6 @@ function checkColorFormat(obj: any, path: string = 'root') {
     });
   }, [pendingGameState]);
 
-  function inspectObject(obj: any, label: string = "") {
-    if (!obj) {
-      console.log(`${label} 是 null 或 undefined`);
-      return;
-    }
-    
-    console.log(`${label} 类型: ${typeof obj}`);
-    console.log(`${label} 属性列表: ${Object.keys(obj).join(", ")}`);
-    
-    // 针对GameState消息特别处理
-    if (obj.visibleLevel1cardIds) {
-      console.log(`Level1卡牌ID: ${obj.visibleLevel1cardIds.join(", ")}`);
-    }
-  }
 
   // 监听卡牌和贵族数据加载
   useEffect(() => {
@@ -861,7 +837,7 @@ const handleConfirmGems = () => {
     }
     
     // 检查玩家的通配符宝石是否足够
-    const wildcards = currentPlayer.gems["*"] || 0;
+    const wildcards = currentPlayer.gems["x"] || 0;
     return wildcards >= wildcardsNeeded;
   };
 
@@ -1025,21 +1001,6 @@ const handleConfirmGems = () => {
     return result;
   }, [gameState, currentUser.id]);
 
-
-  const colorToChip: Record<string, string> = {
-    r: "red",
-    g: "green",
-    b: "blue",
-    u: "black",
-    w: "white",
-    x: "gold",
-  };
-
-  const cancelHint = () => {
-    setHintLoading(false);
-    aiActiveRef.current = false; 
-    setHintMessage("AI request canceled.");
-  };
   
   const GameOverModal = () => {
     if (!gameOver || !gameOverData) return null;
@@ -1188,7 +1149,7 @@ const handleConfirmGems = () => {
             gap: "15px"
           }}>
             <button
-              onClick={() => window.location.href = "/lobby"}
+              onClick={() => globalThis.location.href = "/lobby"}
               style={{
                 padding: "10px 20px",
                 backgroundColor: "rgba(100, 100, 200, 0.8)",
@@ -1520,15 +1481,6 @@ const handleConfirmGems = () => {
           }}>
             {gameState?.players?.map((player) => {
               // 定义颜色映射
-              const colorToChip = {
-                r: "red",
-                g: "green",
-                b: "blue",
-                u: "black",
-                w: "white",
-                "*": "gold",
-              };
-  
               return (
                 <div key={player.uuid} className="player" style={{
                   padding: "6px",
