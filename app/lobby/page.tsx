@@ -14,6 +14,14 @@ interface GameRoom {
   isReady: boolean;
 }
 
+interface RawRoomInfo {
+  roomId: string;
+  roomName?: string;
+  owner?: string;
+  players: number;
+  maxPlayers?: number;
+}
+
 const GameLobby: React.FC = () => {
   const router = useRouter();
   const { value: token, clear: clearToken } = useLocalStorage<string>("token", "");
@@ -29,8 +37,8 @@ const GameLobby: React.FC = () => {
 
   const handleWebSocketMessage = useCallback((message: WebSocketMessage) => {
     if (message.type === 'ROOM_LIST') {
-      const roomInfos = message.content || [];
-      const parsedRooms: GameRoom[] = roomInfos.map((room: any) => ({
+      const roomInfos = message.content as RawRoomInfo[]; 
+      const parsedRooms: GameRoom[] = roomInfos.map((room) => ({
         id: room.roomId,
         name: room.roomName || "Untitled",
         owner: room.owner || 'Unknown',

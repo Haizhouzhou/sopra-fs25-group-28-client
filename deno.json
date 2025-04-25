@@ -2,7 +2,6 @@
     "lint": {
       "exclude": ["public/favico.js"],
       "rules": {
-        "exclude": ["no-explicit-any"]
       }
     }
   }

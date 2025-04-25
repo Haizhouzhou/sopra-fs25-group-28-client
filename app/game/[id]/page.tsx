@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// deno-lint-ignore-file no-explicit-any
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -77,12 +79,6 @@ interface GameOverData {
   winnerId: number | string;
 }
 
-
-type WSMessageType = "state" | "chat" | "start" | "error" | "info" | "ai_hint";
-interface WSMessage {
-  type: WSMessageType;
-  payload: any;
-}
 
 const COLOR_ORDER = ["r", "g", "b", "u", "w", "x"];
 
@@ -168,7 +164,7 @@ export default function GamePage() {
     : {};
 
   const hasJoinedRef = useRef(false);
-  const [_lastHandledPlayerId, setLastHandledPlayerId] = useState<number | null>(null);
+  const [, setLastHandledPlayerId] = useState<number | null>(null);
 
   const aiActiveRef = useRef(false); // 表示当前是否在等待 AI
 
@@ -381,29 +377,6 @@ export default function GamePage() {
     }
   }
 
-  // 调试函数：验证颜色格式
-function checkColorFormat(obj: any, path: string = 'root') {
-  if (!obj) return;
-  
-  if (typeof obj === 'object') {
-    // 检查是否有颜色相关的字段
-    if (obj.color) {
-      console.log(`路径 ${path}.color 的值为: ${obj.color}, 类型: ${typeof obj.color}`);
-    }
-    
-    // 检查是否有cost字段
-    if (obj.cost && typeof obj.cost === 'object') {
-      console.log(`路径 ${path}.cost 包含颜色:`, Object.keys(obj.cost).join(', '));
-    }
-    
-    // 递归检查所有字段
-    Object.entries(obj).forEach(([key, value]) => {
-      if (typeof value === 'object' && value !== null) {
-        checkColorFormat(value, `${path}.${key}`);
-      }
-    });
-  }
-}
 
   // 在连接成功后发送加入房间消息
   useEffect(() => {

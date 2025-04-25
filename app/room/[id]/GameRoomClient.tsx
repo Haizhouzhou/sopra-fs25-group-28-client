@@ -28,6 +28,14 @@ interface User {
   avatar?: string;
 }
 
+interface RoomStatePlayer {
+  userId?: string | number;
+  name?: string;
+  room_status?: boolean;
+  isOwner?: boolean;
+  avatar?: string;
+}
+
 const GameRoomClient = () => {
   const params = useParams();
   const roomId = params?.id as string;
@@ -53,7 +61,7 @@ const GameRoomClient = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isConnected, setIsConnected] = useState(false);
-  const [_isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const hasConnected = useRef(false);
   const currentUserRef = useRef<User | null>(null);
 
@@ -79,14 +87,15 @@ const GameRoomClient = () => {
         }
         
         // 解析玩家数据
-        const rawPlayers = (msg as any).players || [];
+        const roomStateMsg = msg as WebSocketMessage & { players?: RoomStatePlayer[] };
+        const rawPlayers = roomStateMsg.players || [];
         
         if (!Array.isArray(rawPlayers)) {
           console.error("players不是数组:", rawPlayers);
           return;
         }
         
-        const updatedPlayers = rawPlayers.map((p: any) => ({
+        const updatedPlayers = rawPlayers.map((p: RoomStatePlayer) => ({
           id: String(p.userId || ''),
           name: p.name || 'Unknown',
           isReady: Boolean(p.room_status), // 确保这里正确获取准备状态

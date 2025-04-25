@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// deno-lint-ignore-file no-explicit-any
+
 import { useEffect, useState, useRef } from "react";
 import { getApiWsDomain } from "@/utils/domain";
 import useLocalStorage from "@/hooks/useLocalStorage";
