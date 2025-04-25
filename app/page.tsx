@@ -51,14 +51,14 @@ export default function HomePage() {
           />
         </Link>
         
-        <Link href="/tutorial">
+        {/* <Link href="/tutorial">
           <img
             src="/gamesource/homepage/homepage_button_tutorial.png"
             alt="Tutorial"
             width={300}
             style={{ cursor: 'pointer' }}
           />
-        </Link>
+        </Link> */}
       </div>
     </div>
   );

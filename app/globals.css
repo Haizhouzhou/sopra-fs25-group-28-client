@@ -660,27 +660,27 @@ body {
 .reserveCards .card.card-g.card-level2 { background-position: 71.43% 0 !important; }
 .reserveCards .card.card-g.card-level3 { background-position: 78.57% 0 !important; }
 
-/* 蓝色卡牌 */
-.reserveCards .card.card-b.card-level1 { background-position: 0% 0 !important; }
-.reserveCards .card.card-b.card-level2 { background-position: 7.143% 0 !important; }
-.reserveCards .card.card-b.card-level3 { background-position: 14.29% 0 !important; }
+/* 黑色卡牌 */
+.reserveCards .card.card-u.card-level1 { background-position: 0% 0 !important; }
+.reserveCards .card.card-u.card-level2 { background-position: 7.143% 0 !important; }
+.reserveCards .card.card-u.card-level3 { background-position: 14.29% 0 !important; }
 
 /* 白色卡牌 */
 .reserveCards .card.card-w.card-level1 { background-position: 42.86% 0 !important; }
 .reserveCards .card.card-w.card-level2 { background-position: 50% 0 !important; }
 .reserveCards .card.card-w.card-level3 { background-position: 57.14% 0 !important; }
 
-/* 黑色卡牌 */
-.reserveCards .card.card-u.card-level1 { background-position: 21.43% 0 !important; }
-.reserveCards .card.card-u.card-level2 { background-position: 28.57% 0 !important; }
-.reserveCards .card.card-u.card-level3 { background-position: 35.71% 0 !important; }
+/* 蓝色卡牌 */
+.reserveCards .card.card-b.card-level1 { background-position: 21.43% 0 !important; }
+.reserveCards .card.card-b.card-level2 { background-position: 28.57% 0 !important; }
+.reserveCards .card.card-b.card-level3 { background-position: 35.71% 0 !important; }
 
 /* 确保预订卡牌的宝石颜色也正确显示 */
 .reserveCards .card .color.rgem { background-position: 100% 0 !important; }
 .reserveCards .card .color.ggem { background-position: 75% 0 !important; }
-.reserveCards .card .color.bgem { background-position: 0% 0 !important; }
+.reserveCards .card .color.bgem { background-position: 25% 0 !important; }
 .reserveCards .card .color.wgem { background-position: 50% 0 !important; }
-.reserveCards .card .color.ugem { background-position: 25% 0 !important; }
+.reserveCards .card .color.ugem { background-position: 0 0 !important; }
   
 
 
@@ -766,16 +766,16 @@ body {
     background-position: 78.57% 0;
   }
   
-  .card-b.card-level1 {
+  .card-u.card-level1 {
     background-size: 3000% 200%;
     background-position: 0 0;
   }
   
-  .card-b.card-level2 {
+  .card-u.card-level2 {
     background-position: 7.143% 0;
   }
   
-  .card-b.card-level3 {
+  .card-u.card-level3 {
     background-position: 14.29% 0;
   }
   
@@ -791,15 +791,15 @@ body {
     background-position: 57.14% 0;
   }
   
-  .card-u.card-level1 {
+  .card-b.card-level1 {
     background-position: 21.43% 0;
   }
   
-  .card-u.card-level2 {
+  .card-b.card-level2 {
     background-position: 28.57% 0;
   }
   
-  .card-u.card-level3 {
+  .card-b.card-level3 {
     background-position: 35.71% 0;
   }  
   
@@ -1219,11 +1219,11 @@ body {
   }
   
   .bgem {
-    background-position: 0 0;
+    background-position: 25% 0;
   }
   
   .ugem {
-    background-position: 25% 0;
+    background-position: 0% 0;
   }
   
   .deck {

@@ -144,7 +144,7 @@ export default function GamePage() {
   const [newChat, setNewChat] = useState("");
   
   // 使用useWebSocket钩子替代直接创建WebSocket
-  const { sendMessage, connected: wsConnected } = useWebSocket(stableSessionId, handleWebSocketMessage);
+  const { sendMessage, connected: wsConnected, webSocketService } = useWebSocket(stableSessionId, handleWebSocketMessage);
   
   // 卡牌和贵族数据
   const [cardsData, setCardsData] = useState([]);
@@ -562,6 +562,10 @@ const handleConfirmGems = () => {
         console.warn(`未找到ID为 ${numId} 的卡牌`);
         return null;
       }
+
+      const mappedColor = mapColorToFrontend(card.color);
+      console.log(`卡牌 ${numId}: 后端颜色=${card.color}, 前端颜色=${mappedColor}`);
+
       return {
         uuid: card.id.toString(),
         level: `level${card.tier}`,
@@ -1122,7 +1126,13 @@ const handleConfirmGems = () => {
             gap: "15px"
           }}>
             <button
-              onClick={() => globalThis.location.href = "/lobby"}
+              onClick={() => {
+                if (webSocketService?.isConnected()) {
+                  console.log("Closing WebSocket before navigating back to lobby...");
+                  webSocketService.disconnect();
+                }
+                globalThis.location.href = "/lobby"}
+              }
               style={{
                 padding: "10px 20px",
                 backgroundColor: "rgba(100, 100, 200, 0.8)",
@@ -1317,23 +1327,18 @@ const handleConfirmGems = () => {
                       }
                     }}
                   >
-                    <img
-                      className="floppy"
-                      src="/gamesource/game_page/floppy.png"
-                      alt="reserve"
-                    />
                   </div>
                 </div>
               
                 {/* 翻开的卡牌 */}
                 <div className={`c_${level} face-up-cards`}>
                   <div className="cards-inner flex-nowrap overflow-x-auto">
-                  {gameState?.cards?.[level]?.map((card) => (
-                    <div
-                      key={card.uuid}
-                      className={`card card-${card.color.toLowerCase()} card-${card.level}`}
-                      onClick={() => handleCardAction(card.uuid)}
-                    >
+                    {gameState?.cards?.[level]?.map((card) => (
+                      <div
+                        key={card.uuid}
+                        className={`card card-${card.color} card-${card.level}`}
+                        onClick={() => handleCardAction(card.uuid)}
+                      >
                         <div
                           className={`reserve ${isPlayerTurn() ? 'active' : 'inactive'}`}
                           onClick={(e) => {
@@ -1343,22 +1348,19 @@ const handleConfirmGems = () => {
                             }
                           }}
                         >
-                          <img
-                            className="floppy"
-                            src="/gamesource/game_page/floppy.png"
-                            alt="reserve"
-                          />
                         </div>
                         <div className={`overlay ${canAffordCard(card) ? 'affordable' : 'not-affordable'}`}></div>
                         <div className="underlay"></div>
+                        
                         <div className="header">
-                          <div className={`color ${card.color.toLowerCase()}gem`}></div>
+                          <div className={`color ${card.color}gem`}></div> 
                           <div className="points">{card.points > 0 ? card.points : ""}</div>
                         </div>
+
                         <div className="costs">
                           {Object.entries(card.cost).map(([costColor, count]) =>
                             count > 0 ? (
-                              <div key={costColor} className={`cost ${mapColorToFrontend(costColor)}`}>
+                              <div key={costColor} className={`cost ${costColor}`}>
                                 {count}
                               </div>
                             ) : null
@@ -1548,18 +1550,9 @@ const handleConfirmGems = () => {
                       const card = player.reserved?.[i];
 
                       if (card) {
-                        // 明确 color 映射（从 long name 映射为缩写）
-                        const colorMap: Record<string, string> = {
-                          blue: 'b',
-                          red: 'r',
-                          green: 'g',
-                          white: 'w',
-                          black: 'u'
-                        };
-                        // 检查颜色是否已经是短代码
                         const shortColor = card.color && card.color.length === 1 
                           ? card.color 
-                          : (colorMap[card.color] || 'u');
+                          : mapColorToFrontend(card.color);
 
                         return (
                           <div
