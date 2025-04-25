@@ -105,6 +105,11 @@ reason).
 |                                | 2025.4.25 | [e48e4bd](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/e48e4bdff36ce021759dc4ed81925237d95d2c26) | #21 fix card purchase logic and deploy error | allows using gold gems properly, fixing key game rules |
 | **Haizhou Zhou (@Haizhouzhou)** | 2025.4.25 | [8a2c044](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/8a2c044a69e52bd6fa4e2f6a2876b9a23378a38d) | #15 modify tutorial page players mode tutorial | adjusted tutorial logic and UI for different player modes |
 |                                 | 2025.4.25 | [2e7958b](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/2e7958b1940fd4d84f7fcd2c91d83b29c6f9b529) | #15 Add rule description page | added full rule description display to tutorial section |
+| **Philip Spasojevic (@sopraPH)** | 2025.04.13   | [9f7791f](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/27c9ee7d8473211faf916c7c73c29df081e87102) | Added in some of the Player actions to be taken during the game, mainly gem aquisition and reserving cards. also updates the goldcount | gives a first starting point for the actions to be updated |
+|                    | 2025.4.19   | [9e89494](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/9f7791fed5f6a4bcaf8098f8e2ebeea0a1e4fe9a) | Added in End of Turn effects | After a players actions the game will perform end of turn logic, advancing round counter, checking for victory etc. |
+|                    | 2025.4.20   | [16c9f7e](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/16c9f7e1d623e4666d36bbc35e4f8f73698525c2) | Fixed bugs for end of turn |  Fixed end of turn interactions, conflicting with game logic |
+|                    | 2025.4.24   | [9813950](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/98139504578bfc18396364143a8578ce43d47799) | Added in test cases for player action service | Added in tests to cover the code of player action methods for code coverage |
+|                    | 2025.4.24   | [34bdad5](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/34bdad5a0cb1026d542293601d4ad60da8d34e67) | Added in additional test cases for player action service | Added in more tests tests to cover the code of player action methods for code coverage in sonarqube|
 
 ---
 
