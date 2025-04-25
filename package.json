@@ -12,14 +12,19 @@
   "dependencies": {
     "@ant-design/nextjs-registry": "^1.0.2",
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "favico.js": "^0.3.10",
+    "lucide-react": "^0.503.0",
     "moment": "^2.30.1",
     "msw": "^1.3.5",
     "next": "^15.2.0",
     "node-localstorage": "^3.0.5",
     "process": "^0.11.10",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tailwind-merge": "^3.2.0",
+    "tw-animate-css": "^1.2.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.0",

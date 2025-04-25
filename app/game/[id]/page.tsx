@@ -65,11 +65,27 @@ interface PlayerSnapshot {
   reservedCardIds?: number[];
 }
 
+interface GameOverPlayer {
+  userId: number | string;
+  name: string;
+  avatar?: string;
+  victoryPoints: number;
+}
+
+interface GameOverData {
+  players: GameOverPlayer[];
+  winnerId: number | string;
+}
+
+
 type WSMessageType = "state" | "chat" | "start" | "error" | "info" | "ai_hint";
 interface WSMessage {
   type: WSMessageType;
   payload: any;
 }
+
+const COLOR_ORDER = ["r", "g", "b", "u", "w", "x"];
+
 
 const CountdownTimer = ({ initialSeconds = 30 }: { initialSeconds?: number }) => {
   const [seconds, setSeconds] = useState(initialSeconds);
@@ -103,6 +119,24 @@ const mapColorToFrontend = (color: string): string => {
   return result;
 };
 
+const buttonStyle: React.CSSProperties = {
+  flex: 1,
+  backgroundColor: "rgba(255, 150, 0, 0.8)",
+  border: "3px solid #ff6a00",
+  borderRadius: "8px",
+  padding: "10px 5px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  boxShadow: "0 0 20px rgba(255, 150, 0, 0.6)",
+  fontSize: "20px",
+  fontWeight: "bold",
+  color: "#000",
+  textShadow: "1px 1px 2px rgba(0,0,0,0.5)"
+};
+
+
 export default function GamePage() {
   const params = useParams();
   const gameId = params.id as string;
@@ -112,7 +146,7 @@ export default function GamePage() {
   const [showChat, setShowChat] = useState(false);
   const [chatNotify, setChatNotify] = useState(false);
 
-  const [seconds, setSeconds] = useState(300);
+  const [seconds, setSeconds] = useState(30); //自动 passturn 倒计时, 需要同步修改effect
   const [isTimeUp, setIsTimeUp] = useState(false);
 
   const stableGameId = useRef(params.id as string).current;
@@ -120,18 +154,13 @@ export default function GamePage() {
 
   const { lastGameState, clearGameState } = useGameState();
 
+  const [currentAction, setCurrentAction] = useState<"take" | "buy" | "reserve" | null>(null);
+  const [selectedGems, setSelectedGems] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (seconds <= 0) {
-      setIsTimeUp(true);
-      return;
-    }
-    const timer = setInterval(() => {
-      setSeconds((prev) => prev - 1);
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, [seconds]);
+  const [gameOver, setGameOver] = useState<boolean>(false);
+  const [gameOverData, setGameOverData] = useState<GameOverData | null>(null);
+  
+  
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -158,6 +187,54 @@ export default function GamePage() {
     : {};
 
   const hasJoinedRef = useRef(false);
+  const [lastHandledTurnId, setLastHandledTurnId] = useState<number | null>(null);
+  const [lastHandledPlayerId, setLastHandledPlayerId] = useState<number | null>(null);
+
+
+
+
+  useEffect(() => {
+    if (seconds <= 0) {
+      setIsTimeUp(true);
+      if (gameState && gameState.currentPlayerId === currentUser.id) {
+        console.log("Time out, PASS TURN");
+        sendMessage({
+          type: "END_TURN",
+          roomId: gameId,
+          sessionId: stableSessionId,
+          content: {
+            userId: currentUser.id,
+            target: ""
+          }
+        });
+      }
+      return;
+    }
+  
+    const timer = setInterval(() => {
+      setSeconds((prev) => prev - 1);
+    }, 1000);
+  
+    return () => clearInterval(timer);
+  }, [
+    seconds,
+    gameState,
+    currentUser.id,
+    gameId,
+    stableSessionId,
+    sendMessage,
+    lastHandledPlayerId
+  ]);
+
+  useEffect(() => {
+    if (gameState && gameState.currentPlayerId === currentUser.id) {
+      setSeconds(30);
+      setIsTimeUp(false); 
+      setLastHandledPlayerId(null);
+    }
+  }, [gameState?.currentPlayerId, currentUser.id]);
+  
+  
 
 
   // WebSocket消息处理函数
@@ -282,6 +359,26 @@ export default function GamePage() {
           setHintLoading(false);
         }
         break;
+
+        case "GAME_OVER":
+          console.log("Game Over data received:", msg.content);
+          if (msg.content) {
+            let content: GameOverData;
+            if (typeof msg.content === 'string') {
+              try {
+                content = JSON.parse(msg.content);
+              } catch (e) {
+                console.error("Failed to parse GAME_OVER message:", e);
+                return;
+              }
+            } else {
+              content = msg.content as GameOverData;
+            }
+            
+            setGameOverData(content);
+            setGameOver(true);
+          }
+          break;
     }
   }
 
@@ -384,7 +481,7 @@ function checkColorFormat(obj: any, path: string = 'root') {
     }
   }, [lastGameState, cardsData, noblesData]);
 
-  
+
 // 添加这个useEffect专门处理pendingGameState
 useEffect(() => {
   if (pendingGameState && cardsData.length > 0 && noblesData.length > 0) {
@@ -408,6 +505,70 @@ useEffect(() => {
 }, [pendingGameState, cardsData, noblesData, userMap]);
   
   
+const mapFrontendToBackendGemColor = (shortCode: string): string => {
+  const reverseMap: Record<string, string> = {
+    r: "RED",
+    g: "GREEN",
+    b: "BLUE",
+    u: "BLACK",
+    w: "WHITE",
+    x: "GOLD"
+  };
+  return reverseMap[shortCode] || shortCode;
+};
+
+//action logic
+const handleGemSelect = (color: string) => {
+  if (selectedGems.includes(color)) {
+    setSelectedGems(selectedGems.filter(c => c !== color));
+  } else {
+    if (selectedGems.length >= 3) return;
+    setSelectedGems([...selectedGems, color]);
+  }
+  console.log("选中颜色:", color, "映射发送为:", mapFrontendToBackendGemColor(color));
+};
+
+const handleConfirmGems = () => {
+  const publicGems = gameState?.gems || {};
+
+  // 玩家选了两个相同颜色的宝石
+  if (selectedGems.length === 1) {
+    const color = selectedGems[0];
+    if (publicGems[color] < 4) {
+      alert("Cannot take two gems of the same color: at least 4 gems must be available to do so!");
+      return; // 取消发送
+    }
+
+    sendAction("take_double", "", { color: mapFrontendToBackendGemColor(color) });
+  }
+
+  // 玩家选了三个不同颜色的宝石
+  else if (selectedGems.length === 3) {
+    const invalid = selectedGems.some(color => publicGems[color] <= 0);
+    if (invalid) {
+      alert("One or more selected gem colors are unavailable!");
+      return;
+    }
+
+    const colors = selectedGems.map(mapFrontendToBackendGemColor);
+    sendAction("take_three", "", { colors });
+  }
+
+  // 其他情况都不合法
+  else {
+    alert("Invalid selection: choose 3 different or 1 color twice.");
+    return;
+  }
+
+  // ✅ 合法才执行这些
+  setCurrentAction(null);
+  setSelectedGems([]);
+  setSeconds(0); // 倒计时归零
+  sendAction("next", "");
+};
+
+
+
 
   // 转换游戏状态函数 - 改进版本
   function transformGameState(data: any, cardsData: any[], noblesData: any[], userMap: Record<string | number, { name: string }>): GameState | null {    console.log("正在转换游戏状态:", data);
@@ -424,25 +585,19 @@ useEffect(() => {
 
       
     // 查找卡牌的辅助函数
-    const getCardById = (id: number): Card | null => {
-      if (!id) return null;
-      
-      const card = cardsData.find(c => c.id === id);
+    const getCardById = (id: number | string): Card | null => {
+      const numId = typeof id === "string" ? parseInt(id) : id;
+      const card = cardsData.find(c => c.id === numId);
       if (!card) {
-        console.warn(`未找到ID为 ${id} 的卡牌`);
+        console.warn(`未找到ID为 ${numId} 的卡牌`);
         return null;
       }
-      
-      // 为调试添加日志
-      // console.log(`找到卡牌ID ${id}:`, card);
-      
-      // 直接使用原始颜色名称，不进行转换
       return {
         uuid: card.id.toString(),
         level: `level${card.tier}`,
-        color: mapColorToFrontend(card.color), 
+        color: mapColorToFrontend(card.color),
         points: card.points || 0,
-        cost: transformCost(card.cost) 
+        cost: transformCost(card.cost)
       };
     };
     
@@ -476,14 +631,23 @@ useEffect(() => {
       };
     };
     
+    const COLOR_ORDER = ["r", "g", "b", "u", "w", "x"];
     // 转换宝石到前端格式
     const transformGems = (gems: Record<string, number> | undefined): Record<string, number> => {
-      if (!gems) return {};
       const result: Record<string, number> = {};
-      Object.entries(gems).forEach(([color, count]) => {
-        const frontendColor = mapColorToFrontend(color);
-        result[frontendColor] = count;
-      });
+    
+      // 初始化所有颜色为 0，确保有序并不缺项
+      COLOR_ORDER.forEach(color => result[color] = 0);
+    
+      if (gems) {
+        Object.entries(gems).forEach(([color, count]) => {
+          const frontendColor = mapColorToFrontend(color);
+          if (frontendColor in result) {
+            result[frontendColor] = count;
+          }
+        });
+      }
+    
       return result;
     };
     
@@ -516,11 +680,39 @@ useEffect(() => {
         level2: [],
         level3: []
       };
+
+      // bonusGems
+      const bonusGems = player.bonusGems || {};
+      Object.entries(bonusGems).forEach(([color, count]) => {
+        const shortColor = mapColorToFrontend(color);
+        const level = "level1"; // 假设所有折扣卡显示为level1
+        const baseCard: Card = {
+          uuid: `bonus-${shortColor}-${index}`, // 确保唯一
+          level,
+          color: shortColor,
+          points: 0,
+          cost: {}
+        };
+        for (let i = 0; i < count; i++) {
+          playerCards[level].push({ ...baseCard, uuid: `${baseCard.uuid}-${i}` });
+        }
+      });
+
+
+
       
       // 获取玩家预留的卡牌
       const reservedCards = (player.reservedCardIds || [])
-        .map((id: number) => getCardById(id))
-        .filter(Boolean) as Card[];
+        .map((id: number) =>  {
+          console.log(`📥 玩家 ${player.name || player.userId} 预定卡ID:`, id);
+          const found = getCardById(id);
+          if (!found) {
+            console.warn("⚠️ 未能从 cardsData 找到卡牌，ID =", id);
+          } else {
+            console.log("✅ 找到预定卡:", found);
+          }
+          return found;
+        }).filter(Boolean) as Card[];
       
       return {
         id: player.userId,
@@ -653,20 +845,26 @@ useEffect(() => {
   };
 
   // 处理卡牌操作的函数
-  const handleCardAction = (action: string, cardUuid: string) => {
+  const handleCardAction = (cardUuid: string) => {
     if (!gameState) return;
-    
-    // 找到当前玩家
-    const currentPlayer = gameState.players.find(p => p.id === currentUser.id);
-    if (!currentPlayer) {
-      console.warn("找不到当前玩家数据");
+  
+    // Ensure the player has selected an action
+    if (currentAction !== "buy" && currentAction !== "reserve") {
+      alert("Please choose an action before interacting with cards.");
       return;
     }
-    
-    // 寻找要操作的卡牌
+  
+    // Find the current player
+    const currentPlayer = gameState.players.find(p => p.id === currentUser.id);
+    if (!currentPlayer) {
+      console.warn("Current player not found.");
+      return;
+    }
+  
+    // Try to find the clicked card
     let targetCard: Card | undefined;
-    
-    // 从所有展示的卡牌中查找
+  
+    // Search visible cards
     for (const level in gameState.cards) {
       const found = gameState.cards[level].find(card => card.uuid === cardUuid);
       if (found) {
@@ -674,32 +872,40 @@ useEffect(() => {
         break;
       }
     }
-    
-    // 如果没找到，可能是从预留卡牌列表中选择的
+  
+    // Search reserved cards if not found
     if (!targetCard) {
       targetCard = currentPlayer.reserved.find(card => card.uuid === cardUuid);
     }
-    
+  
     if (!targetCard) {
-      console.warn("未找到卡牌:", cardUuid);
+      console.warn("Card not found:", cardUuid);
       return;
     }
-    
-    if (action === "buy") {
+  
+    // Action-specific logic
+    if (currentAction === "buy") {
       if (canAffordCard(targetCard)) {
         sendAction("buy", cardUuid);
+        setCurrentAction(null); // Auto pass after action
+        setSeconds(0); //倒计时归零
+        sendAction("next", "");
       } else {
-        alert("您没有足够的宝石购买此卡!");
+        alert("You don't have enough gems to buy this card.");
       }
-    } else if (action === "reserve") {
-      // 检查是否已经有3张预留卡牌
+    } else if (currentAction === "reserve") {
       if (currentPlayer.reserved.length >= 3) {
-        alert("您已经有3张预留卡牌了!");
+        alert("You already have 3 reserved cards.");
       } else {
+        console.log("📤 发送 RESERVE 请求, cardUuid =", cardUuid);
         sendAction("reserve", cardUuid);
+        setCurrentAction(null); // Auto pass after action
+        setSeconds(0); //倒计时归零
+        sendAction("next", ""); 
       }
     }
   };
+  
 
   const requestAiHint = () => {
     if (!isPlayerTurn() || hintCount >= 3) return; // 限制使用3次
@@ -736,12 +942,19 @@ useEffect(() => {
         break;
       case "take":
         messageType = "TAKE_GEM";
+        target = mapFrontendToBackendGemColor(target);
         break;
       case "chat":
         messageType = "PLAYER_MESSAGE";
         break;
       case "next":
         messageType = "END_TURN";
+        break;
+      case "take_three":
+        messageType = "TAKE_THREE_GEMS";
+        break;
+      case "take_double":
+        messageType = "TAKE_DOUBLE_GEM";
         break;
       default:
         messageType = action.toUpperCase();
@@ -750,6 +963,7 @@ useEffect(() => {
     sendMessage({
       type: messageType,
       roomId: gameId,
+      sessionId: stableSessionId,
       content: {
         userId: currentUser.id,
         target,
@@ -791,6 +1005,190 @@ useEffect(() => {
     x: "gold",
   };
   
+  const GameOverModal = () => {
+    if (!gameOver || !gameOverData) return null;
+    
+    return (
+      <div style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1000
+      }}>
+        <div style={{
+          width: "80%",
+          maxWidth: "600px",
+          backgroundColor: "rgba(20, 20, 40, 0.95)",
+          borderRadius: "10px",
+          border: "3px solid gold",
+          boxShadow: "0 0 30px rgba(255, 215, 0, 0.7)",
+          padding: "20px",
+          color: "white",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center"
+        }}>
+          <h2 style={{
+            fontSize: "36px",
+            textAlign: "center",
+            margin: "10px 0 20px 0",
+            color: "gold",
+            textShadow: "0 0 10px rgba(255, 215, 0, 0.7)"
+          }}>Game Over</h2>
+          
+          <div style={{
+            width: "100%",
+            margin: "10px 0 20px 0"
+          }}>
+            <table style={{
+              width: "100%",
+              borderCollapse: "separate",
+              borderSpacing: "0 8px"
+            }}>
+              <thead>
+                <tr style={{
+                  height: "40px",
+                  fontSize: "18px",
+                  color: "#FFD700"
+                }}>
+                  <th style={{ textAlign: "center", width: "10%" }}>#</th>
+                  <th style={{ textAlign: "left", width: "20%" }}>Avatar</th>
+                  <th style={{ textAlign: "left", width: "40%" }}>Player</th>
+                  <th style={{ textAlign: "center", width: "30%" }}>Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gameOverData.players
+                  .sort((a, b) => b.victoryPoints - a.victoryPoints)
+                  .map((player, index) => {
+                    const isWinner = player.userId === gameOverData.winnerId;
+                    return (
+                      <tr key={player.userId} style={{
+                        height: "60px",
+                        backgroundColor: isWinner ? "rgba(255, 215, 0, 0.2)" : "rgba(30, 30, 60, 0.7)",
+                        border: isWinner ? "2px solid gold" : "1px solid #444",
+                        borderRadius: "8px",
+                        transform: isWinner ? "scale(1.05)" : "scale(1)",
+                        transition: "all 0.3s ease"
+                      }}>
+                        <td style={{ 
+                          textAlign: "center", 
+                          fontWeight: "bold",
+                          color: isWinner ? "gold" : "white"
+                        }}>
+                          {index + 1}
+                        </td>
+                        <td style={{ 
+                          textAlign: "center",
+                          padding: "5px"
+                        }}>
+                          <div style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            backgroundColor: isWinner ? "gold" : "#666",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            margin: "0 auto",
+                            overflow: "hidden"
+                          }}>
+                            {player.avatar ? (
+                              <img 
+                                src={`/avatar/${player.avatar}`} 
+                                alt={player.name}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover"
+                                }}
+                              />
+                            ) : (
+                              <div style={{
+                                fontSize: "20px",
+                                fontWeight: "bold",
+                                color: "#333"
+                              }}>
+                                {player.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td style={{ 
+                          fontWeight: isWinner ? "bold" : "normal",
+                          color: isWinner ? "gold" : "white",
+                          fontSize: isWinner ? "18px" : "16px"
+                        }}>
+                          {player.name}
+                          {isWinner && (
+                            <span style={{ marginLeft: "10px" }}>👑</span>
+                          )}
+                        </td>
+                        <td style={{ 
+                          textAlign: "center",
+                          fontWeight: "bold",
+                          fontSize: isWinner ? "24px" : "20px",
+                          color: isWinner ? "gold" : "white"
+                        }}>
+                          {player.victoryPoints}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+          
+          <div style={{
+            marginTop: "20px",
+            display: "flex",
+            justifyContent: "center",
+            gap: "15px"
+          }}>
+            <button
+              onClick={() => window.location.href = "/lobby"}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "rgba(100, 100, 200, 0.8)",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                fontSize: "16px",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+            >
+              Back to Lobby
+            </button>
+            
+            <button
+              onClick={() => setGameOver(false)}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "rgba(100, 200, 100, 0.8)",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                fontSize: "16px",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+            >
+              View Board
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+
   return (
     <div id="game-board" style={{
       backgroundImage: "url('/gamesource/tile_background.png')",
@@ -804,6 +1202,27 @@ useEffect(() => {
       flexDirection: "column", // 垂直堆叠所有内容
       alignItems: "center" // 水平居中
     }}>
+
+    {gameOverData && !gameOver && (
+      <button 
+        onClick={() => setGameOver(true)}
+        style={{
+          position: "fixed",
+          top: "20px",
+          right: "20px",
+          zIndex: 1001,
+          backgroundColor: "gold",
+          color: "#000",
+          border: "2px solid #fff",
+          padding: "8px 12px",
+          borderRadius: "6px",
+          fontWeight: "bold",
+          cursor: "pointer"
+        }}
+      >
+        Show Result
+      </button>
+    )}
 
       {/* game logo and room name */}
       <div style={{
@@ -943,14 +1362,14 @@ useEffect(() => {
                     <div
                       key={card.uuid}
                       className={`card card-${card.color.toLowerCase()} card-${card.level}`}
-                      onClick={() => handleCardAction("buy", card.uuid)}
+                      onClick={() => handleCardAction(card.uuid)}
                     >
                         <div
                           className={`reserve ${isPlayerTurn() ? 'active' : 'inactive'}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (isPlayerTurn()) {
-                              handleCardAction("reserve", card.uuid);
+                              handleCardAction(card.uuid);
                             }
                           }}
                         >
@@ -991,39 +1410,25 @@ useEffect(() => {
             justifyContent: "space-around",
             marginTop: "5px" 
           }}>
-            {gameState?.gems &&
-              Object.entries(gameState.gems)
-                .sort(([colorA], [colorB]) => {
-                  return colorA === 'x' ? 1 : colorB === 'x' ? -1 : 0;
-                })
-                .map(([color, count]) => {
-                  const lowerColor = color.toLowerCase(); 
-                  let chipClass = `${mapColorToFrontend(color)}chip`;
 
-                  if (lowerColor === "x" || color === "x") {
-                    chipClass = "xchip";
-                  } else if (lowerColor === "u") {
-                    chipClass = "uchip";
-                  } else if (lowerColor === "b") {
-                    chipClass = "bchip";
-                  } else if (lowerColor === "r") {
-                    chipClass = "rchip";
-                  } else if (lowerColor === "g") {
-                    chipClass = "gchip";
-                  } else if (lowerColor === "w") {
-                    chipClass = "wchip";
-                  }
-              
+            {gameState?.gems &&
+              COLOR_ORDER.map((color) => {
+                const count = gameState.gems[color] || 0;
+                const chipClass = `${color}chip`; // 直接使用 class 名称，无需 if 判断
+
                 return (
                   <div
                     key={color}
                     className={`gem ${chipClass} ${isPlayerTurn() ? 'active' : 'inactive'}`}
                     onClick={() => {
-                      if (isPlayerTurn()) {
-                        sendAction("take", color);
-                      } else {
-                        alert("It's not your turn!");
+                      if (!isPlayerTurn()) return;
+
+                      if (currentAction !== "take") {
+                        alert("Please choose 'Take Gems' first.");
+                        return;
                       }
+
+                      handleGemSelect(color);
                     }}
                   >
                     <div className="bubble" style={{
@@ -1048,7 +1453,9 @@ useEffect(() => {
                     <div className="underlay"></div>
                   </div>
                 );
-              })}
+              })
+            }
+
           </div>
         </div>
         
@@ -1104,12 +1511,17 @@ useEffect(() => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginBottom: "5px", // 减小底部边距
-                    fontSize: "0.95em" // 稍微缩小字体
+                    marginBottom: "5px",
+                    fontSize: "0.95em",
+                    fontWeight: player.id === currentUser.id ? "bold" : "normal",
+                    color: player.id === currentUser.id ? "#90ee90" : "white", // 当前用户绿色
+                    animation: gameState.currentPlayerId === player.id ? "pulse 2s infinite" : "none"
                   }}>
-                    <span>{player.name}</span>
+                    <span>
+                      {gameState.currentPlayerId === player.id && "Current Player: "}
+                      {player.id === currentUser.id ? "You" : player.name}
+                    </span>
                     <span>Score: {player.score}</span>
-                    {gameState.currentPlayerId === player.id && <span className="turnIndicator">←</span>}
                   </div>
   
                   {/* Nobles */}
@@ -1135,61 +1547,75 @@ useEffect(() => {
                     marginBottom: "10px",
                     width: "100%"
                   }}>
-                    {Object.entries(player.gems)
-                      .sort(([colorA], [colorB]) => {
-                        return colorA === "x" ? 1 : colorB === "x" ? -1 : 0;
-                      })
-                      .map(([color, count]) => {
-                        const normalizedColor = color.toLowerCase();
+                    {['r', 'g', 'u', 'b', 'w', 'x'].map((color) => {
+                      const count = player.gems[color] || 0;
 
-                        const cardCount = Object.values(player.cards || {})
-                          .flat()
-                          .filter((card) => card.color.toLowerCase() === normalizedColor).length;
+                      const cardCount = Object.values(player.cards || {})
+                        .flat()
+                        .filter((card) => card.color === color).length;
 
-                        const chipColor = color === 'r' ? 'red' :
-                                          color === 'g' ? 'green' :
-                                          color === 'b' ? 'blue' :
-                                          color === 'u' ? 'black' :
-                                          color === 'w' ? 'white' :
-                                          color === 'x' ? 'gold' : 'black';
+                      const chipColor = color === 'r' ? 'red' :
+                                        color === 'g' ? 'green' :
+                                        color === 'b' ? 'blue' :
+                                        color === 'u' ? 'black' :
+                                        color === 'w' ? 'white' :
+                                        color === 'x' ? 'gold' : 'black';
 
-                        return (
-                          <div key={color} className="statSet" style={{ 
-                            margin: "0",
-                            minWidth: "auto", 
-                            textAlign: "center"
-                          }}>
-                            <div className="stat" style={{ 
-                              fontSize: "0.8em", 
-                              padding: "2px 4px"
-                            }}>{count}/{cardCount}</div>
-                            <div className={`chip chip-${chipColor}`} style={{
-                              width: "30px",
-                              height: "30px"
-                            }} />
-                          </div>
-                        );
-                      })}
+                      return (
+                        <div key={color} className="statSet" style={{ 
+                          margin: "0",
+                          minWidth: "auto", 
+                          textAlign: "center"
+                        }}>
+                          <div className="stat" style={{ 
+                            fontSize: "0.8em", 
+                            padding: "2px 4px"
+                          }}>{count} + {cardCount}</div>
+                          <div className={`chip chip-${chipColor}`} style={{
+                            width: "30px",
+                            height: "30px"
+                          }} />
+                        </div>
+                      );
+                    })}
 
                   </div>
   
                   {/* Reserved Cards */}
                   <div className="reserveCards">
                     {[0, 1, 2].map((i) => {
-                      const card = player.reserved[i];
-                      
+                      const card = player.reserved?.[i];
+
                       if (card) {
+                        // 明确 color 映射（从 long name 映射为缩写）
+                        const colorMap: Record<string, string> = {
+                          blue: 'b',
+                          red: 'r',
+                          green: 'g',
+                          white: 'w',
+                          black: 'u'
+                        };
+                        // 检查颜色是否已经是短代码
+                        const shortColor = card.color && card.color.length === 1 
+                          ? card.color 
+                          : (colorMap[card.color] || 'u');
+
+                        console.log(`🧩 渲染 reserved 卡 slot ${i} ID: ${card.uuid}`, card);
+
                         return (
-                          <div 
-                            key={card.uuid} 
-                            className={`card card-${card.color} ${card.level}`}
+                          <div
+                            key={card.uuid}
+                            className={`card card-${shortColor} card-${card.level}`} // 移除 card-${i}，保持与主区域一致
                             onClick={() => {
                               if (player.id === currentUser.id && isPlayerTurn()) {
-                                handleCardAction("buy", card.uuid);
+                                handleCardAction(card.uuid);
                               }
                             }}
                           >
-                            <div className="points">{card.points}</div>
+                            <div className="header">
+                              <div className={`color ${shortColor}gem`}></div>
+                              <div className="points">{card.points}</div>
+                            </div>
                             <div className="overlay"></div>
                             <div className="costs">
                               {Object.entries(card.cost).map(([color, count]) =>
@@ -1204,20 +1630,24 @@ useEffect(() => {
                         );
                       } else {
                         return (
-                          <div 
+                          <div
                             key={`reserved-empty-${i}`}
-                            style={{ 
+                            style={{
                               width: "32%",
-                              aspectRatio: "0.7", 
+                              aspectRatio: "0.8",
                               border: "1px dashed rgba(255,255,255,0.3)",
                               borderRadius: "4px",
                               backgroundColor: "rgba(0,0,0,0.1)"
-                            }} 
+                            }}
                           />
                         );
                       }
                     })}
                   </div>
+
+
+
+
                 </div>
               );
             })}
@@ -1290,7 +1720,87 @@ useEffect(() => {
               )}
             </button>
           </div>
-          
+
+          {isPlayerTurn() && (
+            <div style={{
+              marginBottom: "15px",
+              padding: "10px",
+              backgroundColor: "rgba(0,0,0,0.2)",
+              borderRadius: "8px",
+              textAlign: "center"
+            }}>
+              {currentAction === null ? (
+                <>
+                  <div style={{ fontSize: "18px", marginBottom: "10px", color: "#FFD700" }}>
+                    Please take your action:
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center", gap: "15px" }}>
+                    <button onClick={() => setCurrentAction("take")} style={buttonStyle}>Take Gems</button>
+                    <button onClick={() => setCurrentAction("buy")} style={buttonStyle}>Buy Card</button>
+                    <button onClick={() => setCurrentAction("reserve")} style={buttonStyle}>Reserve Card</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ marginBottom: "10px", color: "#80ffcc" }}>
+                    You selected: <strong>{currentAction.toUpperCase()}</strong>
+                  </div>
+                  <button onClick={() => {
+                    setCurrentAction(null);
+                    setSelectedGems([]);
+                  }} style={{
+                    ...buttonStyle,
+                    backgroundColor: "#cc3333"
+                  }}>Back</button>
+                </>
+              )}
+            </div>
+          )}
+
+            {currentAction === "take" && (
+              <div style={{
+                marginTop: "10px",
+                textAlign: "center"
+              }}>
+                <div style={{ color: "#fff", marginBottom: "5px" }}>
+                  💎 Select gems: 3 different or 2 of the same
+                </div>
+                <div style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: "10px",
+                  flexWrap: "wrap"
+                }}>
+                  {["r", "g", "b", "u", "w"].map(color => (
+                    <div
+                      key={color}
+                      className={`${color}chip gem ${selectedGems.includes(color) ? "selected" : ""}`}
+                      onClick={() => handleGemSelect(color)}
+                      style={{
+                        width: "76px",
+                        height: "76px",
+                        border: selectedGems.includes(color)
+                          ? "3px solid yellow"
+                          : "1px solid #aaa",
+                        borderRadius: "50%",
+                        cursor: "pointer"
+                      }}
+                    />
+                  ))}
+                </div>
+                <div style={{ marginTop: "10px" }}>
+                  <button
+                    onClick={handleConfirmGems}
+                    style={{ ...buttonStyle, backgroundColor: "#22bb55" }}
+                  >
+                    Confirm Gems
+                  </button>
+                </div>
+              </div>
+            )}
+
+
+
           {/* Game Control Area */}
           <div style={{
             display: "flex",
@@ -1338,6 +1848,7 @@ useEffect(() => {
             }}
             onClick={() => {
               if (isPlayerTurn()) {
+                setSeconds(0); //倒计时归零
                 sendAction("next", "");
               } else {
                 alert("It's not your turn!");
@@ -1446,5 +1957,6 @@ useEffect(() => {
           </>
         )}
       </div>
+      {gameOver && <GameOverModal />}
     </div>
   )}

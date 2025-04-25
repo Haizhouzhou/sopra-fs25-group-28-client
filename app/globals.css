@@ -423,24 +423,9 @@ body {
     width: 100% !important;
     min-width: 0 !important;
     display: flex !important;
-    gap: 5px !important;
-    justify-content: space-between !important;
+    gap: 3px !important;
+    justify-content: flex-start !important;
   }
-  
-  /* .reserveCards {
-    vertical-align: top;
-    display: inline-block;
-    width: 291px;
-    height: 120px;
-    border-radius: 5px;
-    padding: 7px;
-    padding-left: 10px;
-    padding-right: 2px;
-    border: 2px solid black;
-    -webkit-box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.2);
-    -moz-box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.2);
-    box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.2);
-  } */
   
   .reserveArea .reserve {
     display: none;
@@ -573,16 +558,155 @@ body {
     display: block;
   }
 
-  .reserveCards .card {
-    width: 32% !important;
-    aspect-ratio: 0.7 !important; /* 现代浏览器 */
-    position: relative !important;
-    height: auto !important; /* 重要：让高度由宽高比决定 */
-  }
+/* 调整预定卡牌的比例 - 增加高度但保持宽度不变 */
+.reserveCards .card {
+  width: 25% !important; /* 保持原来的宽度 */
+  aspect-ratio: 0.4 !important; 
+  height: auto !important; 
+  position: relative !important;
+  background-size: 1500% 100% !important;
+  background-image: url('/gamesource/game_page/cards.jpg');
+}
+
+/* 为预定卡牌添加白条条，类似于主卡牌区 */
+.reserveCards .card .header {
+  height: 27.5%;
+  width: 98%;
+  padding-left: 2%;
+  top: 0;
+  position: absolute;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.7); /* 半透明白色背景 */
+}
+
+/* 调整宝石在白条上的位置 */
+.reserveCards .card .color {
+  width: 30%;
+  height: 65%; /* 增加高度使其在白条内更明显 */
+  position: absolute;
+  right: 10%;
+  top: 15%; /* 位置调整到白条内 */
+  background-repeat: no-repeat;
+  background-size: 500% 100%;
+  background-image: url('/gamesource/game_page/gems.png');
+  border-radius: 50%;
+  z-index: 2; /* 确保宝石在白条上方 */
+}
+
+/* 将点数调整到白条内 */
+.reserveCards .card .points {
+  position: absolute;
+  font-size: 170%;
+  font-weight: bold;
+  top: 10%; /* 调整到白条内 */
+  left: 10%; /* 左侧位置 */
+  z-index: 2; /* 确保点数在白条上方 */
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: #777;
+}
+
+/* 增大预定卡牌中的费用显示 */
+.reserveCards .card .costs {
+  text-align: center;
+  width: 24%; /* 增加宽度 */
+  height: 65%; /* 增加高度 */
+  padding-left: 4%;
+  bottom: 4%;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* 增大费用圈和文字 */
+.reserveCards .card .cost {
+  width: 95%; /* 增加圈的大小 */
+  height: 22%; /* 增加圈的大小 */
+  font-size: 120%; /* 增大字体 */
+  font-weight: bold; /* 加粗字体 */
+  border-radius: 50%;
+  border: 2px solid white;
+  margin-bottom: 3px; /* 增加垂直间隔 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white; /* 确保文字颜色对比度高 */
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.7); /* 添加文字阴影增强可读性 */
+}
+
+/* 特别调整白色费用的文字颜色 */
+.reserveCards .card .cost.w {
+  color: #000;
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+/* 调整分数显示 */
+.reserveCards .card .points {
+  position: relative;
+  font-size: 170%; /* 更大的字体 */
+  font-weight: bold; /* 加粗 */
+  top: -5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6); /* 添加阴影增强可读性 */
+}
+  
+/* 红色卡牌 */
+.reserveCards .card.card-r.card-level1 { background-position: 85.71% 0 !important; }
+.reserveCards .card.card-r.card-level2 { background-position: 92.86% 0 !important; }
+.reserveCards .card.card-r.card-level3 { background-position: 100% 0 !important; }
+
+/* 绿色卡牌 */
+.reserveCards .card.card-g.card-level1 { background-position: 64.29% 0 !important; }
+.reserveCards .card.card-g.card-level2 { background-position: 71.43% 0 !important; }
+.reserveCards .card.card-g.card-level3 { background-position: 78.57% 0 !important; }
+
+/* 蓝色卡牌 */
+.reserveCards .card.card-b.card-level1 { background-position: 0% 0 !important; }
+.reserveCards .card.card-b.card-level2 { background-position: 7.143% 0 !important; }
+.reserveCards .card.card-b.card-level3 { background-position: 14.29% 0 !important; }
+
+/* 白色卡牌 */
+.reserveCards .card.card-w.card-level1 { background-position: 42.86% 0 !important; }
+.reserveCards .card.card-w.card-level2 { background-position: 50% 0 !important; }
+.reserveCards .card.card-w.card-level3 { background-position: 57.14% 0 !important; }
+
+/* 黑色卡牌 */
+.reserveCards .card.card-u.card-level1 { background-position: 21.43% 0 !important; }
+.reserveCards .card.card-u.card-level2 { background-position: 28.57% 0 !important; }
+.reserveCards .card.card-u.card-level3 { background-position: 35.71% 0 !important; }
+
+/* 确保预订卡牌的宝石颜色也正确显示 */
+.reserveCards .card .color.rgem { background-position: 100% 0 !important; }
+.reserveCards .card .color.ggem { background-position: 75% 0 !important; }
+.reserveCards .card .color.bgem { background-position: 0% 0 !important; }
+.reserveCards .card .color.wgem { background-position: 50% 0 !important; }
+.reserveCards .card .color.ugem { background-position: 25% 0 !important; }
+  
+
 
   .reserveCards .card .overlay {
     cursor: pointer;
   }
+
+  .reserveCards .bonusGem {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background-image: url('/gamesource/game_page/gems.png');
+    background-size: 500% 100%;
+    z-index: 2;
+  }
+  
+  /* bonusGem 背景定位按宝石顺序来写 */
+  .reserveCards .bonus-u { background-position:   0% 0; }   /* black */
+  .reserveCards .bonus-b { background-position:  25% 0; }   /* blue */
+  .reserveCards .bonus-w { background-position:  50% 0; }   /* white */
+  .reserveCards .bonus-g { background-position:  75% 0; }   /* green */
+  .reserveCards .bonus-r { background-position: 100% 0; }   /* red */
+  
+  
   
   
   .stats {
@@ -1033,12 +1157,12 @@ body {
   }
   
   .uchip {
-    background: url('/gamesource/game_page/chips.jpg') 20% 0;
+    background: url('/gamesource/game_page/chips.jpg') 0% 0;
     background-size: 600% 100%;
   }
   
   .bchip {
-    background: url('/gamesource/game_page/chips.jpg') 0 0;
+    background: url('/gamesource/game_page/chips.jpg') 20% 0;
     background-size: 600% 100%;
   }
   
@@ -1153,6 +1277,119 @@ body {
   .requires.x { background-color: #ffd700; } /* gold */
 
 
+  .game-over-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 400px;
+    max-width: 90%;
+    text-align: center;
+    color: black;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  }
+  
+  .results-table {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .player-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 6px;
+  }
+  
+  .player-result.winner {
+    border: 2px solid gold;
+    background-color: #fff8dc;
+    font-weight: bold;
+  }
+  
+  .player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+  
+  .player-name {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .player-score {
+    min-width: 60px;
+    text-align: right;
+  }
+  
+  .close-btn {
+    margin-top: 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  
+
+  /* 自定义日历样式 */
+.custom-datepicker .ant-picker-input > input {
+  color: white;
+}
+
+.custom-datepicker-popup .ant-picker-panel-container {
+  background-color: #1f3160;
+  border: 1px solid #FFD700;
+}
+
+.custom-datepicker-popup .ant-picker-cell {
+  color: #ffffff;
+}
+
+.custom-datepicker-popup .ant-picker-cell-in-view {
+  color: #ffffff;
+}
+
+.custom-datepicker-popup .ant-picker-cell-selected .ant-picker-cell-inner {
+  background-color: #FFD700;
+  color: #0F2149;
+}
+
+.custom-datepicker-popup .ant-picker-header {
+  color: #ffffff;
+  border-bottom: 1px solid #FFD700;
+}
+
+.custom-datepicker-popup .ant-picker-header button {
+  color: #FFD700;
+}
+
+.custom-datepicker-popup .ant-picker-footer {
+  border-top: 1px solid #FFD700;
+}
+
+.custom-datepicker-popup .ant-picker-today-btn {
+  color: #FFD700;
+}
+
+
   @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
@@ -1160,3 +1397,9 @@ body {
   }
 
   
+  @keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+    50% { transform: scale(1.03); box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); }
+    100% { transform: scale(1); box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+  }
+
