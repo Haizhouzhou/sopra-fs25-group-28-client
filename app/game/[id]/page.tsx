@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// deno-lint-ignore-file no-explicit-any
+/* eslint-disable @typescript-eslint/no-unused-vars */
+// deno-lint-ignore-file no-explicit-any no-unused-vars
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -513,12 +514,12 @@ export default function GamePage() {
 
           const roomContent = msg.content;
           if (roomContent) {
-            // ✅ 更新房间名
+            // 更新房间名
             if (roomContent.roomName || roomContent.name) {
               setRoomName(roomContent.roomName || roomContent.name);
             }
 
-            // ✅ 保存玩家名称映射
+            // 保存玩家名称映射
             if (Array.isArray(roomContent.players)) {
               const userMap: Record<string, { name: string }> = {};
               roomContent.players.forEach((player: PlayerSnapshot) => {
