@@ -35,16 +35,15 @@
 
 ## Introduction
 
-**ACCUMULATE wealth!**
-Collect gems—emeralds, diamonds, sapphires, onyx, rubies—and use them to purchase Development Cards. Each card grants you a permanent bonus (a “discount” on future purchases) and prestige points.
+Two, three, or four players. One goal: build the most prestigious trade empire—who will rise to the top?
 
-**EXERT YOUR INFLUENCE…**
-As soon as you acquire enough bonuses in the right colors, Noble Tiles visit you automatically. Each Noble awards additional prestige points.
+Splendor Online is a web-based multiplayer board game where players compete to collect gems, attract nobles, and claim victory through wealth and influence. Every turn, you’ll gather gems—emeralds(Greem Gem), diamonds(White Gem), sapphires((Blue Gem)), onyx((Black Gem)), rubies((Red Gem))—and use them to purchase Development Cards. These cards give you permanent bonuses (discounts for future purchases) and earn you prestige points.
 
-**CLAIM your trade empire!**
-The game ends when a player reaches **15 prestige points**. Whoever has the highest total then is crowned the winner.
+But it’s not just about buying cards. Earn enough bonuses in the right colors, and Noble Tiles will seek you out, rewarding you with extra prestige points. The first player to reach 15 prestige points triggers the endgame—and whoever holds the highest total wins.
 
-This web-based Splendor brings the classic tabletop experience online, supporting real-time multiplayer, chat, turn timers, and optional AI advice.
+Play with 2–4 friends in real-time online matches, chat as you compete, keep an eye on the turn timer, and if you’re feeling stuck? Turn on the AI Advisor for some strategic tips (or chaotic suggestions).
+
+Whether you’re a seasoned Splendor pro or a newcomer ready to build your empire, Splendor Online brings the classic tabletop experience straight to your browser—no setup, no cleanup, just pure fun.
 
 ## Technologies
 
