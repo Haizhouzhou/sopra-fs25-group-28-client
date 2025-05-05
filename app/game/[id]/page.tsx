@@ -84,6 +84,20 @@ interface GameOverData {
   winnerId: number | string;
 }
 
+interface GemChanges {
+  [key: string]: number;
+}
+
+// 
+interface CardAnimationState {
+  active: boolean;
+  cardId: string;
+  sourceRect: DOMRect | null;
+  targetRect: DOMRect | null;
+  type: string;
+  playerId: number | string | null;
+  cardClasses?: string;
+}
 
 const COLOR_ORDER = ["r", "g", "b", "u", "w", "x"];
 
@@ -173,12 +187,211 @@ export default function GamePage() {
 
   const aiActiveRef = useRef(false); // 表示当前是否在等待 AI
 
+  const [gemChanges, setGemChanges] = useState<GemChanges>({});
+  const prevGameState = useRef<GameState | null>(null);
 
+  const [cardAnimation, setCardAnimation] = useState<CardAnimationState>({
+    active: false,
+    cardId: '',
+    sourceRect: null,
+    targetRect: null,
+    type: '',
+    playerId: null
+  });
+
+  const [aiHintProcessedForTurn, setAiHintProcessedForTurn] = useState(false);
+
+
+  // 计时器显示文本函数
+  const getTimerDisplay = () => {
+    // 如果正在等待AI提示
+    if (hintLoading) {
+      return "Waiting for AI Hint...";
+    }
+    
+    // 如果不是当前玩家的回合
+    if (gameState && gameState.currentPlayerId !== currentUser.id) {
+      const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayerId);
+      const playerName = currentPlayer?.name || "Other player";
+      return `${playerName}'s turn`;
+    }
+    
+    // 如果是当前玩家的回合但时间到了
+    if (isTimeUp) {
+      return "Time's up!";
+    }
+    
+    // 如果是当前玩家的回合，且在当前回合已收到AI提示但还未执行操作
+    if (aiHintProcessedForTurn && gameState?.currentPlayerId === currentUser.id && !currentAction) {
+      return "Choose Action";
+    }
+    
+    // 正常计时显示
+    return `Timer: ${seconds}s`;
+  };
+
+
+
+  const triggerCardAnimation = (cardId: string, type: string, playerId: number | string, cardElement: HTMLElement) => {
+    if (!cardElement) return;
+    
+    // 获取位置信息
+    const sourceRect = cardElement.getBoundingClientRect();
+    const playerElement = document.querySelector(`[data-player-id="${playerId}"]`);
+    if (!playerElement) return;
+    const targetRect = playerElement.getBoundingClientRect();
+    
+    // 创建动画元素
+    const animatedCard = document.createElement('div');
+    // 复制原始卡牌的样式
+    animatedCard.className = cardElement.className;
+    animatedCard.style.position = 'fixed';
+    animatedCard.style.left = `${sourceRect.left}px`;
+    animatedCard.style.top = `${sourceRect.top}px`;
+    animatedCard.style.width = `${sourceRect.width}px`;
+    animatedCard.style.height = `${sourceRect.height}px`;
+    animatedCard.style.zIndex = '1400';
+    animatedCard.style.pointerEvents = 'none';
+    
+    // 添加到文档
+    document.body.appendChild(animatedCard);
+    
+    // 创建并添加标签
+    const label = document.createElement('div');
+    label.textContent = type === "buy" ? "BUY!" : "RESERVE!";
+    label.style.position = 'fixed';
+    label.style.top = `${sourceRect.top - 30}px`;
+    label.style.left = `${sourceRect.left + sourceRect.width/2}px`;
+    label.style.transform = 'translateX(-50%)';
+    label.style.backgroundColor = type === "buy" ? "#22cc22" : "#ff9900";
+    label.style.color = 'white';
+    label.style.padding = '3px 10px';
+    label.style.borderRadius = '5px';
+    label.style.fontWeight = 'bold';
+    label.style.fontSize = '16px';
+    label.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+    label.style.zIndex = '1500';
+    label.style.pointerEvents = 'none';
+    
+    document.body.appendChild(label);
+    
+    // 执行动画
+    const startTime = performance.now(); // 不需要参数
+    const duration = 1000; // 1秒动画
+    
+    function animate(currentTime: number) { // 添加类型注解
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      if (progress < 1) {
+        // 计算卡牌当前位置
+        const currentX = sourceRect.left + progress * (targetRect.left + targetRect.width/2 - sourceRect.left);
+        const currentY = sourceRect.top + progress * (targetRect.top + targetRect.height/2 - sourceRect.top);
+        const scale = 1 - (0.5 * progress);
+        const opacity = 0.9 * (1 - progress);
+        
+        // 更新卡牌位置
+        animatedCard.style.transform = `translate(${currentX - sourceRect.left}px, ${currentY - sourceRect.top}px) scale(${scale})`;
+        animatedCard.style.opacity = opacity.toString();
+        
+        requestAnimationFrame(animate);
+      } else {
+        // 动画结束，移除元素
+        document.body.removeChild(animatedCard);
+        document.body.removeChild(label);
+      }
+    }
+    
+    requestAnimationFrame(animate);
+    
+    // 在原始卡牌上添加高亮效果
+    cardElement.classList.add('card-highlight');
+    setTimeout(() => {
+      if (cardElement) {
+        cardElement.classList.remove('card-highlight');
+      }
+    }, 1000);
+  };
 
 
 
   useEffect(() => {
-    if (seconds <= 0 || aiActiveRef.current) return; // ⛔ AI active 时暂停
+    if (cardAnimation.active && cardAnimation.sourceRect && cardAnimation.targetRect) {
+      const sourceRect = cardAnimation.sourceRect as DOMRect;
+      const targetRect = cardAnimation.targetRect as DOMRect;
+      
+      // 直接记录这些值以便调试
+      console.log("Source position:", sourceRect.left, sourceRect.top);
+      console.log("Target position:", targetRect.left, targetRect.top);
+      
+      document.documentElement.style.setProperty(
+        '--source-x', 
+        `${sourceRect.left}px`
+      );
+      document.documentElement.style.setProperty(
+        '--source-y', 
+        `${sourceRect.top}px`
+      );
+      document.documentElement.style.setProperty(
+        '--target-x', 
+        `${targetRect.left + (targetRect.width / 2)}px`
+      );
+      document.documentElement.style.setProperty(
+        '--target-y', 
+        `${targetRect.top + (targetRect.height / 2)}px`
+      );
+    }
+  }, [cardAnimation]);
+  
+  useEffect(() => {
+    if (gameState && prevGameState.current) {
+      const changes: GemChanges = {};
+      
+      // 遍历所有玩家
+      gameState.players.forEach(player => {
+        const prevPlayer = prevGameState.current?.players.find(p => p.id === player.id);
+        if (prevPlayer) {
+          // 检查宝石和卡牌数量变化
+          ['r', 'g', 'u', 'b', 'w', 'x'].forEach(color => {
+            const prevGems = prevPlayer.gems[color] || 0;
+            const prevCards = Object.values(prevPlayer.cards || {})
+              .flat()
+              .filter((card: any) => card.color === color).length;
+            
+            const currGems = player.gems[color] || 0;
+            const currCards = Object.values(player.cards || {})
+              .flat()
+              .filter((card: any) => card.color === color).length;
+            
+            const prevTotal = prevGems + prevCards;
+            const currTotal = currGems + currCards;
+            
+            if (currTotal !== prevTotal) {
+              const diff = currTotal - prevTotal;
+              if (diff !== 0) {
+                changes[`${player.id}-${color}`] = diff;
+              }
+            }
+          });
+        }
+      });
+      
+      if (Object.keys(changes).length > 0) {
+        setGemChanges(changes);
+        // 2秒后清除动画
+        setTimeout(() => {
+          setGemChanges({});
+        }, 2000);
+      }
+    }
+    
+    // 保存当前状态用于下次比较
+    prevGameState.current = gameState;
+  }, [gameState]);
+
+
+  useEffect(() => {
+    if (seconds <= 0 || aiActiveRef.current || hintLoading) return; // 添加hintLoading条件
   
     const timer = setInterval(() => {
       setSeconds((prev) => {
@@ -205,7 +418,7 @@ export default function GamePage() {
     }, 1000);
   
     return () => clearInterval(timer);
-  }, [seconds, gameState, currentUser.id, gameId, stableSessionId, sendMessage]);
+  }, [seconds, gameState, currentUser.id, gameId, stableSessionId, sendMessage, hintLoading]); // 添加hintLoading依赖
   
 
   useEffect(() => {
@@ -213,6 +426,7 @@ export default function GamePage() {
       setSeconds(59);
       setIsTimeUp(false); 
       setLastHandledPlayerId(null);
+      setAiHintProcessedForTurn(false); // 重置AI提示处理状态
     }
   }, [gameState?.currentPlayerId, currentUser.id]);
   
@@ -357,6 +571,7 @@ export default function GamePage() {
             setHintMessage(hintText);
             setHintLoading(false);
             aiActiveRef.current = false;
+            setAiHintProcessedForTurn(true);
           }
           break;
 
@@ -535,7 +750,7 @@ const handleConfirmGems = () => {
     return;
   }
 
-  // ✅ 合法才执行这些
+  // 合法才执行这些
   setCurrentAction(null);
   setSelectedGems([]);
   setSeconds(0); // 倒计时归零
@@ -824,7 +1039,7 @@ const handleConfirmGems = () => {
   };
 
   // 处理卡牌操作的函数
-  const handleCardAction = (cardUuid: string) => {
+  const handleCardAction = (cardUuid: string, clickedElement: HTMLElement) => {
 
     if (hintLoading) {
       alert("Please wait for the AI advice to complete.");
@@ -871,10 +1086,15 @@ const handleConfirmGems = () => {
     // Action-specific logic
     if (currentAction === "buy") {
       if (canAffordCard(targetCard)) {
+        triggerCardAnimation(cardUuid, "buy", currentUser.id, clickedElement);
+
+      setTimeout(() => {
         sendAction("buy", cardUuid);
         setCurrentAction(null); // Auto pass after action
         setSeconds(0); //倒计时归零
         sendAction("next", "");
+      }, 1000);
+
       } else {
         alert("You don't have enough gems to buy this card.");
       }
@@ -882,11 +1102,15 @@ const handleConfirmGems = () => {
       if (currentPlayer.reserved.length >= 3) {
         alert("You already have 3 reserved cards.");
       } else {
-        console.log("📤 发送 RESERVE 请求, cardUuid =", cardUuid);
-        sendAction("reserve", cardUuid);
-        setCurrentAction(null); // Auto pass after action
-        setSeconds(0); //倒计时归零
-        sendAction("next", ""); 
+        triggerCardAnimation(cardUuid, "reserve", currentUser.id, clickedElement);
+
+        setTimeout(() => {
+          console.log("📤 发送 RESERVE 请求, cardUuid =", cardUuid);
+          sendAction("reserve", cardUuid);
+          setCurrentAction(null); // Auto pass after action
+          setSeconds(0); //倒计时归零
+          sendAction("next", ""); 
+        }, 1000);
       }
     }
   };
@@ -1173,6 +1397,99 @@ const handleConfirmGems = () => {
     );
   };
 
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const QuitConfirmModal = () => {
+    if (!showQuitConfirm) return null;
+    
+    return (
+      <div style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1000
+      }}>
+        <div style={{
+          width: "60%",
+          maxWidth: "400px",
+          backgroundColor: "rgba(20, 20, 40, 0.95)",
+          borderRadius: "10px",
+          border: "3px solid #cc0000",
+          boxShadow: "0 0 30px rgba(255, 0, 0, 0.7)",
+          padding: "20px",
+          color: "white",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center"
+        }}>
+          <h2 style={{
+            fontSize: "24px",
+            textAlign: "center",
+            margin: "10px 0 20px 0",
+            color: "white"
+          }}>Quit Game</h2>
+          
+          <p style={{
+            textAlign: "center",
+            margin: "0 0 20px 0",
+            fontSize: "18px"
+          }}>
+            Are you sure you want to quit the game and return to lobby?
+          </p>
+          
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "15px"
+          }}>
+            <button
+              onClick={() => {
+                if (webSocketService?.isConnected()) {
+                  console.log("退出游戏前关闭WebSocket连接...");
+                  webSocketService.disconnect();
+                }
+                globalThis.location.href = "/lobby";
+              }}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#cc0000",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                fontSize: "16px",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+            >
+              Quit to Lobby
+            </button>
+            
+            <button
+              onClick={() => setShowQuitConfirm(false)}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "rgba(100, 100, 200, 0.8)",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                fontSize: "16px",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+            >
+              Back to Game
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <ResponsiveGameWrapper>
     
@@ -1213,6 +1530,28 @@ const handleConfirmGems = () => {
         Show Result
       </button>
     )}
+
+      {/* Quit Game Button */}
+      <button 
+        onClick={() => setShowQuitConfirm(true)}
+        style={{
+          position: "fixed",
+          top: "20px",
+          left: "20px",
+          zIndex: 1001,
+          backgroundColor: "#cc0000",
+          color: "white",
+          fontWeight: "bold",
+          padding: "8px 12px",
+          borderRadius: "6px",
+          border: "2px solid white",
+          cursor: "pointer",
+          boxShadow: "0 0 10px rgba(255, 0, 0, 0.5)",
+          transition: "all 0.2s ease"
+        }}
+      >
+        Quit Game
+      </button>
 
       {/* game logo and room name */}
       <div style={{
@@ -1346,15 +1685,16 @@ const handleConfirmGems = () => {
                     {gameState?.cards?.[level]?.map((card) => (
                       <div
                         key={card.uuid}
+                        data-card-id={card.uuid}
                         className={`card card-${card.color} card-${card.level}`}
-                        onClick={() => handleCardAction(card.uuid)}
+                        onClick={(e) => handleCardAction(card.uuid, e.currentTarget)}
                       >
                         <div
                           className={`reserve ${isPlayerTurn() ? 'active' : 'inactive'}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (isPlayerTurn()) {
-                              handleCardAction(card.uuid);
+                              handleCardAction(card.uuid, e.currentTarget);
                             }
                           }}
                         >
@@ -1467,7 +1807,7 @@ const handleConfirmGems = () => {
             {gameState?.players?.map((player) => {
               // 定义颜色映射
               return (
-                <div key={player.uuid} className="player" style={{
+                <div key={player.uuid} data-player-id={player.id} className="player" style={{
                   padding: "6px",
                   backgroundColor: "rgba(0, 0, 0, 0.2)",
                   borderRadius: "5px",
@@ -1515,11 +1855,12 @@ const handleConfirmGems = () => {
                   <div className="gem-stats" style={{
                     display: "flex",
                     flexWrap: "nowrap", // 不换行
-                    justifyContent: "space-around", // 均匀分布
-                    gap: "5px",
+                    justifyContent: "space-between", // 改为space-between更合理的分布
+                    gap: "2px", // 减小间距
                     marginBottom: "10px",
                     width: "100%",
-                    overflow: 'auto'
+                    minWidth: "100%", // 确保最小宽度
+                    overflow: "visible" // 改为visible，让内容不被裁剪
                   }}>
                     {['r', 'g', 'u', 'b', 'w', 'x'].map((color) => {
                       const count = player.gems[color] || 0;
@@ -1527,6 +1868,9 @@ const handleConfirmGems = () => {
                       const cardCount = Object.values(player.cards || {})
                         .flat()
                         .filter((card) => card.color === color).length;
+
+                      const totalCount = count + cardCount;
+
 
                       const chipColor = color === 'r' ? 'red' :
                                         color === 'g' ? 'green' :
@@ -1538,9 +1882,54 @@ const handleConfirmGems = () => {
                       return (
                         <div key={color} className="statSet" style={{ 
                           margin: "0",
-                          minWidth: "auto", 
-                          textAlign: "center"
+                          minWidth: "45px",
+                          textAlign: "center",
+                          flexShrink: 0,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center"
                         }}>
+                          {/* 添加总数大数字显示 */}
+                          <div style={{
+                            fontSize: "24px", // 更大的字体
+                            fontWeight: "bold",
+                            marginBottom: "2px",
+                            position: "relative",
+                            color: color === 'r' ? '#ff3333' : // 红色
+                                  color === 'g' ? '#33cc33' : // 绿色
+                                  color === 'b' ? '#3333ff' : // 蓝色
+                                  color === 'u' ? '#333333' : // 黑色
+                                  color === 'w' ? '#ffffff' : // 白色
+                                  color === 'x' ? '#ffcc00' : // 金色
+                                  'white',
+                            textShadow: color === 'w' ? '1px 1px 2px #000' : 'none',
+                            fontFamily: "'Arial Black', Gadget, sans-serif" // 更改字体
+                          }}>
+                            {totalCount}
+
+                            {/* 变化动画 */}
+                              {gemChanges[`${player.id}-${color}`] && (
+                                <div
+                                  className="gem-change-indicator"
+                                  style={{
+                                    position: "absolute",
+                                    top: "-20px",
+                                    right: "-15px",
+                                    color: gemChanges[`${player.id}-${color}`] > 0 ? '#33cc33' : '#ff3333',
+                                    fontSize: "18px",
+                                    fontWeight: "bold",
+                                    opacity: 1,
+                                    animation: "fadeUpAndOut 2s forwards"
+                                  }}
+                                >
+                                  {gemChanges[`${player.id}-${color}`] > 0 ? 
+                                    `+${gemChanges[`${player.id}-${color}`]}` : 
+                                    gemChanges[`${player.id}-${color}`]}
+                                </div>
+                              )}
+
+                          </div>
+
                           <div className="stat" style={{ 
                             fontSize: "0.8em", 
                             padding: "2px 4px"
@@ -1569,9 +1958,9 @@ const handleConfirmGems = () => {
                           <div
                             key={card.uuid}
                             className={`card card-${shortColor} card-${card.level}`} // 移除 card-${i}，保持与主区域一致
-                            onClick={() => {
+                            onClick={(e) => {
                               if (player.id === currentUser.id && isPlayerTurn()) {
-                                handleCardAction(card.uuid);
+                                handleCardAction(card.uuid, e.currentTarget);
                               }
                             }}
                           >
@@ -1838,7 +2227,7 @@ const handleConfirmGems = () => {
                 textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
                 color: "#000"
               }}>
-                {seconds > 0 ? `Timer: ${seconds}s` : "Time's up!"}
+                {getTimerDisplay()}
               </div>
             </div>
             
@@ -1972,6 +2361,60 @@ const handleConfirmGems = () => {
         )}
       </div>
       {gameOver && <GameOverModal />}
+      {<QuitConfirmModal />}
+
+      {/* 卡牌移动动画*/}
+      {cardAnimation.active && cardAnimation.sourceRect && cardAnimation.targetRect && (
+      <div
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          width: "100%",
+          height: "100%",
+          pointerEvents: "none",
+          zIndex: 1000
+        }}
+      >
+        {/* 卡牌动画元素 */}
+        <div
+          className={cardAnimation.cardClasses || "card card-animate"}
+          style={{
+            position: "fixed", // 改为fixed
+            left: `${(cardAnimation.sourceRect as DOMRect).left}px`,
+            top: `${(cardAnimation.sourceRect as DOMRect).top}px`,
+            width: `${(cardAnimation.sourceRect as DOMRect).width}px`,
+            height: `${(cardAnimation.sourceRect as DOMRect).height}px`,
+            boxShadow: "0 0 15px rgba(255, 215, 0, 0.8)",
+            animation: "moveCard 1s forwards",
+            zIndex: 1400 // 确保在标签下方但在其他内容上方
+          }}
+        />
+        
+        {/* 单独的标签元素 - 固定在原始卡牌位置 */}
+        <div className="action-label" style={{
+          position: "fixed", 
+          top: `${window.scrollY + (cardAnimation.sourceRect as DOMRect).top - 30}px`,
+          left: `${window.scrollX + (cardAnimation.sourceRect as DOMRect).left + ((cardAnimation.sourceRect as DOMRect).width / 2)}px`,
+          transform: "translateX(-50%)",
+          backgroundColor: cardAnimation.type === "buy" ? "#22cc22" : "#ff9900",
+          color: "white",
+          padding: "3px 10px",
+          borderRadius: "5px",
+          fontWeight: "bold",
+          fontSize: "16px",
+          boxShadow: "0 0 10px rgba(0,0,0,0.5)",
+          zIndex: 1500,
+          animation: "pulse 0.5s infinite alternate",
+          pointerEvents: "none"
+        }}>
+          {cardAnimation.type === "buy" ? "BUY!" : "RESERVE!"}
+        </div>
+      </div>
+    )}
+
     </div>
+
+
     </ResponsiveGameWrapper>
   )}

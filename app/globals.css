@@ -206,7 +206,7 @@ body {
   }
   
   #noble-area .noble {
-    cursor: pointer;
+    cursor:  default;
     width: 160px;
     height: 160px;
     margin: 20px 10px;
@@ -228,9 +228,33 @@ body {
   }
   
   #gem-area .gem {
+    cursor: default !important;
+    pointer-events: none !important;
+    transition: none !important;
     height: 76px;
     width: 76px;
   }
+/* 取消底部公共宝石区域(红框区域)的悬停效果 */
+body > #game-board > div[style^="display: flex"] > .gem,  /* 使用层级选择器定位红框区域的宝石 */
+body > #game-board > [style*="margin-bottom"] > .gem,
+body > #game-board > [style*="bottom"] > .gem,
+body > .gem, /* 可能的其他选择器 */
+.root > .gem { /* 更多可能的选择器 */
+  cursor: default !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+/* 覆盖底部红框区域宝石的所有悬停效果 */
+body > #game-board > div[style^="display: flex"] > .gem:hover,
+body > #game-board > [style*="margin-bottom"] > .gem:hover,
+body > #game-board > [style*="bottom"] > .gem:hover,
+body > .gem:hover,
+.root > .gem:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
   
   #player-area {
     display: grid;
@@ -559,25 +583,27 @@ body {
   }
 
 /* 调整预定卡牌的比例 - 增加高度但保持宽度不变 */
-.reserveCards .card {
-  width: 25% !important; /* 保持原来的宽度 */
-  aspect-ratio: 0.4 !important; 
-  height: auto !important; 
+/* 增加选择器优先级，确保样式被应用 */
+#player-area .reserveCards .card {
+  width: 32% !important;
+  aspect-ratio: 0.35 !important;
+  height: auto !important;
   position: relative !important;
   background-size: 1500% 100% !important;
   background-image: url('/gamesource/game_page/cards.jpg');
+  margin: 0 2px !important; /* 调整卡片间距 */
 }
 
 /* 为预定卡牌添加白条条，类似于主卡牌区 */
 .reserveCards .card .header {
-  height: 27.5%;
-  width: 98%;
-  padding-left: 2%;
-  top: 0;
-  position: absolute;
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
-  background-color: rgba(255, 255, 255, 0.7); /* 半透明白色背景 */
+  height: 22% !important;
+  width: 98% !important;
+  padding-left: 2% !important;
+  top: 0 !important;
+  position: absolute !important;
+  border-top-left-radius: 6px !important;
+  border-top-right-radius: 6px !important;
+  background-color: rgba(255, 255, 255, 0.7) !important;
 }
 
 /* 调整宝石在白条上的位置 */
@@ -606,39 +632,41 @@ body {
   -webkit-text-stroke-color: #777;
 }
 
-/* 增大预定卡牌中的费用显示 */
-.reserveCards .card .costs {
-  text-align: center;
-  width: 24%; /* 增加宽度 */
-  height: 65%; /* 增加高度 */
-  padding-left: 4%;
-  bottom: 4%;
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+#player-area .player .reserveCards .card .costs {
+  width: 80% !important;
+  height: 70% !important;
+  bottom: 8% !important;
+  left: 10% !important;
+  position: absolute !important;
+  display: flex !important;
+  flex-flow: row wrap !important; /* 简化的行+换行写法 */
+  justify-content: space-around !important;
+  align-content: flex-end !important;
 }
 
-/* 增大费用圈和文字 */
-.reserveCards .card .cost {
-  width: 95%; /* 增加圈的大小 */
-  height: 22%; /* 增加圈的大小 */
-  font-size: 120%; /* 增大字体 */
-  font-weight: bold; /* 加粗字体 */
-  border-radius: 50%;
-  border: 2px solid white;
-  margin-bottom: 3px; /* 增加垂直间隔 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white; /* 确保文字颜色对比度高 */
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.7); /* 添加文字阴影增强可读性 */
+/* 确保成本图标是圆形且大小合适 */
+#player-area .player .reserveCards .card .cost {
+  width: 23px !important; /* 使用固定像素值而非百分比 */
+  height: 23px !important; /* 确保宽高一致，强制圆形 */
+  min-width: 23px !important; /* 防止收缩 */
+  min-height: 23px !important; /* 防止收缩 */
+  font-size: 18px !important; /* 固定字体大小 */
+  line-height: 1 !important; /* 确保行高为1，文字垂直居中 */
+  border-radius: 50% !important; /* 确保是圆形 */
+  border: 2px solid white !important;
+  margin: 3px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: content-box !important; /* 确保边框不计入宽高 */
+  overflow: visible !important; /* 确保内容不被截断 */
 }
 
 /* 特别调整白色费用的文字颜色 */
-.reserveCards .card .cost.w {
-  color: #000;
-  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
+#player-area .player .reserveCards .card .cost.w {
+  color: #000 !important;
+  text-shadow: none !important;
+  font-weight: bold !important;
 }
 
 /* 调整分数显示 */
@@ -854,16 +882,32 @@ body {
     width: 100%;
   }
   
-  .requires {
-    font-size: 100%;
-    width: 28.7%;
-    height: 20.5%;
-    padding: 4% 14% 4% 14%;
-    margin-left: 10%;
-    border-radius: 14%;
-    border: 1px solid white;
-    margin-bottom: 2%;
+/* 使用更具体的选择器 */
+#noble-area .noble .requirement .requires {
+  /* 确保宽度适合数字 */
+  width: 70%;
+  height: 20.5%;
+  /* 用固定像素内边距替代百分比 */
+  padding: 5px;
+  margin-left: 10%;
+  border-radius: 14%;
+  border: 1px solid white;
+  margin-bottom: 4px;
+  /* 使用flex布局实现文字居中 */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  /* 调整文字 */
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+}
+
+  .requires.w {
+    color: #000;
+    text-shadow: none;
   }
+
   
   .remaining {
     position: absolute;
@@ -1413,3 +1457,39 @@ body {
     }
   }
   
+  @keyframes fadeUpAndOut {
+    0% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    80% {
+      opacity: 0.7;
+      transform: translateY(-20px);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+  }
+
+  @keyframes moveCard {
+    0% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.9;
+    }
+    100% {
+      /* 确保这里的转换计算正确 */
+      transform: translate(
+        calc(var(--target-x) - var(--source-x)), 
+        calc(var(--target-y) - var(--source-y))
+      ) scale(0.5);
+      opacity: 0;
+    }
+  }
+
+  .card-highlight {
+    box-shadow: 0 0 20px rgba(255, 255, 0, 0.8) !important;
+    transform: scale(1.05) !important;
+    transition: all 0.3s ease !important;
+  }
+
