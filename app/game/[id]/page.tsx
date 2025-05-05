@@ -190,7 +190,7 @@ export default function GamePage() {
   const [gemChanges, setGemChanges] = useState<GemChanges>({});
   const prevGameState = useRef<GameState | null>(null);
 
-  const [cardAnimation, setCardAnimation] = useState<CardAnimationState>({
+  const [cardAnimation, _setCardAnimation] = useState<CardAnimationState>({
     active: false,
     cardId: '',
     sourceRect: null,
@@ -232,7 +232,7 @@ export default function GamePage() {
 
 
 
-  const triggerCardAnimation = (cardId: string, type: string, playerId: number | string, cardElement: HTMLElement) => {
+  const triggerCardAnimation = (_cardId: string, type: string, playerId: number | string, cardElement: HTMLElement) => {
     if (!cardElement) return;
     
     // 获取位置信息
