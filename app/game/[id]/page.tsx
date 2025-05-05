@@ -7,7 +7,6 @@ import { useParams } from 'next/navigation';
 import { useWebSocket, WebSocketMessage } from "@/hooks/useWebSocket"; 
 import { useGameState } from '@/hooks/useGameStateContext';
 import ResponsiveGameWrapper from "components/ui/ResponsiveGameWrapper";
-import { GAME_BACKGROUND } from '@/utils/constants';
 
 
 
