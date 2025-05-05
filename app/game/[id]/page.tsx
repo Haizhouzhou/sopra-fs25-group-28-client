@@ -6,6 +6,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from 'next/navigation';
 import { useWebSocket, WebSocketMessage } from "@/hooks/useWebSocket"; 
 import { useGameState } from '@/hooks/useGameStateContext';
+import ResponsiveGameWrapper from "components/ui/ResponsiveGameWrapper";
+import { GAME_BACKGROUND } from '@/utils/constants';
+
+
+
+
 
 // Card Type
 interface Card {
@@ -1168,19 +1174,24 @@ const handleConfirmGems = () => {
     );
   };
 
-
   return (
+    <ResponsiveGameWrapper>
+    
     <div id="game-board" style={{
-      backgroundImage: "url('/gamesource/tile_background.png')",
+      // background: GAME_BACKGROUND,
+      background: 'transparent',
       backgroundSize: "cover",
       backgroundPosition: "center center",
       minHeight: "100vh",
       width: "100%",
-      padding: "20px",
+      padding: "0", // 移除内边距
+      margin: "0", // 移除外边距
+      border: "none", // 移除边框
+      outline: "none", // 移除轮廓
       color: "#fff",
       display: "flex",
-      flexDirection: "column", // 垂直堆叠所有内容
-      alignItems: "center" // 水平居中
+      flexDirection: "column",
+      alignItems: "center"
     }}>
 
     {gameOverData && !gameOver && (
@@ -1237,9 +1248,9 @@ const handleConfirmGems = () => {
       {/* Main game layout */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "auto 800px", // 左侧自适应，右侧固定800px宽度
+        gridTemplateColumns: "auto auto", // 左侧自适应，右侧固定800px宽度
         width: "100%",
-        maxWidth: "1600px",
+        maxWidth: "2000px",
         margin: "0 auto",
         gap: "30px", // 两区域之间的间距
         alignItems: "start" // 从顶部开始对齐
@@ -1508,7 +1519,8 @@ const handleConfirmGems = () => {
                     justifyContent: "space-around", // 均匀分布
                     gap: "5px",
                     marginBottom: "10px",
-                    width: "100%"
+                    width: "100%",
+                    overflow: 'auto'
                   }}>
                     {['r', 'g', 'u', 'b', 'w', 'x'].map((color) => {
                       const count = player.gems[color] || 0;
@@ -1762,7 +1774,7 @@ const handleConfirmGems = () => {
                 textAlign: "center"
               }}>
                 <div style={{ color: "#fff", marginBottom: "5px" }}>
-                  💎 Select gems: 3 different or 2 of the same
+                  Select gems: 3 different or 2 of the same
                 </div>
                 <div style={{
                   display: "flex",
@@ -1962,4 +1974,5 @@ const handleConfirmGems = () => {
       </div>
       {gameOver && <GameOverModal />}
     </div>
+    </ResponsiveGameWrapper>
   )}

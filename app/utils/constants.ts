@@ -1,0 +1,1 @@
+export const GAME_BACKGROUND = 'radial-gradient(circle at center, #10186d 0%, #0a1050 70%, #060A40 100%)';
