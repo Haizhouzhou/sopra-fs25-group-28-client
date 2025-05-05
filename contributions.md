@@ -113,9 +113,12 @@ reason).
 
 ---
 
-## Contributions Week 5 - [Begin Date] to [End Date]
+## Contributions Week 5 - 2025-04-28 to 2025-05-05
+| **Student**                    | **Date**  | **Link to Commit**                                           | **Description**                                              | **Relevance**                                        |
+| ------------------------------ | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------- |
+| **Yiming Xiao (@yimxia)**      | 2025.5.05 | [4982952](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/498295228c32c632aeac10b789a0ae1a76671ae9) | #3 Improve game UI and user experience: added contextual timer display, AI loading state display, action availability timing, card and gem animations, and improved reserved card layout | Consolidates multiple UI-related features into a commit update: improves clarity of AI hint state, ensures actions only appear at appropriate times, adds clear display of other players’ names, and introduces visual feedback through animations. These new feature directly support smoother game flow and reduce user confusion during interactions. |
+|                                | 2025.5.05 | [f597353](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/f5973532b5e26b597c5edbb0e41214816e918a25) | #3 Implement responsive design for game interface: added ResponsiveGameWrapper component, adjusted background color logic | Support the game interface for different screen sizes by introducing a reusable wrapper and unified layout styling. This is important for supporting compatibility across devices and improves consistency in current UI rendering. |
 
-_Continue with the same table format as above._
 
 ---
 
