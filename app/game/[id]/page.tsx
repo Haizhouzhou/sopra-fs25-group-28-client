@@ -550,7 +550,7 @@ export default function GamePage() {
             text: messageText,
             timestamp: Date.now()
           };
-          setChatMessages(prev => [...prev, chatMsg]);
+          //setChatMessages(prev => [...prev, chatMsg]);
           
           // 如果聊天窗口没有打开，显示通知
           if (!showChat) {
@@ -2290,6 +2290,7 @@ const handleConfirmGems = () => {
           fontFamily: "monospace",
           fontWeight: "normal",
           fontStyle: "normal",
+          color: "black",
           opacity: 0.9,
         }}
       >
