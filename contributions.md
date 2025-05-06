@@ -121,7 +121,10 @@ reason).
 | **Zizhou Luo (@Skiingseason)** | 2025.5.05 | [308406f](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/308406fa310d53d16de149c9b211862dd6979c8a) | double checking card data and correct wrong value | make sure all the cards are correct in the game |
 |                                | 2025.5.05 | [4a02986](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/4a02986d1492edfa908df11ad6d63c6c6e3c0882) | #55 refactor part of action implementation, creating ActionBuyCard and ActionReserveCard to handle the logic. Utlize unit tests to change only the internal implmentation without affecting upperlevel interface | clean up and organize code, add more test case, imporve test coverage |
 |                                | 2025.5.05 | [52bcac9](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/52bcac9601111cff26d9f612e63ca961eded063a) | #55 Refactor gem taking logic to use Game.takeGems; update related tests | Unified action processing logic, add more test case, imporve test coverage |
-
+| **Haizhou Zheng (@Haizhouzhou)** | 2025.5.05 | [91d415e](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/91d415e3469ed53fc935dd6df7b8383826b67ce7) | Upload READNE for the Project |Establishes project documentation and developer guidance|
+|                                | 2025.5.05 | [7ecc13d](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/7ecc13d3ee829dec46af69c3ba555606c3048e96) | Upload Lience for the Project |Ensures proper licensing and clarifies project usage rights |
+|                                | 2025.5.06 | [f84e64d](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/f84e64dc6968efb4048f340200f10c927776057d) | #15 Change Tutorial UI to fit the Gamepage |Aligns tutorial interface with main game UI for consistent user experience |
+|                                | 2025.5.06 | [03b5387](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/03b5387dbdee04a0db7efe5e77cb0ebc80b0f979) | #12 Fix Chatroom bugs(text color, double message display) |Improves chat reliability and resolves UI rendering issues |
 ---
 
 ## Contributions Week 6 - [Begin Date] to [End Date]
