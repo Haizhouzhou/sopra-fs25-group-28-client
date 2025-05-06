@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // deno-lint-ignore-file no-explicit-any
 "use client";
@@ -89,30 +91,6 @@ type TutorialStep =
 // 色序
 const COLOR_ORDER: string[] = ["r", "g", "b", "u", "w", "x"];
 
-// 工具：前后端颜色映射
-const mapColorToFrontend = (color: string): string => {
-  const m: Record<string, string> = {
-    BLACK: "u",
-    BLUE: "b",
-    GREEN: "g",
-    RED: "r",
-    WHITE: "w",
-    GOLD: "x",
-  };
-  return m[color.toUpperCase()] || color.toLowerCase() || "u";
-};
-const mapFrontendToBackendGemColor = (shortCode: string): string => {
-  const rm: Record<string, string> = {
-    r: "RED",
-    g: "GREEN",
-    b: "BLUE",
-    u: "BLACK",
-    w: "WHITE",
-    x: "GOLD",
-  };
-  return rm[shortCode] || shortCode;
-};
-
 // 初始 Tutorial 用 gameState
 const initialTutorialGameState: GameState = {
   players: [
@@ -200,58 +178,19 @@ const initialTutorialGameState: GameState = {
   winner: null,
 };
 
-// 按钮样式
-const buttonStyle: React.CSSProperties = {
-  flex: 1,
-  backgroundColor: "rgba(255, 150, 0, 0.8)",
-  border: "3px solid #ff6a00",
-  borderRadius: "8px",
-  padding: "10px 5px",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  boxShadow: "0 0 20px rgba(255, 150, 0, 0.6)",
-  fontSize: "20px",
-  fontWeight: "bold",
-  color: "#000",
-  textShadow: "1px 1px 2px rgba(0,0,0,0.5)",
-};
-export default function TutorialFourPage() {
-  const params = useParams();
-  const gameId = "tutorial_four";
 
+export default function TutorialFourPage() {
+  
   // —— WebSocket & Context Hook —— //
   const stableSessionId = useRef(`tutorial-session-${Date.now()}`).current;
-  const { sendMessage, connected: wsConnected } = useWebSocket(
-    stableSessionId,
-    handleWebSocketMessage
-  );
   const { lastGameState: contextGameState } = useGameState();
 
   // —— 通用 State —— //
-  const [pendingGameState, setPendingGameState] = useState<any>(null);
   const [gameState, setGameState] =
     useState<GameState | null>(initialTutorialGameState);
-  const [roomName, setRoomName] = useState(initialTutorialGameState.roomName);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [newChat, setNewChat] = useState("");
-  const [showChat, setShowChat] = useState(false);
-  const [chatNotify, setChatNotify] = useState(false);
+  const [roomName] = useState(initialTutorialGameState.roomName);
   const [seconds, setSeconds] = useState(59);
-  const [isTimeUp, setIsTimeUp] = useState(false);
-  const [currentAction, setCurrentAction] = useState<
-    "take" | "buy" | "reserve" | null
-  >(null);
-  const [selectedGems, setSelectedGems] = useState<string[]>([]);
-  const [gameOver, setGameOver] = useState<boolean>(false);
-  const [gameOverData, setGameOverData] =
-    useState<GameOverData | null>(null);
-  const currentUser = {
-    id: "player1_tutorial",
-    name: "You (Tutorial)",
-    uuid: "player1_tutorial",
-  };
+
 
   // —— Tutorial 专属 State —— //
   const [step, setStep] = useState<TutorialStep>("PreHighlightGem");
@@ -264,7 +203,11 @@ export default function TutorialFourPage() {
     color: string | null;
     count: number;
   }>({ color: null, count: 0 });
-
+  const currentUser = {
+    id: "player1_tutorial",
+    name: "You (Tutorial)",
+    uuid: "player1_tutorial",
+  };
   // tutorialPlayer 引用
   const tutorialPlayer =
     gameState?.players.find((p) => p.id === currentUser.id) ||
@@ -303,7 +246,7 @@ export default function TutorialFourPage() {
   function handleWebSocketMessage(msg: WebSocketMessage) {
     console.log("Tutorial: Received WS message:", msg);
   }
-
+const [isTimeUp, setIsTimeUp] = useState(false);
   // 其余 useEffect、handler、render 函数保留不变……
   useEffect(() => {
     // 定时器
@@ -697,7 +640,6 @@ export default function TutorialFourPage() {
         }}
       >
         
-         
 
         {/* 顶部标题栏 */}
         <div
