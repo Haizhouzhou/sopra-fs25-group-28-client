@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
+import Image from "next/image"; // 导入 Next.js 的 Image 组件
 import type { UserListGetDTO } from "@/types/user";
 
 // Backend response data structure
@@ -23,13 +24,14 @@ interface LeaderboardDisplayData {
 const Leaderboard: React.FC = () => {
   const router = useRouter();
   const apiService = useApi();
+  const { value: token } = useLocalStorage<string>("token", "");
   const { value: currentUser } = useLocalStorage<UserListGetDTO>("currentUser", {} as UserListGetDTO);
   
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardDisplayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // @ts-ignore 或 @ts-expect-error
+  const [error, setError] = useState<string | null>(null);
 
+  // 处理数据加载
   useEffect(() => {
     async function loadData() {
       try {
@@ -43,8 +45,10 @@ const Leaderboard: React.FC = () => {
           return;
         }
         
+        // 获取用户数据
         const users = await apiService.get<UserListGetDTO[]>("/users");
         
+        // 合并数据
         const processedData: LeaderboardDisplayData[] = leaderboardEntries.map(entry => {
           const user = users.find(u => u.id === entry.playerId);
           return {
@@ -58,28 +62,29 @@ const Leaderboard: React.FC = () => {
         // 排序
         processedData.sort((a, b) => b.wins - a.wins);
         setLeaderboardData(processedData);
-      } catch (error) {
-        console.error("Error loading leaderboard data:", error);
+      } catch (err) {
+        console.error("Error loading leaderboard data:", err);
+        setError(typeof err === 'string' ? err : err instanceof Error ? err.message : "Failed to load data");
       } finally {
         setIsLoading(false);
       }
     }
     
     loadData();
-  }, []); // 只在组件挂载时运行一次
+  }, [apiService]); // 添加 apiService 作为依赖项
 
   // Mock data for demonstration
   const getMockLeaderboardData = (): LeaderboardDisplayData[] => {
     return [
       {
         playerId: 999,
-        avatar: "a_08.png",
+        avatar: "a_07.png",
         username: "Test_Champion123",
         wins: 15
       },
       {
         playerId: 888,
-        avatar: "a_09.png",
+        avatar: "a_08.png",
         username: "Test_ProGamer",
         wins: 10
       }
@@ -92,16 +97,26 @@ const Leaderboard: React.FC = () => {
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflow: 'hidden' }}>
-      {/* Background image */}
-      <img
-        src="/gamesource/tile_background.png"
-        alt="Background"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: -1 }}
-      />
+      {/* Background image*/}
+      <div style={{ position: 'absolute', inset: 0, zIndex: -1 }}>
+        <Image
+          src="/gamesource/tile_background.png"
+          alt="Background"
+          fill
+          style={{ objectFit: 'cover' }}
+          priority
+        />
+      </div>
 
-      {/* Logo in top left */}
+      {/* Logo in top left*/}
       <div style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 10 }}>
-        <img src="/gamesource/splendor_logo.png" alt="Logo" width={500} />
+        <Image
+          src="/gamesource/splendor_logo.png"
+          alt="Logo"
+          width={500}
+          height={200}
+          priority
+        />
       </div>
 
       {/* Content area */}
@@ -109,18 +124,29 @@ const Leaderboard: React.FC = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', alignItems: 'center' }}>
           <h1 style={{ color: '#FFD700', fontSize: '2.5rem' }}>Leaderboard</h1>
           
-          {/* User info */}
+          {/* User info*/}
           {currentUser && currentUser.id && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <img 
-                src={`/avatar/${currentUser.avatar || 'a_01.png'}`} 
-                alt="Avatar" 
-                style={{ width: 60, height: 60, borderRadius: '50%', border: '3px solid #FFD700' }} 
-              />
+              <div style={{ position: 'relative', width: 60, height: 60 }}>
+                <Image
+                  src={`/avatar/${currentUser.avatar || 'a_01.png'}`}
+                  alt="Avatar"
+                  width={60}
+                  height={60}
+                  style={{ borderRadius: '50%', border: '3px solid #FFD700' }}
+                />
+              </div>
               <span style={{ color: '#FFD700', fontWeight: 'bold', fontSize: '1.3rem' }}>{currentUser.name}</span>
             </div>
           )}
         </div>
+
+        {/* Error message display */}
+        {error && (
+          <div style={{ padding: 20, textAlign: 'center', color: 'red', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 8, marginBottom: 20 }}>
+            {error}
+          </div>
+        )}
 
         {/* Leaderboard table */}
         <div style={{ backgroundColor: 'rgba(15, 33, 73, 0.7)', borderRadius: 8, padding: 16, marginBottom: 20 }}>
@@ -158,11 +184,13 @@ const Leaderboard: React.FC = () => {
                 }}
               >
                 <div style={{ fontWeight: 'bold' }}>{index + 1}</div>
-                <div>
-                  <img 
-                    src={`/avatar/${player.avatar}`} 
-                    alt="Avatar" 
-                    style={{ width: 40, height: 40, borderRadius: '50%', border: '2px solid #FFD700' }} 
+                <div style={{ position: 'relative', width: 40, height: 40 }}>
+                  <Image
+                    src={`/avatar/${player.avatar}`}
+                    alt="Avatar"
+                    width={40}
+                    height={40}
+                    style={{ borderRadius: '50%', border: '2px solid #FFD700' }}
                   />
                 </div>
                 <div>{player.username}</div>
