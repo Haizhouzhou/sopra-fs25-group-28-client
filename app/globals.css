@@ -1539,3 +1539,27 @@ body > .gem:hover,
   0% { background-color: #cc0000; }
   100% { background-color: #ff3333; box-shadow: 0 0 20px rgba(255,0,0,0.9); }
 }
+
+@keyframes gemConfirmAnimation {
+  0% { transform: translateY(0); }
+  25% { transform: translateY(-15px); }
+  50% { transform: translateY(0); }
+  75% { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
+
+.gem-confirm-animation {
+  animation: gemConfirmAnimation 1s ease-in-out;
+}
+
+
+.card-tooltip {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  
+  .card-tooltip.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
