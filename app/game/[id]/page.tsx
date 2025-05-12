@@ -203,6 +203,10 @@ export default function GamePage() {
   const [aiHintProcessedForTurn, setAiHintProcessedForTurn] = useState(false);
 
 
+  const [isFinalRound, setIsFinalRound] = useState(false);
+  const [showFinalRoundAnimation, setShowFinalRoundAnimation] = useState(false);
+
+
   // 计时器显示文本函数
   const getTimerDisplay = () => {
     // 如果正在等待AI提示
@@ -384,11 +388,22 @@ export default function GamePage() {
           setGemChanges({});
         }, 2000);
       }
+
+       const hasFinalRound = gameState.players.some(player => player.score >= 5); // FINAL ROUND CONDITION
+        if (hasFinalRound && !isFinalRound) {
+          setIsFinalRound(true);
+          setShowFinalRoundAnimation(true);
+          // 3秒后关闭动画
+          setTimeout(() => {
+            setShowFinalRoundAnimation(false);
+          }, 2000);
+        }
     }
+    
     
     // 保存当前状态用于下次比较
     prevGameState.current = gameState;
-  }, [gameState]);
+  }, [gameState, isFinalRound]);
 
 
   useEffect(() => {
@@ -1581,6 +1596,11 @@ const handleConfirmGems = () => {
           textShadow: "2px 2px 4px rgba(0,0,0,0.5)"
         }}>
           Room: {gameState?.roomName || roomName}
+          {isFinalRound && (
+            <div className="final-round-indicator">
+              FINAL ROUND
+            </div>
+          )}
         </div>
       </div>
 
@@ -2414,6 +2434,16 @@ const handleConfirmGems = () => {
         </div>
       </div>
     )}
+
+
+      {/* 最终回合动画 */}
+      {showFinalRoundAnimation && (
+        <div className="final-round-overlay">
+          <div className="final-round-animation">
+            FINAL ROUND!
+          </div>
+        </div>
+      )}
 
     </div>
 
