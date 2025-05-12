@@ -29,7 +29,6 @@ const Leaderboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   // @ts-ignore 或 @ts-expect-error
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -122,13 +121,6 @@ const Leaderboard: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Error message display */}
-        {error && (
-          <div style={{ padding: 20, textAlign: 'center', color: 'red', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 8, marginBottom: 20 }}>
-            {error}
-          </div>
-        )}
 
         {/* Leaderboard table */}
         <div style={{ backgroundColor: 'rgba(15, 33, 73, 0.7)', borderRadius: 8, padding: 16, marginBottom: 20 }}>
