@@ -24,7 +24,6 @@ interface LeaderboardDisplayData {
 const Leaderboard: React.FC = () => {
   const router = useRouter();
   const apiService = useApi();
-  const { value: token } = useLocalStorage<string>("token", "");
   const { value: currentUser } = useLocalStorage<UserListGetDTO>("currentUser", {} as UserListGetDTO);
   
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardDisplayData[]>([]);
