@@ -129,6 +129,11 @@ reason).
 |                                | 2025.5.05 | [cf339aa](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/cf339aa25eadb509484423ff2c93c2a463e22650) | Adjusted end turn logic to now correctly play out the full round and fixed a bug where players were able to take multiple turns after | Now every player has the equal amount of chances to win, where before the starting player would have a significant advantage to have more turns to win |
 ---
 
-## Contributions Week 6 - [Begin Date] to [End Date]
+## Contributions Week 6 - 2025-05-06 to 2025-05-13
+| **Student**                    | **Date**  | **Link to Commit**                                           | **Description**                                              | **Relevance**                                        |
+| ------------------------------ | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------- |
+| **Yiming Xiao (@yimxia)**      | 2025.5.13 | [103fefb](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/103fefbfddfe6f8136275180bbc387380794c88b)| #3 Add tooltip to show missing gems for card purchases, add gem animation, and adjust UI layout | Enhances user clarity during purchasing by indicating exact gem shortages. Also improves animation feedback and adjusts layout to improve UI. |
+|                                | 2025.5.13 | [b3930c9](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/b3930c9b2131a165f1aba177945ad5c3cbb93e2b) | #16, #1, #3 Implement leaderboard page showing usernames, avatars, and win counts; add fallback data and error handling | Introduces a leaderboard system for player comparison. Also ensures robustness through mock data. |
+|                                | 2025.5.12 | [e050e36](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/e050e36fab3b513cf34a03b363ffe5d9b703ec79)| #3, #17 Add "FINAL ROUND" game state logic and card definition fix | Adds visual and logical indication when final round is triggered, ensuring players are aware of end-game conditions. This improves player's experience during the game. |
 
 _Continue with the same table format as above._
