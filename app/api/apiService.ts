@@ -137,4 +137,41 @@ export class ApiService {
       "An error occurred while deleting the data.\n",
     );
   }
+
+  /**
+   * Fetches the leaderboard data.
+   * @param token - Authentication token for the request.
+   * @returns A Promise resolving to an array of LeaderboardEntry objects.
+   */
+  public async getLeaderboard<T>(token: string): Promise<T> {
+    // 调试信息
+    console.log("baseURL before:", this.baseURL);
+    
+    // 确保baseURL格式正确
+    let baseURL = this.baseURL;
+    if (baseURL.includes(":3000") && !baseURL.startsWith("http")) {
+      baseURL = "http://localhost" + baseURL;
+      console.log("Fixed baseURL:", baseURL);
+    }
+    
+    const endpoint = "/users/leaderboard";
+    const url = `${baseURL}${endpoint}`;
+    
+    console.log("Final URL:", url);
+    
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        ...this.defaultHeaders,
+        "Authorization": `Bearer ${token}`
+      },
+    });
+    
+    return this.processResponse<T>(
+      res,
+      "An error occurred while fetching the leaderboard data.\n"
+    );
+  }
+
 }
+

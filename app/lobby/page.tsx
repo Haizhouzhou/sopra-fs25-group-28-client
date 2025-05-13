@@ -69,6 +69,10 @@ const GameLobby: React.FC = () => {
     });
   }, [isConnected, currentUser]);
 
+  const handleLeaderboardClick = () => {
+  router.push("/leaderboard");
+};
+
   useEffect(() => {
     const initialize = async () => {
       if (!token || !localUser?.id) return;
@@ -149,6 +153,7 @@ const GameLobby: React.FC = () => {
               </div>
             )}
             <div style={{ display: 'flex', gap: '20px' }}>
+              <button onClick={handleLeaderboardClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>LEADE RBOARD</button>
               <button onClick={handleProfileClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>PROFILE</button>
               <button onClick={handleLogout} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>LOG OUT</button>
             </div>
