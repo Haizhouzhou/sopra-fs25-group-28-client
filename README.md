@@ -1,5 +1,6 @@
 # Splendor Online Board Game
-![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB) ![Next.js](https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwindcss&logoColor=white) ![WebSocket](https://img.shields.io/badge/WebSocket-000000?logo=websockets&logoColor=white) ![MSW](https://img.shields.io/badge/MSW-FF6F61?logo=msw&logoColor=white) ![Gemini API](https://img.shields.io/badge/Gemini-FFCC00?logo=google&logoColor=black) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?logo=spring-boot&logoColor=white) ![GitHub](https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB) ![Next.js](https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white) ![CSS](https://img.shields.io/badge/CSS-1572B6?logo=css3&logoColor=white)
+ ![WebSocket](https://img.shields.io/badge/WebSocket-000000?logo=websockets&logoColor=white) ![MSW](https://img.shields.io/badge/MSW-FF6F61?logo=msw&logoColor=white) ![Gemini API](https://img.shields.io/badge/Gemini-FFCC00?logo=google&logoColor=black) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?logo=spring-boot&logoColor=white) ![GitHub](https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=white)
 
 
 ---
@@ -260,3 +261,13 @@ Special thanks to TA **Ambros Eberhard** for semester-long support.
 ## License
 
 This project is licensed under **Apache 2.0**. See [LICENSE](./LICENSE) for details.
+
+## Third-party Assets and Licenses
+
+This project includes sound effects from [Pixabay](https://pixabay.com/sound-effects/), used under the [Pixabay Content License](https://pixabay.com/service/license-summary/).
+
+- Free for commercial and non-commercial use
+- No attribution required (although credit is appreciated)
+- Allowed to be modified and integrated into other works
+
+Thanks to the Pixabay community for providing high-quality, royalty-free audio content.

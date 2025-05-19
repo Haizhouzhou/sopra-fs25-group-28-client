@@ -143,4 +143,9 @@ reason).
 |                    | 2025.5.12   | [9241fd7](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/commit/9241fd7795134ac246073ad071035389fd8f90ec) | Leaderboard bug fixes & tests | Fixed bugs for leaderboard and added in testcases to make sure it works as intended |
                         
 
-_Continue with the same table format as above._
+## Contributions Week 7 - 2025-05-13 to 2025-05-20
+| **Student**                    | **Date**  | **Link to Commit**                                           | **Description**                                              | **Relevance**                                        |
+| ------------------------------ | --------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------------------------------- |
+| **Yiming Xiao (@yimxia)**      | 2025.5.19 | [87ac34f](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/87ac34f6b8b4549921e5c9e69aa73c603edb38f3) | #1, #2, #3, #4 Improve real-time refreshing in lobby, restrict registration birthday input, fix AI hint cancellation logic | Addresses feedback from BETA testing: ensures lobby room list auto-refreshes, improves input validation during registration, and corrects logic for AI hint cancellation to restore user control |
+|                                | 2025.5.19 | [743065f](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/743065f11edfff2986537ebba5dec479f592cd10) | #3 Add sound effect to improve player experience | Adds audio feedback to enhance user engagement and signal in-game interactions more clearly. |
+|                                | 2025.5.19 | [c71f19b](https://github.com/Haizhouzhou/sopra-fs25-group-28-client/commit/c71f19bac7e4cf0880b18b3d90bdaae9a87e3223) | #3 Add animation and sound for Noble Visit and pass turn events | Adds visual and audio cues for key in-game events like noble visits and pass turns. Improves user awareness of game state changes without relying solely on visuals |

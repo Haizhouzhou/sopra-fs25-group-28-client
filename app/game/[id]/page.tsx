@@ -810,13 +810,12 @@ const handleConfirmGems = () => {
       // 设置状态
       setCurrentAction(null);
       setSelectedGems([]);
-      setSeconds(0); // 倒计时归零
       
       // 等待前一个请求完成后再结束回合
       setTimeout(() => {
         sendAction("next", "");
-      }, 1000);
-    }, 1000);
+      }, 500);
+    }, 500);
   }
   
   // 玩家选了三个不同颜色的宝石
@@ -829,7 +828,7 @@ const handleConfirmGems = () => {
 
     // 先执行动画
     animateSelectedGems();
-  // 播放拾取宝石音效 
+    // 播放拾取宝石音效 
     playSound('takeGem');
 
     
@@ -841,13 +840,12 @@ const handleConfirmGems = () => {
       // 设置状态
       setCurrentAction(null);
       setSelectedGems([]);
-      setSeconds(0); // 倒计时归零
       
       // 等待前一个请求完成后再结束回合
       setTimeout(() => {
         sendAction("next", "");
-      }, 1000);
-    }, 1000);
+      }, 500);
+    }, 500);
   }
 
   // 其他情况都不合法
@@ -1432,7 +1430,7 @@ const TooltipPortal = () => {
   
 
   const requestAiHint = () => {
-    if (!isPlayerTurn() || hintCount >= 3) return; // 限制使用3次
+    if (!isPlayerTurn() || hintCount >= 1) return; // 限制使用3次
     
     setHintLoading(true);
     setHintMessage("");
