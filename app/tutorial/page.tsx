@@ -37,15 +37,34 @@ export default function TutorialPage() {
         }}
       />
 
-      {/* Logo */}
-      <div style={{ position: "absolute", top: 20, left: 20, zIndex: 10 }}>
-        <img
-          src="/gamesource/splendor_logo.png"
-          alt="Splendor Logo"
-          width={500}
-          style={{ height: "auto" }}
-        />
-      </div>
+{/* Logo and Back Button */}
+<div style={{ position: "absolute", top: 20, left: 20, zIndex: 10 }}>
+  <button
+    onClick={() => router.push("/")}
+    style={{
+      backgroundColor: "#0F2149",
+      border: "2px solid #FFD700",
+      color: "#FFD700",
+      padding: "6px 14px",
+      borderRadius: 4,
+      cursor: "pointer",
+      fontWeight: "bold",
+      fontFamily: "monospace",
+      marginBottom: "10px",
+      fontSize: "14px",
+      boxShadow: "0 0 6px rgba(255, 215, 0, 0.5)",
+    }}
+  >
+    ← Back
+  </button>
+  <img
+    src="/gamesource/splendor_logo.png"
+    alt="Splendor Logo"
+    width={500}
+    style={{ height: "auto" }}
+  />
+</div>
+
 
       {/* Main content area */}
       <div
