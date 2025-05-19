@@ -585,7 +585,7 @@ body > .gem:hover,
 /* 调整预定卡牌的比例 - 增加高度但保持宽度不变 */
 /* 增加选择器优先级，确保样式被应用 */
 #player-area .reserveCards .card {
-  width: 32% !important;
+  width: 30% !important;
   aspect-ratio: 0.35 !important;
   height: auto !important;
   position: relative !important;
@@ -1563,3 +1563,47 @@ body > .gem:hover,
     opacity: 1;
     transform: translateY(0);
   }
+
+
+  .noble-visit-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 2000;
+  pointer-events: none;
+}
+
+.noble-visit-animation {
+  font-size: 48px;
+  font-weight: bold;
+  color: gold;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  text-align: center;
+  animation: nobleVisitAnimation 2s forwards;
+  padding: 20px;
+  background-color: rgba(128, 0, 128, 0.7);
+  border-radius: 15px;
+  border: 3px solid gold;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+}
+
+@keyframes nobleVisitAnimation {
+  0% {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}

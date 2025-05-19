@@ -58,6 +58,8 @@ interface GameState {
   winner: number | null;
   roomName: string;
   currentPlayerId: number;
+  visibleNobleIds?: number[]; // 添加这一行
+
 }
 
 // Chat Message
@@ -214,7 +216,12 @@ export default function GamePage() {
     reserveCard: null,
     nobleVisit: null,
     gameOver: null,
+    passturn: null
   });
+
+
+  const [showNobleVisitAnimation, setShowNobleVisitAnimation] = useState(false);
+  const [lastNobleCount, setLastNobleCount] = useState(0);
 
 
   // 计时器显示文本函数
@@ -358,62 +365,62 @@ export default function GamePage() {
     }
   }, [cardAnimation]);
   
-  useEffect(() => {
-    if (gameState && prevGameState.current) {
-      const changes: GemChanges = {};
-      
-      // 遍历所有玩家
-      gameState.players.forEach(player => {
-        const prevPlayer = prevGameState.current?.players.find(p => p.id === player.id);
-        if (prevPlayer) {
-          // 检查宝石和卡牌数量变化
-          ['r', 'g', 'u', 'b', 'w', 'x'].forEach(color => {
-            const prevGems = prevPlayer.gems[color] || 0;
-            const prevCards = Object.values(prevPlayer.cards || {})
-              .flat()
-              .filter((card: any) => card.color === color).length;
-            
-            const currGems = player.gems[color] || 0;
-            const currCards = Object.values(player.cards || {})
-              .flat()
-              .filter((card: any) => card.color === color).length;
-            
-            const prevTotal = prevGems + prevCards;
-            const currTotal = currGems + currCards;
-            
-            if (currTotal !== prevTotal) {
-              const diff = currTotal - prevTotal;
-              if (diff !== 0) {
-                changes[`${player.id}-${color}`] = diff;
-              }
+useEffect(() => {
+  if (gameState && prevGameState.current) {
+    const changes: GemChanges = {};
+    
+    // 遍历所有玩家
+    gameState.players.forEach(player => {
+      const prevPlayer = prevGameState.current?.players.find(p => p.id === player.id);
+      if (prevPlayer) {
+        // 检查宝石和卡牌数量变化
+        ['r', 'g', 'u', 'b', 'w', 'x'].forEach(color => {
+          const prevGems = prevPlayer.gems[color] || 0;
+          const prevCards = Object.values(prevPlayer.cards || {})
+            .flat()
+            .filter((card: any) => card.color === color).length;
+          
+          const currGems = player.gems[color] || 0;
+          const currCards = Object.values(player.cards || {})
+            .flat()
+            .filter((card: any) => card.color === color).length;
+          
+          const prevTotal = prevGems + prevCards;
+          const currTotal = currGems + currCards;
+          
+          if (currTotal !== prevTotal) {
+            const diff = currTotal - prevTotal;
+            if (diff !== 0) {
+              changes[`${player.id}-${color}`] = diff;
             }
-          });
-        }
-      });
-      
-      if (Object.keys(changes).length > 0) {
-        setGemChanges(changes);
-        // 2秒后清除动画
-        setTimeout(() => {
-          setGemChanges({});
-        }, 2000);
+          }
+        });
       }
-
-       const hasFinalRound = gameState.players.some(player => player.score >= 5); // FINAL ROUND CONDITION
-        if (hasFinalRound && !isFinalRound) {
-          setIsFinalRound(true);
-          setShowFinalRoundAnimation(true);
-          // 3秒后关闭动画
-          setTimeout(() => {
-            setShowFinalRoundAnimation(false);
-          }, 2000);
-        }
+    });
+    
+    if (Object.keys(changes).length > 0) {
+      setGemChanges(changes);
+      // 2秒后清除动画
+      setTimeout(() => {
+        setGemChanges({});
+      }, 2000);
     }
-    
-    
-    // 保存当前状态用于下次比较
-    prevGameState.current = gameState;
-  }, [gameState, isFinalRound]);
+
+    const hasFinalRound = gameState.players.some(player => player.score >= 5); // FINAL ROUND CONDITION
+    if (hasFinalRound && !isFinalRound) {
+      setIsFinalRound(true);
+      setShowFinalRoundAnimation(true);
+      // 3秒后关闭动画
+      setTimeout(() => {
+        setShowFinalRoundAnimation(false);
+      }, 2000);
+    }
+  }
+  
+  
+  // 保存当前状态用于下次比较
+  prevGameState.current = gameState;
+}, [gameState, isFinalRound]);
 
 
   useEffect(() => {
@@ -475,6 +482,26 @@ export default function GamePage() {
   // WebSocket消息处理函数
   function handleWebSocketMessage(msg: WebSocketMessage) {
     console.log("收到游戏消息类型:", msg.type, "内容:", msg.content);
+    if (msg.type === "GAME_STATE" && typeof msg.content === 'object') {
+    // 获取当前贵族ID数量
+    const visibleNobleIds = msg.content.visibleNobleIds || [];
+    const currentNobleCount = visibleNobleIds.length;
+    console.log("原始贵族数量:", lastNobleCount, "->", currentNobleCount);
+    // 检测贵族数量是否减少
+    if (lastNobleCount > 0 && currentNobleCount < lastNobleCount) {
+      console.log("检测到贵族数量减少! 从", lastNobleCount, "变为", currentNobleCount);
+      // 触发动画
+      setShowNobleVisitAnimation(true);
+      playSound('nobleVisit');
+      // 2秒后关闭动画
+      window.setTimeout(() => {
+        setShowNobleVisitAnimation(false);
+      }, 2000);
+    }
+    // 更新贵族数量
+    setLastNobleCount(currentNobleCount);
+  }
+
 
     if (msg.content) {
       // 如果内容是字符串，尝试解析为JSON
@@ -1134,10 +1161,11 @@ useEffect(() => {
   if (typeof window !== "undefined") {
     setSounds({
       buyCard: new Audio('/gamesource/Sound_effect/Buy_Card.mp3'),
-      takeGem: new Audio('/gamesource/Sound_effect/Take_Gem.mp3'),
+      takeGem: new Audio('/gamesource/Sound_effect/Take_Gem2.mp3'),
       reserveCard: new Audio('/gamesource/Sound_effect/Reserve_Card.mp3'),
       nobleVisit: new Audio('/gamesource/Sound_effect/Noble_Visit.mp3'),
       gameOver: new Audio('/gamesource/Sound_effect/GameOver.mp3'),
+      passturn: new Audio('/gamesource/Sound_effect/Pass_Rurn.mp3'),
     });
   }
 }, []);
@@ -1158,6 +1186,10 @@ const playSound = (soundName: string) => {
 
 const TooltipPortal = () => {
   if (!tooltipInfo.show || !tooltipInfo.card) return null;
+  
+  // 获取当前玩家的金币数量
+  const currentPlayer = gameState?.players.find(p => p.id === currentUser.id);
+  const goldCount = currentPlayer?.gems?.x || 0; // 'x' 是金币的代码
   
   return ReactDOM.createPortal(
     <div 
@@ -1228,6 +1260,32 @@ const TooltipPortal = () => {
       ) : (
         <div style={{ color: "#33cc33" }}>You can afford this card!</div>
       )}
+      
+      {/* 显示玩家拥有的金币数量 */}
+      {goldCount > 0 && (
+        <div style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          margin: "8px 0",
+          borderTop: "1px solid rgba(255, 215, 0, 0.3)",
+          paddingTop: "8px"
+        }}>
+          <div className="xchip" style={{ 
+            width: "20px", 
+            height: "20px", 
+            marginRight: "8px",
+            flexShrink: 0
+          }}></div>
+          <span style={{ 
+            color: "#ffcc00", 
+            fontWeight: "bold",
+            textShadow: "0 0 5px rgba(255, 204, 0, 0.4)"
+          }}>
+            You have {goldCount} Gold coins
+          </span>
+        </div>
+      )}
+      
       {tooltipInfo.card.points > 0 && (
         <div style={{ marginTop: "8px", color: "#FFD700" }}>
           Victory Points: {tooltipInfo.card.points}
@@ -1237,6 +1295,8 @@ const TooltipPortal = () => {
     document.body
   );
 };
+
+
   // 检查用户是否有足够资源购买卡牌
   const canAffordCard = (card: Card): boolean => {
     if (!gameState) return false;
@@ -2079,7 +2139,7 @@ const TooltipPortal = () => {
           flex: "1",
           display: "flex",
           flexDirection: "column",
-          gap: "50px",
+          gap: "25px",
           width: "100%",
         }}>
           {/* Player panels */}
@@ -2304,59 +2364,27 @@ const TooltipPortal = () => {
             })}
           </div>
           
-          {/* AI Assistant Area */}
           <div id="ai-hint-content" style={{
             flex: 1,
+            display: "flex", // 改为 flex 布局
+            flexDirection: "row", // 水平方向排列
+            alignItems: "center", // 垂直居中
+            justifyContent: "flex-start", // 靠左对齐
             backgroundColor: "rgba(0, 0, 0, 0.3)",
             borderRadius: "5px",
             padding: "10px",
-            marginBottom: "10px",
+            marginBottom: "5px",
             minHeight: "80px",
             width: "100%",
-            fontSize: "20px",
-            fontWeight: "bold",
-            color: "#FFD700",
-            border: "2px solid #FFD700",
-            boxShadow: "0 0 20px rgba(255, 215, 0, 0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center"
+            // border: "2px solid #FFD700",
+            // boxShadow: "0 0 20px rgba(255, 215, 0, 0.4)"
           }}>
-            {hintMessage ? (
-              <div style={{
-                backgroundColor: "#cc0000",
-                color: "white",
-                fontWeight: "bold",
-                padding: "6px 10px",
-                border: "none",
-                borderRadius: "6px",
-                fontSize: "14px",
-                cursor: "pointer",
-                boxShadow: "0 0 8px rgba(255, 0, 0, 0.5)",
-                transition: "all 0.2s ease"
-              }}>{hintMessage}</div>
-            ) : (
-              <div style={{ opacity: 0.7 }}>
-                Click the button below for AI strategy advice
-              </div>
-            )}
-          </div>
-
-
-         {/* 主按钮 & 取消按钮区域 */}
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              marginTop: "6px",
-              paddingLeft: "15px"
-            }}
-          >
-            {hintLoading ? (
-              <>
+            {/* 按钮保持原来的大小和样式 */}
+            <div style={{ 
+              marginRight: "15px", // 添加右边距，与对话框分隔
+              flexShrink: 0 // 防止按钮被压缩
+            }}>
+              {hintLoading ? (
                 <button
                   disabled
                   style={{
@@ -2365,221 +2393,239 @@ const TooltipPortal = () => {
                     fontSize: "18px",
                     borderRadius: "8px",
                     border: "none",
-                    backgroundColor: "rgba(0, 100, 255, 0.9)", // 蓝色
+                    backgroundColor: "rgba(0, 100, 255, 0.9)",
                     color: "white",
                     boxShadow: "0 0 10px rgba(0, 100, 255, 0.6)",
                   }}
                 >
                   Thinking...
                 </button>
-
+              ) : (
                 <button
-                  onClick={() => {
-                    setHintLoading(false);
-                    setHintMessage("AI request canceled.");
-                  }}
+                  onClick={requestAiHint}
+                  disabled={!isPlayerTurn()}
                   style={{
                     padding: "8px 24px",
                     fontWeight: "bold",
                     fontSize: "18px",
                     borderRadius: "8px",
                     border: "none",
-                    backgroundColor: "crimson", // 红色
+                    backgroundColor: isPlayerTurn()
+                      ? "rgba(0, 100, 255, 0.9)"
+                      : "rgba(100, 100, 100, 0.5)",
                     color: "white",
-                    boxShadow: "0 0 10px rgba(255, 0, 0, 0.6)",
-                    cursor: "pointer",
+                    cursor: isPlayerTurn() ? "pointer" : "not-allowed",
+                    boxShadow: isPlayerTurn()
+                      ? "0 0 10px rgba(0, 100, 255, 0.6)"
+                      : "none",
+                    transition: "all 0.2s ease"
                   }}
                 >
-                  Cancel
+                  Get AI Advice {hintCount > 0 ? `(${hintCount}/3 used)` : ""}
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={requestAiHint}
-                disabled={!isPlayerTurn()}
-                style={{
-                  padding: "8px 24px",
-                  fontWeight: "bold",
-                  fontSize: "18px",
-                  borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: isPlayerTurn()
-                    ? "rgba(0, 100, 255, 0.9)"
-                    : "rgba(100, 100, 100, 0.5)",
-                  color: "white",
-                  cursor: isPlayerTurn() ? "pointer" : "not-allowed",
-                  boxShadow: isPlayerTurn()
-                    ? "0 0 10px rgba(0, 100, 255, 0.6)"
-                    : "none",
-                  transition: "all 0.2s ease"
-                }}
-              >
-                Get AI Advice {hintCount > 0 ? `(${hintCount}/3 used)` : ""}
-              </button>
-            )}
-          </div>
-
-
-
-
-
-{isPlayerTurn() && (
-  <div style={{
-    marginBottom: "15px",
-    padding: "10px",
-    backgroundColor: "rgba(0,0,0,0.2)",
-    borderRadius: "8px",
-    textAlign: "center"
-  }}>
-    {currentAction === null ? (
-      <>
-        <div style={{
-          fontSize: "24px",
-          marginBottom: "15px",
-          color: "#33FF33",
-          fontWeight: "bold",
-          textShadow: "0 0 8px rgba(51, 255, 51, 0.7)",
-          animation: "pulse 1.5s infinite",
-          textAlign: "center",
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-          padding: "10px",
-          borderRadius: "8px",
-          border: "2px solid #33FF33"
-        }}>
-          Please take your action!
-        </div>
-        <div style={{ display: "flex", justifyContent: "center", gap: "15px" }}>
-          <button onClick={() => setCurrentAction("take")} style={buttonStyle}>Take Gems</button>
-          <button onClick={() => setCurrentAction("buy")} style={buttonStyle}>Buy Card</button>
-          <button onClick={() => setCurrentAction("reserve")} style={buttonStyle}>Reserve Card</button>
-        </div>
-      </>
-    ) : (
-      <>
-        {/* 这里是选择后的状态 */}
-        <div style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px"
-        }}>
-          {/* 第一行: 选择状态 */}
-          <div style={{ 
-            color: "#80ffcc", 
-            fontSize: "22px",
-            fontWeight: "bold",
-            textShadow: "0 0 6px rgba(128, 255, 204, 0.7)",
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
-            padding: "8px",
-            borderRadius: "8px",
-            border: "2px solid #80ffcc",
-            textAlign: "center"
-          }}>
-            You selected: <strong style={{color: "#FFD700"}}>{currentAction.toUpperCase()}</strong>
-          </div>
-          
-          {/* 第二行: Back按钮 + 宝石选择区域 (水平排列) */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "10px"
-          }}>
-            {/* 左侧: Back按钮 */}
-            <button 
-              onClick={() => {
-                setCurrentAction(null);
-                setSelectedGems([]);
-              }} 
-              style={{
-                ...buttonStyle,
-                backgroundColor: "#cc3333",
-                minWidth: "80px",
-                flexShrink: 0,
-                height: "45px"
-              }}
-            >
-              Back
-            </button>
+              )}
+            </div>
             
-            {/* 右侧: 宝石选择区域 (仅当选择take时显示) */}
-            {currentAction === "take" && (
-              <div style={{
-                flex: 1,
-                backgroundColor: "rgba(0, 0, 0, 0.3)",
-                padding: "5px 10px",
-                borderRadius: "10px",
-                border: "2px solid #22bb55",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between"
-              }}>
-                {/* 提示文字 */}
-                <div style={{ 
-                  color: "#FFFFFF", 
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                  textShadow: "0 0 6px rgba(255, 255, 255, 0.6)",
-                  whiteSpace: "nowrap",
-                  marginRight: "10px"
-                }}>
-                  Select: <span style={{color: "#FFD700"}}>3 diff</span> or <span style={{color: "#FFD700"}}>2 same</span>
-                </div>
-                
-                {/* 宝石选择 */}
+            {/* 对话框部分 */}
+            <div style={{
+              flex: 1, // 占用剩余空间
+              backgroundColor: "rgba(0, 0, 0, 0.4)",
+              borderRadius: "5px",
+              padding: "10px",
+              minHeight: "60px",
+              fontSize: "18px", // 稍微减小字体
+              fontWeight: "bold",
+              color: "#FFD700",
+              border: "1px solid #FFD700",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center"
+            }}>
+              {hintMessage ? (
                 <div style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: "6px",
-                  flex: 1
-                }}>
-                  {["r", "g", "b", "u", "w"].map(color => (
-                    <div
-                      key={color}
-                      className={`${color}chip gem ${selectedGems.includes(color) ? "selected" : ""}`}
-                      onClick={() => handleGemSelect(color)}
-                      style={{
-                        width: "45px",
-                        height: "45px",
-                        border: selectedGems.includes(color)
-                          ? "3px solid #FFD700"
-                          : "1px solid #aaa",
-                        borderRadius: "50%",
-                        cursor: "pointer",
-                        boxShadow: selectedGems.includes(color)
-                          ? "0 0 10px rgba(255, 215, 0, 0.7)"
-                          : "none"
-                      }}
-                    />
-                  ))}
+                  backgroundColor: "#cc0000",
+                  color: "white",
+                  fontWeight: "bold",
+                  padding: "6px 10px",
+                  border: "none",
+                  borderRadius: "6px",
+                  fontSize: "14px",
+                  boxShadow: "0 0 8px rgba(255, 0, 0, 0.5)",
+                  transition: "all 0.2s ease",
+                  maxWidth: "100%", // 确保文字不溢出
+                  wordWrap: "break-word" // 允许长文本换行
+                }}>{hintMessage}</div>
+              ) : (
+                <div style={{ opacity: 0.7 }}>
+                  Click the button for AI strategy advice
                 </div>
-                
-                {/* 确认按钮 */}
-                <button
-                  onClick={handleConfirmGems}
-                  style={{ 
-                    backgroundColor: "#22bb55", 
-                    fontSize: "16px",
-                    padding: "5px 10px",
-                    border: "2px solid #fff",
-                    borderRadius: "6px",
-                    fontWeight: "bold",
-                    color: "#000",
-                    cursor: "pointer",
-                    boxShadow: "0 0 8px rgba(34, 187, 85, 0.5)",
-                    marginLeft: "10px",
-                    whiteSpace: "nowrap"
-                  }}
-                >
-                  Confirm
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      </>
-    )}
-  </div>
-)}
+
+
+          {isPlayerTurn() && (
+            <div style={{
+              marginTop: "5px",
+              marginBottom: "10px",
+              padding: "10px",
+              backgroundColor: "rgba(0,0,0,0.2)",
+              borderRadius: "8px",
+              textAlign: "center"
+            }}>
+              {currentAction === null ? (
+                <>
+                  <div style={{
+                    fontSize: "24px",
+                    marginBottom: "15px",
+                    color: "#33FF33",
+                    fontWeight: "bold",
+                    textShadow: "0 0 8px rgba(51, 255, 51, 0.7)",
+                    animation: "pulse 1.5s infinite",
+                    textAlign: "center",
+                    backgroundColor: "rgba(0, 0, 0, 0.4)",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    border: "2px solid #33FF33"
+                  }}>
+                    Please take your action!
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "center", gap: "15px" }}>
+                    <button onClick={() => setCurrentAction("take")} style={buttonStyle}>Take Gems</button>
+                    <button onClick={() => setCurrentAction("buy")} style={buttonStyle}>Buy Card</button>
+                    <button onClick={() => setCurrentAction("reserve")} style={buttonStyle}>Reserve Card</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* 这里是选择后的状态 */}
+                  <div style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px"
+                  }}>
+                    {/* 第一行: 选择状态 */}
+                    <div style={{ 
+                      color: "#80ffcc", 
+                      fontSize: "22px",
+                      fontWeight: "bold",
+                      textShadow: "0 0 6px rgba(128, 255, 204, 0.7)",
+                      backgroundColor: "rgba(0, 0, 0, 0.4)",
+                      padding: "8px",
+                      borderRadius: "8px",
+                      border: "2px solid #80ffcc",
+                      textAlign: "center"
+                    }}>
+                      You selected: <strong style={{color: "#FFD700"}}>{currentAction.toUpperCase()}</strong>
+                    </div>
+                    
+                    {/* 第二行: Back按钮 + 宝石选择区域 (水平排列) */}
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "10px"
+                    }}>
+                      {/* 左侧: Back按钮 */}
+                      <button 
+                        onClick={() => {
+                          setCurrentAction(null);
+                          setSelectedGems([]);
+                        }} 
+                        style={{
+                          ...buttonStyle,
+                          backgroundColor: "#cc3333",
+                          minWidth: "80px",
+                          flexShrink: 0,
+                          height: "45px"
+                        }}
+                      >
+                        Back
+                      </button>
+                      
+                      {/* 右侧: 宝石选择区域 (仅当选择take时显示) */}
+                      {currentAction === "take" && (
+                        <div style={{
+                          flex: 1,
+                          backgroundColor: "rgba(0, 0, 0, 0.3)",
+                          padding: "5px 10px",
+                          borderRadius: "10px",
+                          border: "2px solid #22bb55",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between"
+                        }}>
+                          {/* 提示文字 */}
+                          <div style={{ 
+                            color: "#FFFFFF", 
+                            fontSize: "16px",
+                            fontWeight: "bold",
+                            textShadow: "0 0 6px rgba(255, 255, 255, 0.6)",
+                            whiteSpace: "nowrap",
+                            marginRight: "10px"
+                          }}>
+                            Select: <span style={{color: "#FFD700"}}>3 diff</span> or <span style={{color: "#FFD700"}}>2 same</span>
+                          </div>
+                          
+                          {/* 宝石选择 */}
+                          <div style={{
+                            display: "flex",
+                            justifyContent: "center",
+                            gap: "6px",
+                            flex: 1
+                          }}>
+                            {["r", "g", "b", "u", "w"].map(color => (
+                              <div
+                                key={color}
+                                className={`${color}chip gem ${selectedGems.includes(color) ? "selected" : ""}`}
+                                onClick={() => {
+                                    playSound('passturn'); 
+                                    handleGemSelect(color);
+                                }}
+                                style={{
+                                  width: "45px",
+                                  height: "45px",
+                                  border: selectedGems.includes(color)
+                                    ? "3px solid #FFD700"
+                                    : "1px solid #aaa",
+                                  borderRadius: "50%",
+                                  cursor: "pointer",
+                                  boxShadow: selectedGems.includes(color)
+                                    ? "0 0 10px rgba(255, 215, 0, 0.7)"
+                                    : "none"
+                                }}
+                              />
+                            ))}
+                          </div>
+                          
+                          {/* 确认按钮 */}
+                          <button
+                            onClick={handleConfirmGems}
+                            style={{ 
+                              backgroundColor: "#22bb55", 
+                              fontSize: "16px",
+                              padding: "5px 10px",
+                              border: "2px solid #fff",
+                              borderRadius: "6px",
+                              fontWeight: "bold",
+                              color: "#000",
+                              cursor: "pointer",
+                              boxShadow: "0 0 8px rgba(34, 187, 85, 0.5)",
+                              marginLeft: "10px",
+                              whiteSpace: "nowrap"
+                            }}
+                          >
+                            Confirm
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
 
 
@@ -2629,6 +2675,7 @@ const TooltipPortal = () => {
               opacity: isPlayerTurn() ? 1 : 0.5
             }}
             onClick={() => {
+              playSound('passturn');
               if (hintLoading) {
                 alert("Please wait for the AI advice to complete.");
                 return;
@@ -2744,6 +2791,7 @@ const TooltipPortal = () => {
           </>
         )}
       </div>
+
       {gameOver && <GameOverModal />}
       {<QuitConfirmModal />}
 
@@ -2807,6 +2855,15 @@ const TooltipPortal = () => {
         </div>
       )}
     </div>
+
+      {/* 贵族访问动画 - 简化版 */}
+      {showNobleVisitAnimation && (
+        <div className="noble-visit-overlay">
+          <div className="noble-visit-animation">
+            NOBLE VISIT!
+          </div>
+        </div>
+      )}
 
       <TooltipPortal />
     </ResponsiveGameWrapper>
