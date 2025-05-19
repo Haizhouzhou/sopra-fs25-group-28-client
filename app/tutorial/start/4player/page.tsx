@@ -187,6 +187,32 @@ export default function TutorialPage() {
 
   return (
     <ResponsiveGameWrapper>
+      {/* Back Button */}
+<div
+  style={{
+    position: "fixed",
+    top: "20px",
+    left: "20px",
+    zIndex: 1000,
+  }}
+>
+  <button
+    onClick={() => router.push("/tutorial")}
+    style={{
+      background: "rgba(0,0,0,0.5)",
+      color: "#FFD700",
+      border: "none",
+      padding: "8px 12px",
+      borderRadius: "4px",
+      cursor: "pointer",
+      fontFamily: "monospace",
+      fontWeight: "bold",
+    }}
+  >
+    ← Back
+  </button>
+</div>
+
       <TutorialOverlay step={step} totalSteps={tutorialSteps.length} onNext={advanceStep} gameState={gameState} onFinish={() => router.push('/tutorial')} />
       <div id="game-board">
          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: "600px", margin: "0 auto", padding: "20px 20px 0", marginBottom: "20px" }}>
@@ -216,7 +242,7 @@ export default function TutorialPage() {
                 </div>
                 {currentAction === "take" && allowedAction === "selectAndConfirmGems" && (
                   <div id="gem-selection-area" style={{ marginTop: "10px", padding: "15px", backgroundColor: "rgba(0,0,0,0.3)", border: "2px solid #aaa", borderRadius: "8px", textAlign: "center" }}>
-                    <div style={{ color: "#fff", marginBottom: "10px", fontSize: "14px" }}> Select gems: 3 different (Tutorial: {currentStepConfig?.targetGems?.join(', ')}) </div>
+                    <div style={{ color: "#fff", marginBottom: "10px", fontSize: "14px" }}> Select gems: 3 different (Please select 🔴Ruby(red gem), 🟢Emerald(green gem) and 🔵Sapphire(blue gem)) </div>
                     <div className="flex justify-center gap-2 flex-wrap mb-4">
                       {["r", "g", "b", "u", "w"].map(color => ( <div key={color} className={`gem ${color}chip ${enableGemSelection ? 'tutorial-active' : 'tutorial-inactive'} ${selectedGems.includes(color) ? "selected" : ""}`} onClick={() => { if(enableGemSelection) handleGemSelect(color); }} style={{ width: "50px", height: "50px", cursor: enableGemSelection ? "pointer" : "not-allowed", border: selectedGems.includes(color) ? "3px solid yellow" : (enableGemSelection ? '1px solid #aaa' : '1px solid #555'), }} /> ))}
                     </div>
