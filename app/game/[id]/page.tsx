@@ -175,6 +175,13 @@ export default function GamePage() {
   const [cardsData, setCardsData] = useState([]);
   const [noblesData, setNoblesData] = useState([]);
 
+  const chatContainerRef = useRef<HTMLDivElement>(null); // For auto-scrolling
+   useEffect(() => {
+    if (showChat && chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatMessages, showChat]);
+
   // for AI hint
   const [hintMessage, setHintMessage] = useState("");
   const [hintLoading, setHintLoading] = useState(false);
@@ -2704,89 +2711,182 @@ const TooltipPortal = () => {
       {/* Chat box */}
       <div
         id="chat-box"
+        // ... (keep existing #chat-box styles: position, width, backgroundColor, border, etc.)
         style={{
           position: "fixed",
           right: "20px",
-          bottom: -4,
-          width: "250px",
-          height: "auto",
-          backgroundColor: "white",
-          border: "2px solid black",
-          borderBottom: "none",
-          borderTopLeftRadius: "4px",
-          borderTopRightRadius: "4px",
-          zIndex: 3,
-          fontFamily: "monospace",
-          fontWeight: "normal",
-          fontStyle: "normal",
-          color: "black",
-          opacity: 0.9,
+          bottom: "0px",
+          width: "300px",
+          backgroundColor: "rgba(20, 20, 30, 0.9)",
+          border: "2px solid gold",
+          borderTopLeftRadius: "8px",
+          borderTopRightRadius: "8px",
+          zIndex: 1050,
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
+          color: "#e0e0e0",
+          transition: "height 0.3s ease-out, max-height 0.3s ease-out",
+          boxShadow: "0 0 15px rgba(255, 215, 0, 0.5)",
+          display: 'flex',
+          flexDirection: 'column',
+          height: showChat ? "400px" : "40px",
+          overflow: "hidden",
         }}
       >
         {/* Heading */}
         <div
-          className={`title${chatNotify ? " blinking" : ""}`}
+          className={`title${chatNotify && !showChat ? " blinking" : ""}`}
           onClick={() => {
             setShowChat((prev) => !prev);
             setChatNotify(false);
           }}
           style={{
-            width: "230px",
             cursor: "pointer",
-            padding: "3px 10px",
-            borderBottom: "1px solid black",
-            marginBottom: "5px",
+            padding: "8px 12px",
+            borderBottom: showChat ? "1px solid gold" : "none",
+            fontWeight: "bold",
+            fontSize: "16px",
+            color: "gold",
+            backgroundColor: "rgba(0,0,0,0.3)",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            width: "100%", // Ensure the title div takes the full width of its parent (#chat-box content area)
+            boxSizing: "border-box", // Makes width: 100% include padding and border of this element
           }}
         >
-          ::Chat
+          {/* Chat Box Text and Notification */}
+          <span>
+            Chat Box
+            {chatNotify && !showChat && (
+              <span style={{ color: "#FF6B6B", marginLeft: "5px" }}>(New!)</span>
+            )}
+          </span>
+
+          {/* Collapse/Expand Indicator */}
+          <span style={{
+            fontSize: "20px",
+            lineHeight: "1",
+            marginLeft: "auto" // This will push the icon to the right edge of the title div's content box
+          }}>
+            {showChat ? "−" : "+"}
+          </span>
         </div>
-  
-        {/* Show Content */}
+
+        {/* Conditional rendering for chat content */}
         {showChat && (
           <>
             {/* Conversation */}
             <div
+              ref={chatContainerRef}
               className="scroller"
+              // ... (keep existing .scroller styles)
               style={{
-                height: "230px",
-                overflowY: "scroll",
-                padding: "0 10px",
+                overflowY: "auto",
+                padding: "10px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                flexGrow: 1,
+                minHeight: 0,
+                // Explicitly set width and boxSizing here too for consistency if needed,
+                // though as a flex-grow item in a column flex parent, it should stretch.
+                width: "100%",
+                boxSizing: "border-box",
               }}
             >
-              {chatMessages.map((msg, idx) => (
-                <div key={idx}>
-                  <strong>{msg.player}: </strong>
-                  <span>{msg.text}</span>
-                </div>
-              ))}
+              {chatMessages.map((msg, idx) => {
+                const isCurrentUser = msg.player === (currentUser.name || "You");
+                const messageDate = new Date(msg.timestamp);
+                const timeString = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      display: 'flex',
+                      justifyContent: isCurrentUser ? 'flex-end' : 'flex-start',
+                      marginBottom: '5px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        maxWidth: '80%',
+                        padding: '8px 12px',
+                        borderRadius: '15px',
+                        backgroundColor: isCurrentUser ? 'rgba(0, 120, 255, 0.8)' : 'rgba(50, 50, 70, 0.8)',
+                        color: 'white',
+                        border: isCurrentUser ? '1px solid rgba(0,100,200,0.9)' : '1px solid rgba(70,70,90,0.9)',
+                        wordWrap: 'break-word',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', marginBottom: '3px', fontSize: '0.9em', color: isCurrentUser ? '#FFD700' : '#aaa' }}>
+                        {msg.player}
+                      </div>
+                      <div style={{ marginBottom: '4px', fontSize: '1em', lineHeight: '1.4' }}>{msg.text}</div>
+                      <div style={{ fontSize: '0.75em', textAlign: 'right', opacity: 0.7 }}>
+                        {timeString}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-  
+
             {/*Input Area*/}
             <form
-              id="chat"
+              id="chat-form"
               onSubmit={handleSendChat}
+              // ... (keep existing #chat-form styles)
               style={{
-                width: "240px",
                 display: "flex",
-                borderTop: "1px solid black",
-                padding: "0 5px",
+                alignItems: "center",
+                borderTop: "1px solid gold",
+                padding: "8px 10px",
+                backgroundColor: "rgba(0,0,0,0.3)",
+                flexShrink: 0,
+                // Explicitly set width and boxSizing here too for consistency
+                width: "100%",
+                boxSizing: "border-box",
               }}
             >
-              <span id="prompt">&gt;</span>
               <input
-                id="chat-inner"
+                id="chat-input"
                 type="text"
                 value={newChat}
                 onChange={(e) => setNewChat(e.target.value)}
+                placeholder="Type a message..."
+                // ... (keep existing #chat-input styles)
                 style={{
-                  marginLeft: "5px",
-                  fontFamily: "monospace",
-                  height: "25px",
-                  width: "210px",
+                  flexGrow: 1,
+                  fontFamily: 'inherit',
+                  height: "35px",
+                  padding: "0 10px",
                   outline: "none",
-                  border: "none",
+                  border: "1px solid #555",
+                  borderRadius: "5px",
+                  backgroundColor: "#333",
+                  color: "#e0e0e0",
+                  marginRight: "8px",
                 }}
               />
+              <button
+                type="submit"
+                // ... (keep existing button styles)
+                style={{
+                  padding: "0 15px",
+                  height: "35px",
+                  backgroundColor: "gold",
+                  color: "black",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontFamily: 'inherit',
+                }}
+              >
+                Send
+              </button>
             </form>
           </>
         )}
