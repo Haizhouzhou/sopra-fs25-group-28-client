@@ -175,13 +175,6 @@ export default function GamePage() {
   const [cardsData, setCardsData] = useState([]);
   const [noblesData, setNoblesData] = useState([]);
 
-  const chatContainerRef = useRef<HTMLDivElement>(null); // For auto-scrolling
-   useEffect(() => {
-    if (showChat && chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [chatMessages, showChat]);
-
   // for AI hint
   const [hintMessage, setHintMessage] = useState("");
   const [hintLoading, setHintLoading] = useState(false);
@@ -230,6 +223,21 @@ export default function GamePage() {
   const [showNobleVisitAnimation, setShowNobleVisitAnimation] = useState(false);
   const [lastNobleCount, setLastNobleCount] = useState(0);
 
+  const [isPageRefreshed, setIsPageRefreshed] = useState(false);
+  const requestGameState = useCallback(() => {
+    if (!wsConnected || !stableSessionId || !gameId) return;
+    
+    console.log("页面被刷新，请求恢复游戏状态...");
+    sendMessage({
+      type: "GET_GAME_STATE",
+      roomId: gameId,
+      sessionId: stableSessionId,
+      content: {
+        userId: currentUser.id
+      }
+    });
+  }, [wsConnected, stableSessionId, gameId, sendMessage, currentUser.id]);
+
 
   // 计时器显示文本函数
   const getTimerDisplay = () => {
@@ -250,10 +258,11 @@ export default function GamePage() {
       return "Time's up!";
     }
     
-    // 如果是当前玩家的回合，且在当前回合已收到AI提示但还未执行操作
-    if (aiHintProcessedForTurn && gameState?.currentPlayerId === currentUser.id && !currentAction) {
-      return "Choose Action";
-    }
+    if ((aiHintProcessedForTurn || isPageRefreshed) && 
+      gameState?.currentPlayerId === currentUser.id && 
+      !currentAction) {
+    return "Choose Action";
+  }
     
     // 正常计时显示
     return `Timer: ${seconds}s`;
@@ -342,6 +351,34 @@ export default function GamePage() {
     }, 1000);
   };
 
+
+  // useEffect用于检测页面刷新
+  useEffect(() => {
+    // 检测是否是页面刷新
+    const wasRefreshed = () => {
+      const navEntries = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+      
+      if (navEntries.length > 0 && navEntries[0].type === "reload") {
+        return true;
+      }
+      
+      // 兼容性检查，如果performance API不可用
+      if (!navEntries.length && document.referrer.includes(window.location.host)) {
+        return true;
+      }
+      
+      return false;
+    };
+    
+    // 如果是页面刷新，并且websocket已连接，请求游戏状态
+    if (wasRefreshed() && wsConnected) {
+      console.log("检测到页面刷新，准备恢复游戏状态...");
+      // 短暂延迟确保WebSocket完全连接
+      setTimeout(() => {
+        requestGameState();
+      }, 500);
+    }
+  }, [wsConnected, requestGameState]);
 
 
   useEffect(() => {
@@ -553,6 +590,15 @@ useEffect(() => {
             const gameStateData = transformGameState(msg.content, cardsData, noblesData, userMap);
             if (gameStateData) {
               console.log("设置新游戏状态:", gameStateData);
+
+              // 检查是否是页面刷新后收到的第一个状态更新
+              if (isPageRefreshed && gameStateData.currentPlayerId === currentUser.id) {
+                console.log("检测到页面刷新后的首次状态更新，当前是玩家回合");
+                setAiHintProcessedForTurn(true); // 使其显示"Choose Action"
+                setSeconds(30); // 设置合理的倒计时时间
+                setIsPageRefreshed(false); // 重置页面刷新标记
+              }
+
               setGameState(gameStateData);
               setPendingGameState(null); // 清除缓存
             }
@@ -669,8 +715,26 @@ useEffect(() => {
         roomId: gameId
       });
       hasJoinedRef.current = true; // 确保只发一次
+      
+      // 检测是否是页面刷新 - 避开TypeScript错误
+      const wasRefreshed = () => {
+        try {
+          // 使用any类型避开TypeScript检查
+          const entries = performance.getEntriesByType("navigation") as any[];
+          return entries.length > 0 && entries[0].type === "reload";
+        } catch (e) {
+          // 如果上面的方法不可用，返回false
+          return false;
+        }
+      };
+      
+      // 如果是页面刷新，请求游戏状态
+      if (wasRefreshed()) {
+        // 延迟请求，确保加入房间处理完成
+        setTimeout(() => requestGameState(), 1000);
+      }
     }
-  }, [wsConnected, gameId, sendMessage]);
+  }, [wsConnected, gameId, sendMessage, requestGameState]);
 
   
   // 加载卡牌和贵族数据
@@ -821,8 +885,8 @@ const handleConfirmGems = () => {
       // 等待前一个请求完成后再结束回合
       setTimeout(() => {
         sendAction("next", "");
-      }, 500);
-    }, 500);
+      }, 300);
+    }, 300);
   }
   
   // 玩家选了三个不同颜色的宝石
@@ -835,7 +899,7 @@ const handleConfirmGems = () => {
 
     // 先执行动画
     animateSelectedGems();
-    // 播放拾取宝石音效 
+  // 播放拾取宝石音效 
     playSound('takeGem');
 
     
@@ -851,8 +915,8 @@ const handleConfirmGems = () => {
       // 等待前一个请求完成后再结束回合
       setTimeout(() => {
         sendAction("next", "");
-      }, 500);
-    }, 500);
+      }, 300);
+    }, 300);
   }
 
   // 其他情况都不合法
@@ -1437,7 +1501,7 @@ const TooltipPortal = () => {
   
 
   const requestAiHint = () => {
-    if (!isPlayerTurn() || hintCount >= 1) return; // 限制使用3次
+    if (!isPlayerTurn() || hintCount >= 3) return; // 限制使用3次
     
     setHintLoading(true);
     setHintMessage("");
@@ -2709,182 +2773,89 @@ const TooltipPortal = () => {
       {/* Chat box */}
       <div
         id="chat-box"
-        // ... (keep existing #chat-box styles: position, width, backgroundColor, border, etc.)
         style={{
           position: "fixed",
           right: "20px",
-          bottom: "0px",
-          width: "300px",
-          backgroundColor: "rgba(20, 20, 30, 0.9)",
-          border: "2px solid gold",
-          borderTopLeftRadius: "8px",
-          borderTopRightRadius: "8px",
-          zIndex: 1050,
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
-          color: "#e0e0e0",
-          transition: "height 0.3s ease-out, max-height 0.3s ease-out",
-          boxShadow: "0 0 15px rgba(255, 215, 0, 0.5)",
-          display: 'flex',
-          flexDirection: 'column',
-          height: showChat ? "400px" : "40px",
-          overflow: "hidden",
+          bottom: -4,
+          width: "250px",
+          height: "auto",
+          backgroundColor: "white",
+          border: "2px solid black",
+          borderBottom: "none",
+          borderTopLeftRadius: "4px",
+          borderTopRightRadius: "4px",
+          zIndex: 3,
+          fontFamily: "monospace",
+          fontWeight: "normal",
+          fontStyle: "normal",
+          color: "black",
+          opacity: 0.9,
         }}
       >
         {/* Heading */}
         <div
-          className={`title${chatNotify && !showChat ? " blinking" : ""}`}
+          className={`title${chatNotify ? " blinking" : ""}`}
           onClick={() => {
             setShowChat((prev) => !prev);
             setChatNotify(false);
           }}
           style={{
+            width: "230px",
             cursor: "pointer",
-            padding: "8px 12px",
-            borderBottom: showChat ? "1px solid gold" : "none",
-            fontWeight: "bold",
-            fontSize: "16px",
-            color: "gold",
-            backgroundColor: "rgba(0,0,0,0.3)",
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            width: "100%", // Ensure the title div takes the full width of its parent (#chat-box content area)
-            boxSizing: "border-box", // Makes width: 100% include padding and border of this element
+            padding: "3px 10px",
+            borderBottom: "1px solid black",
+            marginBottom: "5px",
           }}
         >
-          {/* Chat Box Text and Notification */}
-          <span>
-            Chat Box
-            {chatNotify && !showChat && (
-              <span style={{ color: "#FF6B6B", marginLeft: "5px" }}>(New!)</span>
-            )}
-          </span>
-
-          {/* Collapse/Expand Indicator */}
-          <span style={{
-            fontSize: "20px",
-            lineHeight: "1",
-            marginLeft: "auto" // This will push the icon to the right edge of the title div's content box
-          }}>
-            {showChat ? "−" : "+"}
-          </span>
+          ::Chat
         </div>
-
-        {/* Conditional rendering for chat content */}
+  
+        {/* Show Content */}
         {showChat && (
           <>
             {/* Conversation */}
             <div
-              ref={chatContainerRef}
               className="scroller"
-              // ... (keep existing .scroller styles)
               style={{
-                overflowY: "auto",
-                padding: "10px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                flexGrow: 1,
-                minHeight: 0,
-                // Explicitly set width and boxSizing here too for consistency if needed,
-                // though as a flex-grow item in a column flex parent, it should stretch.
-                width: "100%",
-                boxSizing: "border-box",
+                height: "230px",
+                overflowY: "scroll",
+                padding: "0 10px",
               }}
             >
-              {chatMessages.map((msg, idx) => {
-                const isCurrentUser = msg.player === (currentUser.name || "You");
-                const messageDate = new Date(msg.timestamp);
-                const timeString = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'flex',
-                      justifyContent: isCurrentUser ? 'flex-end' : 'flex-start',
-                      marginBottom: '5px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        maxWidth: '80%',
-                        padding: '8px 12px',
-                        borderRadius: '15px',
-                        backgroundColor: isCurrentUser ? 'rgba(0, 120, 255, 0.8)' : 'rgba(50, 50, 70, 0.8)',
-                        color: 'white',
-                        border: isCurrentUser ? '1px solid rgba(0,100,200,0.9)' : '1px solid rgba(70,70,90,0.9)',
-                        wordWrap: 'break-word',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                      }}
-                    >
-                      <div style={{ fontWeight: 'bold', marginBottom: '3px', fontSize: '0.9em', color: isCurrentUser ? '#FFD700' : '#aaa' }}>
-                        {msg.player}
-                      </div>
-                      <div style={{ marginBottom: '4px', fontSize: '1em', lineHeight: '1.4' }}>{msg.text}</div>
-                      <div style={{ fontSize: '0.75em', textAlign: 'right', opacity: 0.7 }}>
-                        {timeString}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {chatMessages.map((msg, idx) => (
+                <div key={idx}>
+                  <strong>{msg.player}: </strong>
+                  <span>{msg.text}</span>
+                </div>
+              ))}
             </div>
-
+  
             {/*Input Area*/}
             <form
-              id="chat-form"
+              id="chat"
               onSubmit={handleSendChat}
-              // ... (keep existing #chat-form styles)
               style={{
+                width: "240px",
                 display: "flex",
-                alignItems: "center",
-                borderTop: "1px solid gold",
-                padding: "8px 10px",
-                backgroundColor: "rgba(0,0,0,0.3)",
-                flexShrink: 0,
-                // Explicitly set width and boxSizing here too for consistency
-                width: "100%",
-                boxSizing: "border-box",
+                borderTop: "1px solid black",
+                padding: "0 5px",
               }}
             >
+              <span id="prompt">&gt;</span>
               <input
-                id="chat-input"
+                id="chat-inner"
                 type="text"
                 value={newChat}
                 onChange={(e) => setNewChat(e.target.value)}
-                placeholder="Type a message..."
-                // ... (keep existing #chat-input styles)
                 style={{
-                  flexGrow: 1,
-                  fontFamily: 'inherit',
-                  height: "35px",
-                  padding: "0 10px",
+                  marginLeft: "5px",
+                  fontFamily: "monospace",
+                  height: "25px",
+                  width: "210px",
                   outline: "none",
-                  border: "1px solid #555",
-                  borderRadius: "5px",
-                  backgroundColor: "#333",
-                  color: "#e0e0e0",
-                  marginRight: "8px",
+                  border: "none",
                 }}
               />
-              <button
-                type="submit"
-                // ... (keep existing button styles)
-                style={{
-                  padding: "0 15px",
-                  height: "35px",
-                  backgroundColor: "gold",
-                  color: "black",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontFamily: 'inherit',
-                }}
-              >
-                Send
-              </button>
             </form>
           </>
         )}
