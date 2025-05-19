@@ -216,7 +216,8 @@ export default function GamePage() {
     reserveCard: null,
     nobleVisit: null,
     gameOver: null,
-    passturn: null
+    passturn: null,
+    AIhint:null,
   });
 
 
@@ -1235,6 +1236,7 @@ useEffect(() => {
       nobleVisit: new Audio('/gamesource/Sound_effect/Noble_Visit.mp3'),
       gameOver: new Audio('/gamesource/Sound_effect/GameOver.mp3'),
       passturn: new Audio('/gamesource/Sound_effect/Pass_Rurn.mp3'),
+      AIhint: new Audio('/gamesource/Sound_effect/Take_Gem.mp3'),
     });
   }
 }, []);
@@ -1501,7 +1503,7 @@ const TooltipPortal = () => {
   
 
   const requestAiHint = () => {
-    if (!isPlayerTurn() || hintCount >= 3) return; // 限制使用3次
+    if (!isPlayerTurn() || hintCount >= 1) return; // 限制使用1次
     
     setHintLoading(true);
     setHintMessage("");
@@ -2471,26 +2473,31 @@ const TooltipPortal = () => {
                 </button>
               ) : (
                 <button
-                  onClick={requestAiHint}
-                  disabled={!isPlayerTurn()}
+                  onClick={() => {
+                    playSound('AIhint');
+                    requestAiHint();
+                  }}
+                  disabled={!isPlayerTurn() || hintCount >= 1}
                   style={{
                     padding: "8px 24px",
                     fontWeight: "bold",
                     fontSize: "18px",
                     borderRadius: "8px",
                     border: "none",
-                    backgroundColor: isPlayerTurn()
-                      ? "rgba(0, 100, 255, 0.9)"
-                      : "rgba(100, 100, 100, 0.5)",
+                    backgroundColor:
+                      !isPlayerTurn() || hintCount >= 1
+                        ? "rgba(120, 120, 120, 0.5)" // 灰色背景
+                        : "rgba(0, 100, 255, 0.9)",  // 正常蓝色背景
                     color: "white",
-                    cursor: isPlayerTurn() ? "pointer" : "not-allowed",
-                    boxShadow: isPlayerTurn()
-                      ? "0 0 10px rgba(0, 100, 255, 0.6)"
-                      : "none",
+                    cursor: !isPlayerTurn() || hintCount >= 1 ? "not-allowed" : "pointer",
+                    boxShadow:
+                      !isPlayerTurn() || hintCount >= 1
+                        ? "none"
+                        : "0 0 10px rgba(0, 100, 255, 0.6)",
                     transition: "all 0.2s ease"
                   }}
                 >
-                  Get AI Advice {hintCount > 0 ? `(${hintCount}/3 used)` : ""}
+                  {hintCount >= 1 ? "Used" : "Get AI Advice"}
                 </button>
               )}
             </div>
@@ -2513,14 +2520,14 @@ const TooltipPortal = () => {
             }}>
               {hintMessage ? (
                 <div style={{
-                  backgroundColor: "#cc0000",
+                  backgroundColor: "#003ee8",
                   color: "white",
                   fontWeight: "bold",
                   padding: "6px 10px",
                   border: "none",
                   borderRadius: "6px",
-                  fontSize: "14px",
-                  boxShadow: "0 0 8px rgba(255, 0, 0, 0.5)",
+                  fontSize: "20px",
+                  boxShadow: "0 0 8px rgba(0, 100, 255, 0.9)",
                   transition: "all 0.2s ease",
                   maxWidth: "100%", // 确保文字不溢出
                   wordWrap: "break-word" // 允许长文本换行
@@ -2561,9 +2568,25 @@ const TooltipPortal = () => {
                     Please take your action!
                   </div>
                   <div style={{ display: "flex", justifyContent: "center", gap: "15px" }}>
-                    <button onClick={() => setCurrentAction("take")} style={buttonStyle}>Take Gems</button>
-                    <button onClick={() => setCurrentAction("buy")} style={buttonStyle}>Buy Card</button>
-                    <button onClick={() => setCurrentAction("reserve")} style={buttonStyle}>Reserve Card</button>
+                    <button 
+                    onClick={() => {
+                        playSound('passturn'); 
+                        setCurrentAction("take")
+                      }} 
+                      style={buttonStyle}>
+                        Take Gems</button>
+                    <button 
+                    onClick={() => {
+                        playSound('passturn');
+                        setCurrentAction("buy")
+                      }}
+                       style={buttonStyle}>Buy Card</button>
+                    <button 
+                    onClick={() => {
+                      playSound('passturn');
+                      setCurrentAction("reserve")
+                      }}
+                    style={buttonStyle}>Reserve Card</button>
                   </div>
                 </>
               ) : (
@@ -2599,6 +2622,7 @@ const TooltipPortal = () => {
                       {/* 左侧: Back按钮 */}
                       <button 
                         onClick={() => {
+                          playSound('passturn');
                           setCurrentAction(null);
                           setSelectedGems([]);
                         }} 
@@ -2770,8 +2794,8 @@ const TooltipPortal = () => {
         </div>
       </div>
   
-      {/* Chat box */}
-      <div
+
+      {/* 
         id="chat-box"
         style={{
           position: "fixed",
@@ -2792,7 +2816,6 @@ const TooltipPortal = () => {
           opacity: 0.9,
         }}
       >
-        {/* Heading */}
         <div
           className={`title${chatNotify ? " blinking" : ""}`}
           onClick={() => {
@@ -2810,10 +2833,8 @@ const TooltipPortal = () => {
           ::Chat
         </div>
   
-        {/* Show Content */}
         {showChat && (
           <>
-            {/* Conversation */}
             <div
               className="scroller"
               style={{
@@ -2830,7 +2851,6 @@ const TooltipPortal = () => {
               ))}
             </div>
   
-            {/*Input Area*/}
             <form
               id="chat"
               onSubmit={handleSendChat}
@@ -2859,7 +2879,8 @@ const TooltipPortal = () => {
             </form>
           </>
         )}
-      </div>
+      */}
+
 
       {gameOver && <GameOverModal />}
       {<QuitConfirmModal />}

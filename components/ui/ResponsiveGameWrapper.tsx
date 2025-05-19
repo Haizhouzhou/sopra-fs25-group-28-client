@@ -11,7 +11,7 @@ interface ResponsiveGameWrapperProps {
 
 const ResponsiveGameWrapper = ({ 
   children,
-  debugMode = true // 开发时可以设为true，发布时改为false
+  debugMode = false // 开发时可以设为true，发布时改为false
 }: ResponsiveGameWrapperProps) => {
   const [scale, setScale] = useState(1);
   const [mounted, setMounted] = useState(false);

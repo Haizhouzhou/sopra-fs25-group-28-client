@@ -387,53 +387,106 @@ const GameRoomClient = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', maxWidth: '1000px', margin: '0 auto', padding: '120px 20px 20px' }}>
         <div style={{ display: 'flex', gap: '20px', height: 'calc(100vh - 200px)' }}>
-          <div style={{ width: '60%', backgroundColor: 'rgba(15,33,73,0.7)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ flex: 1, overflowY: 'auto', marginBottom: '10px', color: 'white' }}>
-              {messages.length > 0 ? (
-                messages.map((msg, idx) => (
-                  <div key={`${msg.timestamp}-${idx}`} style={{ marginBottom: '8px' }}>
-                    <span style={{ color: '#FFD700' }}>{msg.player}: </span>
-                    <span>{msg.text}</span>
-                  </div>
-                ))
-              ) : (
-                <div style={{ color: '#aaa', textAlign: 'center', marginTop: '20px' }}>
-                  No messages in chat yet...
-                </div>
-              )}
+          <div style={{ 
+            width: '60%', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '20px' 
+          }}>
+            
+            {/* 游戏规则简介区域 */}
+            <div style={{ 
+              backgroundColor: 'rgba(15,33,73,0.7)', 
+              borderRadius: '8px', 
+              padding: '16px', 
+              color: 'white', 
+              fontSize: '16px', 
+              lineHeight: '1.7', 
+              maxHeight: '65%', 
+              overflowY: 'auto' 
+            }}>
+              <h2 style={{ color: '#FFD700', marginTop: 0 }}>📘 Game Overview</h2>
+              <p><b>Splendor</b> is a strategy game for 2–4 players. Collect gems, buy cards, and attract nobles. Reach <b>15 points</b> to win!</p>
+
+              <h3 style={{ color: '#FFD700' }}>💠 Components</h3>
+              <ul style={{ paddingLeft: '1em' }}>
+                <li>7 each of 🔴 🟢 🔵 ⚫ ⚪ + 5 🟨 wildcards</li>
+                <li>90 cards (3 levels), 10 nobles</li>
+              </ul>
+
+              <h3 style={{ color: '#FFD700' }}>🎯 Actions</h3>
+              <ul style={{ paddingLeft: '1em' }}>
+                <li><b>Take Gems:</b> 3 different OR 2 same color</li>
+                <li><b>Reserve:</b> Hold a card + 1 gold</li>
+                <li><b>Buy:</b> Pay cost, get bonuses</li>
+                <li><b>Earn Nobles:</b> Automatically gain if qualified</li>
+              </ul>
+
+              <h3 style={{ color: '#FFD700' }}>🏆 Winning</h3>
+              <p>First to 15 Prestige triggers last round. Highest score wins.</p>
             </div>
-            <form onSubmit={handleSendMessage} style={{ display: 'flex' }}>
-              <input 
-                value={newMessage} 
-                onChange={(e) => setNewMessage(e.target.value)} 
-                placeholder="Type your message..." 
-                style={{ 
-                  flex: 1, 
-                  backgroundColor: '#0F2149', 
-                  border: '1px solid #FFD700', 
-                  color: 'white', 
-                  padding: '8px 12px', 
-                  borderRadius: '4px 0 0 4px' 
-                }} 
-              />
-              <button 
-                type="submit" 
-                disabled={!isConnected} 
-                style={{ 
-                  backgroundColor: '#0F2149', 
-                  border: '1px solid #FFD700', 
-                  borderLeft: 'none', 
-                  color: '#FFD700', 
-                  padding: '8px 16px', 
-                  borderRadius: '0 4px 4px 0', 
-                  cursor: isConnected ? 'pointer' : 'not-allowed', 
-                  opacity: isConnected ? 1 : 0.7 
-                }}
-              >
-                Send
-              </button>
-            </form>
+
+            {/* 聊天框区域 */}
+            <div style={{ 
+              backgroundColor: 'rgba(15,33,73,0.7)', 
+              borderRadius: '8px', 
+              padding: '16px', 
+              flex: 1, 
+              display: 'flex', 
+              flexDirection: 'column', 
+              justifyContent: 'space-between', 
+              overflow: 'hidden' 
+            }}>
+              <div style={{ flex: 1, overflowY: 'auto', marginBottom: '10px', color: 'white' }}>
+                {messages.length > 0 ? (
+                  messages.map((msg, idx) => (
+                    <div key={`${msg.timestamp}-${idx}`} style={{ marginBottom: '8px' }}>
+                      <span style={{ color: '#FFD700' }}>{msg.player}: </span>
+                      <span>{msg.text}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ color: '#aaa', textAlign: 'center', marginTop: '20px' }}>
+                    No messages in chat yet...
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={handleSendMessage} style={{ display: 'flex' }}>
+                <input 
+                  value={newMessage} 
+                  onChange={(e) => setNewMessage(e.target.value)} 
+                  placeholder="Type your message..." 
+                  style={{ 
+                    flex: 1, 
+                    backgroundColor: '#0F2149', 
+                    border: '1px solid #FFD700', 
+                    color: 'white', 
+                    padding: '8px 12px', 
+                    borderRadius: '4px 0 0 4px' 
+                  }} 
+                />
+                <button 
+                  type="submit" 
+                  disabled={!isConnected} 
+                  style={{ 
+                    backgroundColor: '#0F2149', 
+                    border: '1px solid #FFD700', 
+                    borderLeft: 'none', 
+                    color: '#FFD700', 
+                    padding: '8px 16px', 
+                    borderRadius: '0 4px 4px 0', 
+                    cursor: isConnected ? 'pointer' : 'not-allowed', 
+                    opacity: isConnected ? 1 : 0.7 
+                  }}
+                >
+                  Send
+                </button>
+              </form>
+            </div>
           </div>
+
+
 
           <div style={{ width: '40%', backgroundColor: 'rgba(15,33,73,0.7)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column' }}>
             <h2 style={{ color: '#FFD700', marginTop: 0, marginBottom: '16px', textAlign: 'center' }}>Room - {roomName}</h2>
