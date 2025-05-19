@@ -204,14 +204,18 @@ export default function GamePage() {
   });
 
   const [aiHintProcessedForTurn, setAiHintProcessedForTurn] = useState(false);
-
-
   const [isFinalRound, setIsFinalRound] = useState(false);
   const [showFinalRoundAnimation, setShowFinalRoundAnimation] = useState(false);
 
-  const [savedSeconds, setSavedSeconds] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [sounds, setSounds] = useState<{[key: string]: HTMLAudioElement | null}>({
+    buyCard: null,
+    takeGem: null,
+    reserveCard: null,
+    nobleVisit: null,
+    gameOver: null,
+  });
 
-  const savedSecondsRef = useRef(0);
 
   // 计时器显示文本函数
   const getTimerDisplay = () => {
@@ -230,10 +234,6 @@ export default function GamePage() {
     // 如果是当前玩家的回合但时间到了
     if (isTimeUp) {
       return "Time's up!";
-    }
-
-    if (seconds > 0) {
-    return `Timer: ${seconds}s`;
     }
     
     // 如果是当前玩家的回合，且在当前回合已收到AI提示但还未执行操作
@@ -416,52 +416,35 @@ export default function GamePage() {
   }, [gameState, isFinalRound]);
 
 
-useEffect(() => {
-  // 调试日志
-  console.log("计时器状态:", { seconds, aiActive: aiActiveRef.current, hintLoading });
+  useEffect(() => {
+    if (seconds <= 0 || aiActiveRef.current || hintLoading) return; // 添加hintLoading条件
   
-  // 如果秒数为0或AI正在活动或正在加载提示，则不启动计时器
-  if (seconds <= 0 || aiActiveRef.current || hintLoading) {
-    console.log("计时器未启动，条件:", { seconds, aiActive: aiActiveRef.current, hintLoading });
-    return;
-  }
-
-  console.log("计时器启动，从", seconds, "秒开始");
-  const timer = setInterval(() => {
-    setSeconds((prev) => {
-      const newValue = prev - 1;
-      // 调试输出
-      console.log("计时器tick:", prev, "->", newValue);
-      
-      if (prev <= 1) {
-        console.log("时间到!");
-        setIsTimeUp(true);
-
-        // 自动结束回合，但仅当非AI思考状态时
-        if (gameState && gameState.currentPlayerId === currentUser.id && !hintLoading && !aiActiveRef.current) {
-          console.log("自动结束回合");
-          sendMessage({
-            type: "END_TURN",
-            roomId: gameId,
-            sessionId: stableSessionId,
-            content: {
-              userId: currentUser.id,
-              target: ""
-            }
-          });
+    const timer = setInterval(() => {
+      setSeconds((prev) => {
+        if (prev <= 1) {
+          setIsTimeUp(true);
+  
+          // 自动结束回合
+          if (gameState && gameState.currentPlayerId === currentUser.id) {
+            sendMessage({
+              type: "END_TURN",
+              roomId: gameId,
+              sessionId: stableSessionId,
+              content: {
+                userId: currentUser.id,
+                target: ""
+              }
+            });
+          }
+  
+          return 0;
         }
-
-        return 0;
-      }
-      return newValue;
-    });
-  }, 1000);
-
-  return () => {
-    console.log("清除计时器");
-    clearInterval(timer);
-  };
-}, [seconds, gameState, currentUser.id, gameId, stableSessionId, sendMessage, hintLoading, aiActiveRef.current]);
+        return prev - 1;
+      });
+    }, 1000);
+  
+    return () => clearInterval(timer);
+  }, [seconds, gameState, currentUser.id, gameId, stableSessionId, sendMessage, hintLoading]); // 添加hintLoading依赖
   
 
   useEffect(() => {
@@ -470,24 +453,9 @@ useEffect(() => {
       setIsTimeUp(false); 
       setLastHandledPlayerId(null);
       setAiHintProcessedForTurn(false); // 重置AI提示处理状态
-
-      // 重置AI相关状态
-      setHintMessage("");
-      aiActiveRef.current = false;
-      setHintLoading(false);
-    
-      setSavedSeconds(59);
-
     }
   }, [gameState?.currentPlayerId, currentUser.id]);
   
-  useEffect(() => {
-  // 如果不是当前玩家的回合，并且有AI提示消息，则清除
-  if (gameState && gameState.currentPlayerId !== currentUser.id && hintMessage) {
-    setHintMessage("");
-  }
-}, [gameState?.currentPlayerId, currentUser.id, hintMessage]);
-
   
   //持久化sessionId
   function getStableSessionId(gameId: string): string {
@@ -630,14 +598,6 @@ useEffect(() => {
             setHintLoading(false);
             aiActiveRef.current = false;
             setAiHintProcessedForTurn(true);
-
-            console.log("AI响应后恢复计时到ref:", savedSecondsRef.current);
-            
-            // 使用setTimeout确保这个更新不会被其他状态更新覆盖
-            setTimeout(() => {
-              setSeconds(savedSecondsRef.current > 0 ? savedSecondsRef.current : 59);
-              setIsTimeUp(false);
-            }, 0);
           }
           break;
 
@@ -658,6 +618,8 @@ useEffect(() => {
             
             setGameOverData(content);
             setGameOver(true);
+            playSound('gameOver');
+
           }
           break;
     }
@@ -747,8 +709,6 @@ useEffect(() => {
     }
   }
 }, [pendingGameState, cardsData, noblesData, userMap]);
-
-
   
   
 const mapFrontendToBackendGemColor = (shortCode: string): string => {
@@ -767,7 +727,7 @@ const mapFrontendToBackendGemColor = (shortCode: string): string => {
 const handleGemSelect = (color: string) => {
 
   if (hintLoading) {
-    alert("Please wait for the AI advice to complete or cancel it.");
+    alert("Please wait for the AI advice to complete.");
     return;
   }
 
@@ -782,7 +742,7 @@ const handleGemSelect = (color: string) => {
 
 const handleConfirmGems = () => {
   if (hintLoading) {
-    alert("Please wait for the AI advice to complete or cancel it.");
+    alert("Please wait for the AI advice to complete.");
     return;
   }
 
@@ -811,6 +771,9 @@ const handleConfirmGems = () => {
 
     // 先执行动画
     animateSelectedGems();
+    // 播放拾取宝石音效
+    playSound('takeGem');
+
     
     // 然后发送请求
     setTimeout(() => {
@@ -839,6 +802,9 @@ const handleConfirmGems = () => {
 
     // 先执行动画
     animateSelectedGems();
+  // 播放拾取宝石音效 
+    playSound('takeGem');
+
     
     // 然后发送请求
     setTimeout(() => {
@@ -1163,20 +1129,32 @@ useEffect(() => {
   return () => window.removeEventListener('mousemove', handleMouseMove);
 }, [tooltipInfo.show]);
 
+// 加载音效
 useEffect(() => {
-  // 如果AI状态结束但计时器值没有恢复，确保恢复
-  if (
-    !aiActiveRef.current && 
-    !hintLoading && 
-    savedSecondsRef.current > 0 && 
-    seconds === 0
-  ) {
-    console.log("检测到AI状态结束但计时器未恢复，强制恢复:", savedSecondsRef.current);
-    setSeconds(savedSecondsRef.current);
-    // 避免重复恢复
-    savedSecondsRef.current = 0;
+  if (typeof window !== "undefined") {
+    setSounds({
+      buyCard: new Audio('/gamesource/Sound_effect/Buy_Card.mp3'),
+      takeGem: new Audio('/gamesource/Sound_effect/Take_Gem.mp3'),
+      reserveCard: new Audio('/gamesource/Sound_effect/Reserve_Card.mp3'),
+      nobleVisit: new Audio('/gamesource/Sound_effect/Noble_Visit.mp3'),
+      gameOver: new Audio('/gamesource/Sound_effect/GameOver.mp3'),
+    });
   }
-}, [aiActiveRef.current, hintLoading, seconds]);
+}, []);
+
+// 播放音效的函数
+const playSound = (soundName: string) => {
+  if (!soundEnabled) return;
+  
+  const sound = sounds[soundName];
+  if (sound) {
+    // 重置音频以便可以重复播放
+    sound.pause();
+    sound.currentTime = 0;
+    sound.play().catch(err => console.error("音效播放失败:", err));
+  }
+};
+
 
 const TooltipPortal = () => {
   if (!tooltipInfo.show || !tooltipInfo.card) return null;
@@ -1317,7 +1295,7 @@ const TooltipPortal = () => {
   const handleCardAction = (cardUuid: string, clickedElement: HTMLElement) => {
 
     if (hintLoading) {
-      alert("Please wait for the AI advice to complete or cancel it.");
+      alert("Please wait for the AI advice to complete.");
       return;
     }
 
@@ -1362,6 +1340,7 @@ const TooltipPortal = () => {
     if (currentAction === "buy") {
       if (canAffordCard(targetCard)) {
         triggerCardAnimation(cardUuid, "buy", currentUser.id, clickedElement);
+        playSound('buyCard');
 
       setTimeout(() => {
         sendAction("buy", cardUuid);
@@ -1378,6 +1357,7 @@ const TooltipPortal = () => {
         alert("You already have 3 reserved cards.");
       } else {
         triggerCardAnimation(cardUuid, "reserve", currentUser.id, clickedElement);
+        playSound('reserveCard');
 
         setTimeout(() => {
           console.log("📤 发送 RESERVE 请求, cardUuid =", cardUuid);
@@ -1394,9 +1374,6 @@ const TooltipPortal = () => {
   const requestAiHint = () => {
     if (!isPlayerTurn() || hintCount >= 3) return; // 限制使用3次
     
-    savedSecondsRef.current = seconds; 
-    console.log("AI请求前保存时间到ref:", savedSecondsRef.current);
-
     setHintLoading(true);
     setHintMessage("");
     
@@ -1830,6 +1807,29 @@ const TooltipPortal = () => {
       >
         Quit Game
       </button>
+
+      {/* 音效开关按钮*/}
+      <button 
+        onClick={() => setSoundEnabled(prev => !prev)}
+        style={{
+          position: "fixed",
+          top: "20px",
+          left: "150px", // 放在Quit Game按钮右侧
+          zIndex: 1001,
+          backgroundColor: soundEnabled ? "rgba(0, 150, 0, 0.8)" : "rgba(150, 150, 150, 0.8)",
+          color: "white",
+          fontWeight: "bold",
+          padding: "8px 12px",
+          borderRadius: "6px",
+          border: "2px solid white",
+          cursor: "pointer",
+          boxShadow: soundEnabled ? "0 0 10px rgba(0, 255, 0, 0.5)" : "none",
+          transition: "all 0.2s ease"
+        }}
+      >
+        {soundEnabled ? "🔊 Sound Effect On" : "🔇 Sound Effect Off"}
+      </button>
+
 
       {/* game logo and room name */}
       <div style={{
@@ -2325,15 +2325,15 @@ const TooltipPortal = () => {
           }}>
             {hintMessage ? (
               <div style={{
-                backgroundColor: "#000acc",
+                backgroundColor: "#cc0000",
                 color: "white",
                 fontWeight: "bold",
                 padding: "6px 10px",
                 border: "none",
                 borderRadius: "6px",
-                fontSize: "20px",
+                fontSize: "14px",
                 cursor: "pointer",
-                boxShadow: "0 0 8px rgba(0, 100, 255, 0.6)",
+                boxShadow: "0 0 8px rgba(255, 0, 0, 0.5)",
                 transition: "all 0.2s ease"
               }}>{hintMessage}</div>
             ) : (
@@ -2377,12 +2377,6 @@ const TooltipPortal = () => {
                   onClick={() => {
                     setHintLoading(false);
                     setHintMessage("AI request canceled.");
-                    setHintCount(prev => prev - 1 >= 0 ? prev - 1 : 0);
-                    aiActiveRef.current = false;
-                    console.log("取消后恢复计时器到ref:", savedSecondsRef.current);
-                    setSeconds(savedSecondsRef.current > 0 ? savedSecondsRef.current : 59);
-                    setIsTimeUp(false);
-                    savedSecondsRef.current = 0;
                   }}
                   style={{
                     padding: "8px 24px",
@@ -2640,23 +2634,8 @@ const TooltipPortal = () => {
                 return;
               }
               if (isPlayerTurn()) {
-                // 立即设置标志，防止重复点击
-                const wasAiActive = aiActiveRef.current;
-                aiActiveRef.current = false;
-                setHintLoading(false);
-                
-                // 强制设置时间为0，确保回合结束
-                setSeconds(0);
-                setIsTimeUp(true);
-                
-                // 发送结束回合消息
+                setSeconds(0); //倒计时归零
                 sendAction("next", "");
-                
-                // 如果AI曾经激活，重置状态
-                if (wasAiActive) {
-                  setHintMessage("");
-                  setAiHintProcessedForTurn(false);
-                }
               } else {
                 alert("It's not your turn!");
               }
