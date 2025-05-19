@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import useLocalStorage from "@/hooks/useLocalStorage";
 import WebSocketService, { WebSocketMessage } from '@/hooks/useWebSocket';
@@ -14,14 +14,6 @@ interface GameRoom {
   isReady: boolean;
 }
 
-interface RawRoomInfo {
-  roomId: string;
-  roomName?: string;
-  owner?: string;
-  players: number;
-  maxPlayers?: number;
-}
-
 const GameLobby: React.FC = () => {
   const router = useRouter();
   const { value: token, clear: clearToken } = useLocalStorage<string>("token", "");
@@ -32,20 +24,38 @@ const GameLobby: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [gameRooms, setGameRooms] = useState<GameRoom[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  
+  // 添加防抖计时器引用
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const websocketService = WebSocketService.getInstance();
 
   const handleWebSocketMessage = useCallback((message: WebSocketMessage) => {
-    if (message.type === 'ROOM_LIST') {
-      const roomInfos = message.content as RawRoomInfo[]; 
-      const parsedRooms: GameRoom[] = roomInfos.map((room) => ({
-        id: room.roomId,
-        name: room.roomName || "Untitled",
-        owner: room.owner || 'Unknown',
-        players: `${room.players}/${room.maxPlayers || 4}`,
-        isReady: false
-      }));
-      setGameRooms(parsedRooms);
+    if (message.type === 'ROOM_LIST' || message.type === 'SERVER_ROOM_LIST') {
+      // 清除之前的防抖计时器
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      
+      // 设置新的防抖计时器，延迟300ms处理
+      debounceTimerRef.current = setTimeout(() => {
+        console.log("处理房间列表数据:", message.content);
+        
+        // 确保 content 是数组
+        const roomInfos = Array.isArray(message.content) ? message.content : [];
+        
+        // 直接转换数据并更新状态，不再比较变化
+        const parsedRooms: GameRoom[] = roomInfos.map((room) => ({
+          id: room.roomId,
+          name: room.roomName || "Untitled",
+          owner: room.owner || 'Unknown',
+          players: `${room.players}/${room.maxPlayers || 4}`,
+          isReady: false
+        }));
+        
+        console.log("更新房间列表:", parsedRooms);
+        setGameRooms(parsedRooms);
+      }, 300); // 300ms的防抖时间
     }
 
     if (message.type === 'ROOM_JOINED') {
@@ -54,7 +64,7 @@ const GameLobby: React.FC = () => {
         router.push(`/room/${joinedRoomId}`);
       }
     }
-  }, [router]);
+  }, [router]); // 移除了 gameRooms 依赖，因为不再需要比较
 
   const fetchGameRooms = useCallback(() => {
     if (!isConnected || !currentUser) return;
@@ -70,8 +80,8 @@ const GameLobby: React.FC = () => {
   }, [isConnected, currentUser]);
 
   const handleLeaderboardClick = () => {
-  router.push("/leaderboard");
-};
+    router.push("/leaderboard");
+  };
 
   useEffect(() => {
     const initialize = async () => {
@@ -94,6 +104,13 @@ const GameLobby: React.FC = () => {
     };
 
     initialize();
+    
+    // 清理函数，清除防抖计时器
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, [token, localUser, fetchGameRooms, handleWebSocketMessage]);
 
   const handleJoinGame = () => {
@@ -123,6 +140,10 @@ const GameLobby: React.FC = () => {
   };
 
   const handleRefreshRooms = () => {
+    // 手动刷新时，清除防抖计时器以立即更新
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
     fetchGameRooms();
   };
 
@@ -153,7 +174,7 @@ const GameLobby: React.FC = () => {
               </div>
             )}
             <div style={{ display: 'flex', gap: '20px' }}>
-              <button onClick={handleLeaderboardClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>LEADE RBOARD</button>
+              <button onClick={handleLeaderboardClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>LEADERBOARD</button>
               <button onClick={handleProfileClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>PROFILE</button>
               <button onClick={handleLogout} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>LOG OUT</button>
             </div>
@@ -161,7 +182,10 @@ const GameLobby: React.FC = () => {
         </div>
 
         <div style={{ backgroundColor: 'rgba(15, 33, 73, 0.7)', borderRadius: 8, padding: 16, marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <span style={{ color: '#8aff8a', fontSize: '0.9rem' }}>
+              {isConnected ? 'Real-time Updates Active' : 'Waiting for connection...'}
+            </span>
             <button onClick={handleRefreshRooms} style={{ backgroundColor: '#0F2149', border: '1px solid #FFD700', color: '#FFD700', padding: '4px 12px', borderRadius: 4 }}>REFRESH</button>
           </div>
 
@@ -180,7 +204,8 @@ const GameLobby: React.FC = () => {
               color: 'white',
               backgroundColor: selectedRoom === room.id ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
               cursor: 'pointer',
-              alignItems: 'center'
+              alignItems: 'center',
+              transition: 'background-color 0.2s ease' // 添加过渡效果
             }}>
               <div>{room.id}</div>
               <div>{room.name}</div>
@@ -188,7 +213,12 @@ const GameLobby: React.FC = () => {
               <div>{room.players}</div>
             </div>
           )) : (
-            <div style={{ padding: 20, textAlign: 'center', color: 'white' }}>
+            <div style={{ 
+              padding: 20, 
+              textAlign: 'center', 
+              color: 'white',
+              transition: 'opacity 0.3s ease' // 添加过渡效果
+            }}>
               No rooms available. Create a new game!
             </div>
           )}

@@ -8,6 +8,9 @@ import type { LoginTokenGetDTO } from "@/types/api";
 import type { UserListGetDTO } from "@/types/user";
 import { Form, Input, DatePicker, ConfigProvider } from "antd";
 import type { Moment } from "moment";
+import moment from 'moment';
+
+
 
 interface FormFieldProps {
   username: string;
@@ -102,18 +105,19 @@ const SignUp: React.FC = () => {
               <Form.Item name="name" label={<span style={{ color: "white" }}>NAME</span>} rules={[{ required: true, message: "Please input your name!" }]}> 
                 <Input placeholder="Name" style={{ backgroundColor: '#0F2149', border: '1px solid #FFD700', color: 'white' }} /> 
               </Form.Item>
-              <Form.Item name="birthday" label={<span style={{ color: "white" }}>BIRTHDAY</span>} rules={[{ required: true, message: "Please select your birthday!" }]}> 
-                <DatePicker 
-                  format="YYYY-MM-DD" 
-                  style={{ 
-                    width: "100%", 
-                    backgroundColor: '#0F2149',
-                    border: '1px solid #FFD700', 
-                    color: 'white' 
-                  }}
-                  className="custom-date-picker"
-                />
-              </Form.Item>
+                <Form.Item name="birthday" label={<span style={{ color: "white" }}>BIRTHDAY</span>} rules={[{ required: true, message: "Please select your birthday!" }]}> 
+                  <DatePicker 
+                    format="YYYY-MM-DD" 
+                    style={{ 
+                      width: "100%", 
+                      backgroundColor: '#0F2149',
+                      border: '1px solid #FFD700', 
+                      color: 'white' 
+                    }}
+                    className="custom-date-picker"
+                    disabledDate={current => current && current > moment().endOf('day')} 
+                  />
+                </Form.Item>
               <Form.Item name="password" label={<span style={{ color: "white" }}>PASSWORD</span>} rules={[{ required: true, message: "Please input your password!" }]}> 
                 <Input.Password placeholder="Password" style={{ backgroundColor: '#0F2149', border: '1px solid #FFD700', color: 'white' }} /> 
               </Form.Item>
