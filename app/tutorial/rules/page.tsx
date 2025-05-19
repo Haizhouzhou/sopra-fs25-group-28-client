@@ -71,45 +71,17 @@ const RulesPage = () => {
       >
         <h2 style={{ fontSize: "1.2rem", marginBottom: "1rem" }}>📜 Contents</h2>
         <ul style={{ listStyle: "none", padding: 0, margin: 0, lineHeight: 1.6 }}>
-          <li style={{ marginBottom: "0.5rem" }}>
-            <a href="#overview" style={{ color: "#FFD700", textDecoration: "none" }}>
-              Overview 📋
-            </a>
-          </li>
-          <li style={{ marginBottom: "0.5rem" }}>
-            <a href="#setup" style={{ color: "#FFD700", textDecoration: "none" }}>
-              Setup 🛠️
-            </a>
-          </li>
-          <li style={{ marginBottom: "0.5rem" }}>
-            <a href="#players" style={{ color: "#FFD700", textDecoration: "none" }}>
-              2–3 Players 👥
-            </a>
-          </li>
-          <li style={{ marginBottom: "0.5rem" }}>
-            <a href="#rules" style={{ color: "#FFD700", textDecoration: "none" }}>
-              Game Rules 🎲
-            </a>
-          </li>
-          <li style={{ marginBottom: "0.5rem" }}>
-            <a href="#actions" style={{ color: "#FFD700", textDecoration: "none" }}>
-              Actions 🎯
-            </a>
-          </li>
-          <li style={{ marginBottom: "0.5rem" }}>
-            <a href="#upkeep" style={{ color: "#FFD700", textDecoration: "none" }}>
-              Upkeep 🔄
-            </a>
-          </li>
-          <li>
-            <a href="#win" style={{ color: "#FFD700", textDecoration: "none" }}>
-              Winning 🏆
-            </a>
-          </li>
+          <li><a href="#overview" style={{ color: "#FFD700", textDecoration: "none" }}>Overview 📋</a></li>
+          <li><a href="#components" style={{ color: "#FFD700", textDecoration: "none" }}>Components 💎</a></li>
+          <li key="setup"><a href="#setup" style={{ color: "#FFD700", textDecoration: "none" }}>Setup 🛠️</a></li>
+          <li><a href="#players" style={{ color: "#FFD700", textDecoration: "none" }}>2–3 Players 👥</a></li>
+          <li><a href="#actions" style={{ color: "#FFD700", textDecoration: "none" }}>Actions 🎯</a></li>
+          <li><a href="#upkeep" style={{ color: "#FFD700", textDecoration: "none" }}>Upkeep 🔄</a></li>
+          <li><a href="#winning" style={{ color: "#FFD700", textDecoration: "none" }}>Winning 🏆</a></li>
         </ul>
       </nav>
 
-      {/* Logo (scrolls with content) */}
+      {/* Logo */}
       <div
         style={{
           position: "absolute",
@@ -144,107 +116,112 @@ const RulesPage = () => {
 
         <section id="overview" style={{ marginBottom: "1.5rem" }}>
           <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>
-            Player count, game length and overview ⏱️
+            Overview 📋
           </h2>
           <p>
-            Splendor is a resource-management game for two to four players that plays in about 30
-            minutes. Players take the role of merchants racing to produce the most renowned
-            jewellery of the Renaissance by collecting raw gems, buying developments and
-            attracting wealthy patrons.
+            Splendor is a resource-management game for 2–4 players, taking about 30 minutes.
+            Players collect gem tokens to purchase development cards, earn permanent bonuses,
+            and attract nobles for prestige points. The first to reach 15 points triggers the
+            final round; highest score wins.
           </p>
+        </section>
+        <hr style={{ borderColor: "#FFD700", margin: "2rem 0" }} />
+
+        <section id="components" style={{ marginBottom: "1.5rem" }}>
+          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>
+            Components 💎
+          </h2>
+          <ul style={{ paddingLeft: "1.2rem" }}>
+            <li>7 Ruby tokens (red)🔴</li>
+            <li>7 Emerald tokens (green)🟢</li>
+            <li>7 Sapphire tokens (blue)🔵</li>
+            <li>7 Onyx tokens (black)⚫</li>
+            <li>7 Diamond tokens (white)⚪</li>            
+            <li>5 Gold Joker tokens (yellow)🟨</li>
+            <li>90 Development cards:
+              <ul style={{ marginTop: "0.5rem", marginLeft: "1.2rem" }}>
+                <li>40 Level 1 cards</li>
+                <li>30 Level 2 cards</li>
+                <li>20 Level 3 cards</li>
+              </ul>
+            </li>
+            <li>10 Noble tiles</li>
+          </ul>
         </section>
         <hr style={{ borderColor: "#FFD700", margin: "2rem 0" }} />
 
         <section id="setup" style={{ marginBottom: "1.5rem" }}>
           <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>
-            How to set up Splendor 🔧
+            Setup 🛠️
           </h2>
-          <p>
-            Divide the development cards into their respective decks. You can tell which deck a
-            development card belongs to by counting the white dots printed on its back. Those
-            white dots also indicate the deck’s level, from one to three.
-          </p>
-          <p>
-            Shuffle the decks separately and place them in a column, with level one at the bottom
-            and level three at the top. Reveal four cards from each deck and place them in a line
-            next to their respective decks. You should now have a three-by-four grid of face-up
-            development cards, each deck sitting next to a line of face-up cards of the same level.
-          </p>
-          <p>
-            Pick five noble tiles at random and return the rest to the box. Place those tiles where
-            everyone can see them.
-          </p>
-          <p>
-            Lastly, divide the gem and gold tokens by colour and place them so that every player
-            can reach them easily. This is the token supply:
-          </p>
-          <p>💚 Emerald, 🤍 Diamond, 💙 Sapphire, 🖤 Onyx, ❤️ Ruby, 💛 Gold</p>
+          <p>1. Shuffle each development deck separately and place Level 1–3 stacked.</p>
+          <p>2. Reveal 4 cards from each deck in rows beside them (3×4 grid).</p>
+          <p>3. Shuffle noble tiles, reveal one more than player count, remove the rest.</p>
+          <p>4. Place tokens in supply: gems and gold tokens reachable by all.</p>
         </section>
         <hr style={{ borderColor: "#FFD700", margin: "2rem 0" }} />
 
         <section id="players" style={{ marginBottom: "1.5rem" }}>
           <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>
-            How to play Splendor with two or three players 🎮
+            2–3 Players 👥
           </h2>
           <p>
-            Splendor’s setup for 2 or 3 players is slightly different, as the game uses fewer
-            gems and noble tiles. The number of gold tokens and development cards does not
-            change with player count.
-          </p>
-          <p>For a two-player game, use only 3 noble tiles and 4 gems each: 💚 🤍 💙 🖤 ❤️</p>
-          <p>For a three-player game, use only 4 noble tiles and 5 gems each: 💚 🤍 💙 🖤 ❤️</p>
-        </section>
-        <hr style={{ borderColor: "#FFD700", margin: "2rem 0" }} />
-
-        <section id="rules" style={{ marginBottom: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>Splendor rules 🎲</h2>
-          <p>
-            The goal of Splendor is to be the first player to reach 15 prestige points by accumulating
-            development cards and noble tiles. Cards and tiles are worth the number of points
-            indicated by the white number in the top left. Cards with no number printed in the top
-            left are worth zero points.
+            For fewer players, remove some gems and nobles:
           </p>
           <p>
-            Starting from the first player and continuing clockwise, players must perform one action per turn: gathering gems, reserving a development card, or buying a development card.
+            • 2 players: remove 3 of each colored gem (4 remain), reveal 3 nobles.<br/>
+            • 3 players: remove 2 of each colored gem (5 remain), reveal 4 nobles.
           </p>
+          <p>No other changes to cards or gold tokens.</p>
         </section>
         <hr style={{ borderColor: "#FFD700", margin: "2rem 0" }} />
 
         <section id="actions" style={{ marginBottom: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>Actions 🎯</h2>
-
-          <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Gather gems:</h3>
+          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>
+            Actions 🎯
+          </h2>
+          <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Take Gems:</h3>
           <p>
-            Take three gems of different colours or two gems of the same colour (only if at least four remain). End your turn with a maximum of 10 tokens (gems + gold), returning any extras.
+            Either take 3 different colored gems, or 2 of the same color (only if ≥4 remain).
+            You may hold up to 10 tokens (gems + gold) total.
           </p>
 
-          <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Reserve a card:</h3>
+          <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Reserve a Card:</h3>
           <p>
-            Reserve a face-up card or draw from a deck. Gain one gold token (joker) if available. You may hold up to three reserved cards.
+            Reserve any face-up card or draw and reserve from deck. Gain 1 Gold token if available.
+            Max 3 reserved cards in hand.
           </p>
 
-          <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Buy a card:</h3>
+          <h3 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Buy a Card:</h3>
           <p>
-            Spend tokens matching the card’s cost. Gold tokens act as jokers. Each bonus from previously bought cards discounts future purchases of that colour by one.
+            Spend tokens equal to the card’s cost. Gold = jokers. Permanent bonuses from purchased
+            cards discount future costs by 1 each.
           </p>
         </section>
         <hr style={{ borderColor: "#FFD700", margin: "2rem 0" }} />
 
         <section id="upkeep" style={{ marginBottom: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>Upkeep 🔄</h2>
+          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>
+            Upkeep 🔄
+          </h2>
           <p>
-            Refill face-up cards after purchases/reservations. At turn end, check for noble visits: if you meet a noble’s bonus requirements, you automatically gain that noble tile (worth 3 points), one per turn.
+            Refill cards after buys/reserves. At turn end, check nobles: if you meet a noble’s
+            bonus requirements, you automatically gain that tile (worth 3 points), max one per
+            turn.
           </p>
         </section>
         <hr style={{ borderColor: "#FFD700", margin: "2rem 0" }} />
 
-        <section id="win" style={{ marginBottom: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>Winning 🏆</h2>
+        <section id="winning" style={{ marginBottom: "1.5rem" }}>
+          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem" }}>
+            Winning 🏆
+          </h2>
           <p>
-            When a player reaches 15 prestige points, finish the current round so everyone has equal turns. Highest prestige wins; ties broken by fewest purchased development cards.
+            Once a player reaches 15 Prestige Points, finish the current round so all have equal
+            turns. Highest prestige wins; ties broken by fewest purchased cards.
           </p>
           <p>
-            Score only bought development cards and noble tiles. Reserved cards do not score.
+            Score = sum of development cards’ points + noble tiles’ points.
           </p>
         </section>
       </div>
