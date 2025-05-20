@@ -48,7 +48,7 @@ const tutorialSteps = [
   },
   {
     description: "These are the face-up Development Cards available for all players. Each card shows: 1) Prestige Points (top-right), 2) Gem bonus (top-left), and 3) Gem cost (bottom). Click 'Next'.",
-    highlight: ".card",
+    highlight: ".card", // This will highlight all cards. If a specific card level is needed, adjust selector.
     allowedAction: null
   },
   {
@@ -110,7 +110,7 @@ const CardComponent: React.FC<CardComponentProps> = ({ card, onClick, isDisabled
     const shortColor = card.color.length === 1 ? card.color : mapColorToFrontend(card.color);
 
     return ( <div ref={cardRef} key={card.uuid} data-card-id={card.id} className={`card card-${shortColor} card-${card.level} ${sizeClass} ${isDisabled ? 'tutorial-inactive' : 'tutorial-active'} ${className}`} onClick={handleClick} style={{ cursor: isDisabled ? 'not-allowed' : (onClick ? 'pointer' : 'default') }} >
-            {!isDisabled && <div className={`overlay ${isAffordable ? 'affordable' : 'not-affordable'}`}></div>} <div className="underlay"></div> <div className="header"> <div className={`color ${shortColor}gem`}></div> <div className="points">{card.points > 0 ? card.points : ""}</div> </div> <div className="costs"> {Object.entries(card.cost).map(([costColor, count]) => count > 0 ? (<div key={costColor} className={`cost ${mapColorToFrontend(costColor)}`}>{count}</div>) : null )} </div> </div> );
+        {!isDisabled && <div className={`overlay ${isAffordable ? 'affordable' : 'not-affordable'}`}></div>} <div className="underlay"></div> <div className="header"> <div className={`color ${shortColor}gem`}></div> <div className="points">{card.points > 0 ? card.points : ""}</div> </div> <div className="costs"> {Object.entries(card.cost).map(([costColor, count]) => count > 0 ? (<div key={costColor} className={`cost ${mapColorToFrontend(costColor)}`}>{count}</div>) : null )} </div> </div> );
 };
 
 // --- Tutorial Overlay Component ---
@@ -118,17 +118,63 @@ interface TutorialOverlayProps { step: number; totalSteps: number; onNext: () =>
 const TutorialOverlay: React.FC<TutorialOverlayProps> = ({ step, totalSteps, onNext, gameState ,
   onFinish}) => {
   const currentStepConfig = tutorialSteps[step];
-  useEffect(() => { const highlightElement = () => { const existingHighlights = document.querySelectorAll('.tutorial-highlight-overlay'); existingHighlights.forEach(el => el.remove()); if (!currentStepConfig || currentStepConfig.highlight === "none") return; const elements = document.querySelectorAll(currentStepConfig.highlight); if (elements.length > 0) { elements.forEach(targetElement => { const rect = targetElement.getBoundingClientRect(); const overlay = document.createElement('div'); overlay.className = 'tutorial-highlight-overlay'; overlay.style.position = 'fixed'; overlay.style.left = `${rect.left - 5}px`; overlay.style.top = `${rect.top - 5}px`; overlay.style.width = `${rect.width + 10}px`; overlay.style.height = `${rect.height + 10}px`; overlay.style.border = '3px solid yellow'; overlay.style.boxShadow = '0 0 15px 5px rgba(255, 255, 0, 0.5)'; overlay.style.borderRadius = '8px'; overlay.style.pointerEvents = 'none'; overlay.style.zIndex = '1999'; overlay.style.transition = 'all 0.2s ease-in-out'; document.body.appendChild(overlay); }); } }; const timer = setTimeout(highlightElement, 50); window.addEventListener('resize', highlightElement); window.addEventListener('scroll', highlightElement); return () => { clearTimeout(timer); window.removeEventListener('resize', highlightElement); window.removeEventListener('scroll', highlightElement); const existingHighlights = document.querySelectorAll('.tutorial-highlight-overlay'); existingHighlights.forEach(el => el.remove()); } }, [step, currentStepConfig, gameState]);
-  if (!currentStepConfig) return null; const isFinalStep = step === totalSteps - 1;
-const showNextButton = currentStepConfig.allowedAction === null && !isFinalStep;
+
+  useEffect(() => {
+    const highlightElement = () => {
+      const existingHighlights = document.querySelectorAll('.tutorial-highlight-overlay');
+      existingHighlights.forEach(el => el.remove());
+
+      if (!currentStepConfig || currentStepConfig.highlight === "none") return;
+
+      const elements = document.querySelectorAll(currentStepConfig.highlight);
+      if (elements.length > 0) {
+        elements.forEach(targetElement => {
+          const rect = targetElement.getBoundingClientRect();
+          const overlay = document.createElement('div');
+          overlay.className = 'tutorial-highlight-overlay';
+          overlay.style.position = 'fixed';
+          overlay.style.left = `${rect.left - 5}px`;
+          overlay.style.top = `${rect.top - 5}px`;
+          overlay.style.width = `${rect.width + 10}px`;
+          overlay.style.height = `${rect.height + 10}px`;
+          overlay.style.border = '3px solid yellow';
+          overlay.style.boxShadow = '0 0 15px 5px rgba(255, 255, 0, 0.5)';
+          overlay.style.borderRadius = '8px';
+          overlay.style.pointerEvents = 'none'; // Make sure clicks go through to elements underneath if needed for tutorial
+          overlay.style.zIndex = '1999'; // Below tutorial text, above everything else
+          overlay.style.transition = 'all 0.2s ease-in-out'; // Smooth transition for position/size changes
+          document.body.appendChild(overlay);
+        });
+      }
+    };
+
+    // Initial highlight + on subsequent re-renders if step/config/gamestate changes
+    const timer = setTimeout(highlightElement, 50); // Small delay for DOM updates
+
+    window.addEventListener('resize', highlightElement);
+    window.addEventListener('scroll', highlightElement, true); // Use capture phase for scroll
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', highlightElement);
+      window.removeEventListener('scroll', highlightElement, true);
+      const existingHighlights = document.querySelectorAll('.tutorial-highlight-overlay');
+      existingHighlights.forEach(el => el.remove());
+    };
+  }, [step, currentStepConfig, gameState]); // Re-run effect if these change
+
+  if (!currentStepConfig) return null;
+  const isFinalStep = step === totalSteps - 1;
+  const showNextButton = currentStepConfig.allowedAction === null && !isFinalStep;
+
 
   return ( <> <div style={{ position: 'fixed', bottom: '20px', right: '20px', left: 'auto', transform: 'none', width: 'auto', minWidth: '300px', maxWidth: '450px', backgroundColor: 'rgba(0, 0, 0, 0.9)', color: 'white', border: '2px solid gold', borderRadius: '10px', padding: '15px 25px', zIndex: '2000', textAlign: 'left', boxShadow: '0 4px 20px rgba(0,0,0,0.6)' }}>
-        <h3 style={{ marginTop: 0, marginBottom: '10px', color: 'gold', fontSize: '1.1em' }}> Tutorial Step {step + 1} / {totalSteps} </h3>
-        <p style={{ margin: '0 0 15px 0', lineHeight: '1.5' }}>{currentStepConfig.description}</p>
-        {showNextButton && step < totalSteps -1 && ( <button onClick={onNext} style={{ padding: '10px 25px', fontSize: '16px', cursor: 'pointer', backgroundColor: 'gold', color: 'black', border: 'none', borderRadius: '5px', fontWeight: 'bold', transition: 'background-color 0.2s ease', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e6c300')} onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'gold')} > Next </button> )}
-        {isFinalStep && (
+      <h3 style={{ marginTop: 0, marginBottom: '10px', color: 'gold', fontSize: '1.1em' }}> Tutorial Step {step + 1} / {totalSteps} </h3>
+      <p style={{ margin: '0 0 15px 0', lineHeight: '1.5' }}>{currentStepConfig.description}</p>
+      {showNextButton && step < totalSteps -1 && ( <button onClick={onNext} style={{ padding: '10px 25px', fontSize: '16px', cursor: 'pointer', backgroundColor: 'gold', color: 'black', border: 'none', borderRadius: '5px', fontWeight: 'bold', transition: 'background-color 0.2s ease', display: 'block', marginLeft: 'auto', marginRight: 'auto' }} onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e6c300')} onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'gold')} > Next </button> )}
+      {isFinalStep && (
   <button
-    onClick={onFinish} 
+    onClick={onFinish}
     style={{
       padding: '10px 25px',
       fontSize: '16px',
@@ -149,8 +195,8 @@ const showNextButton = currentStepConfig.allowedAction === null && !isFinalStep;
     Finish Tutorial
   </button>
 )}
-  
-      </div> </> );
+
+    </div> </> );
 };
 
 // --- Main Tutorial Page Component ---
@@ -161,10 +207,10 @@ export default function TutorialPage() {
   const [selectedGems, setSelectedGems] = useState<string[]>([]);
   const [currentAction, setCurrentAction] = useState<"take" | "buy" | "reserve" | null>(null);
 
-   const gameState = currentGameState;
-   const currentUser = gameState.players.find(p => p.id === MOCK_USER_ID);
+    const gameState = currentGameState;
+    const currentUser = gameState.players.find(p => p.id === MOCK_USER_ID);
 
-   useEffect(() => { if (!currentUser) return; const currentCards = currentUser.cards; const calculatedBonuses = calculateBonusGems(currentCards); if (JSON.stringify(calculatedBonuses) !== JSON.stringify(currentUser.bonusGems)) { console.log("Recalculating bonus gems due to card change..."); setCurrentGameState(prev => { const playerIndex = prev.players.findIndex(p => p.id === MOCK_USER_ID); if (playerIndex === -1) return prev; const updatedPlayers = [...prev.players]; updatedPlayers[playerIndex] = { ...updatedPlayers[playerIndex], bonusGems: calculatedBonuses }; return {...prev, players: updatedPlayers}; }); } }, [currentUser?.cards]);
+    useEffect(() => { if (!currentUser) return; const currentCards = currentUser.cards; const calculatedBonuses = calculateBonusGems(currentCards); if (JSON.stringify(calculatedBonuses) !== JSON.stringify(currentUser.bonusGems)) { console.log("Recalculating bonus gems due to card change..."); setCurrentGameState(prev => { const playerIndex = prev.players.findIndex(p => p.id === MOCK_USER_ID); if (playerIndex === -1) return prev; const updatedPlayers = [...prev.players]; updatedPlayers[playerIndex] = { ...updatedPlayers[playerIndex], bonusGems: calculatedBonuses }; return {...prev, players: updatedPlayers}; }); } }, [currentUser?.cards, currentUser]); // Added currentUser to dependency array
 
   const advanceStep = () => { const nextStepIndex = step + 1; if (nextStepIndex < tutorialSteps.length) { console.log(`Advancing PASSIVE step from ${step} to ${nextStepIndex}`); setCurrentAction(null); setSelectedGems([]); setStep(nextStepIndex); } else { console.log("Tutorial finished"); } };
   const canAffordCard = (card: Card): boolean => { if (!currentUser) return false; const discounts: { [color: string]: number } = currentUser.bonusGems || { r: 0, g: 0, b: 0, u: 0, w: 0 }; const requiredGems: { [color: string]: number } = {}; let wildcardsNeeded = 0; Object.entries(card.cost).forEach(([color, count]) => { const discount = discounts[mapColorToFrontend(color)] || 0; const required = Math.max(0, count - discount); if (required > 0) requiredGems[mapColorToFrontend(color)] = required; }); for (const [color, required] of Object.entries(requiredGems)) { const available = currentUser.gems[color] || 0; if (available < required) wildcardsNeeded += (required - available); } const wildcards = currentUser.gems["x"] || 0; return wildcards >= wildcardsNeeded; };
@@ -193,14 +239,14 @@ export default function TutorialPage() {
     position: "fixed",
     top: "20px",
     left: "20px",
-    zIndex: 1000,
+    zIndex: 1000, // Ensure it's above game board but below tutorial overlay if necessary
   }}
 >
   <button
-    onClick={() => router.push("/tutorial")}
+    onClick={() => router.push("/tutorial")} // Assuming /tutorial is the route to go back to
     style={{
       background: "rgba(0,0,0,0.5)",
-      color: "#FFD700",
+      color: "#FFD700", // Gold color
       border: "none",
       padding: "8px 12px",
       borderRadius: "4px",
@@ -215,13 +261,14 @@ export default function TutorialPage() {
 
       <TutorialOverlay step={step} totalSteps={tutorialSteps.length} onNext={advanceStep} gameState={gameState} onFinish={() => router.push('/tutorial')} />
       <div id="game-board">
-         <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: "600px", margin: "0 auto", padding: "20px 20px 0", marginBottom: "20px" }}>
-           <img src="/gamesource/splendor_logo.png" alt="Splendor" style={{ height: "50px", maxWidth: "150px" }} /> <div style={{ fontSize: "20px", fontWeight: "bold", color: "#FFD700", textShadow: "1px 1px 3px rgba(0,0,0,0.6)" }}> Room: {gameState?.roomName} </div>
-         </div>
-         <div className="main-game-grid" style={{ width: "100%", alignItems: "start" }}>
+          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: "600px", margin: "0 auto", padding: "20px 20px 0", marginBottom: "20px" }}>
+            <img src="/gamesource/splendor_logo.png" alt="Splendor" style={{ height: "50px", maxWidth: "150px" }} /> <div style={{ fontSize: "20px", fontWeight: "bold", color: "#FFD700", textShadow: "1px 1px 3px rgba(0,0,0,0.6)" }}> Room: {gameState?.roomName} </div>
+          </div>
+          <div className="main-game-grid" style={{ width: "100%", alignItems: "start" }}>
             <div id="common-area">
                 <div id="noble-area"> {gameState?.nobles?.map((noble, idx) => ( <div key={noble.uuid} id={`noble${idx}`} className={`noble ${allowedAction === null && step === 0 ? 'tutorial-active' : 'tutorial-inactive'}`}> <div className="points">{noble.points}</div> <div className="requirement"> {Object.entries(noble.requirement).map(([color, count]) => count > 0 ? (<div key={color} className={`requires ${mapColorToFrontend(color)}`}>{count}</div>) : null )} </div> </div> ))} </div>
-                <div id="level-area" style={{ width: "100%", height: "auto", marginBottom: "5px" }}> {["level3", "level2", "level1"].map((level) => ( <div key={level} className="card-row" style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "15px", width: "100%", overflowX: "auto", paddingBottom: '10px' }}> <div className={`deck ${level} w-[100px] h-[140px] relative flex-shrink-0 ${allowedAction === null && step === 2 ? 'tutorial-active' : 'tutorial-inactive'}`}> <div className="remaining">{gameState?.decks?.[level as keyof GameState['decks']] ?? 0}</div> <div className="overlay"></div> </div> <div className={`c_${level} face-up-cards flex-grow-1`}> <div className="cards-inner flex flex-nowrap gap-2"> {gameState?.cards?.[level as keyof GameState['cards']]?.map((card) => ( <CardComponent key={card.uuid} card={card} isDisabled={!enableCardInteraction(card.id)} isAffordable={canAffordCard(card)} onClick={handleCardAction} size="normal" className={allowedAction === null && step === 3 ? 'tutorial-active' : ''} /> ))} </div> </div> </div> ))} </div>
+                {/* --- MODIFIED: Card level display order --- */}
+                <div id="level-area" style={{ width: "100%", height: "auto", marginBottom: "5px" }}> {["level1", "level2", "level3"].map((level) => ( <div key={level} className="card-row" style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "15px", width: "100%", overflowX: "auto", paddingBottom: '10px' }}> <div className={`deck ${level} w-[100px] h-[140px] relative flex-shrink-0 ${allowedAction === null && step === 2 ? 'tutorial-active' : 'tutorial-inactive'}`}> <div className="remaining">{gameState?.decks?.[level as keyof GameState['decks']] ?? 0}</div> <div className="overlay"></div> </div> <div className={`c_${level} face-up-cards flex-grow-1`}> <div className="cards-inner flex flex-nowrap gap-2"> {gameState?.cards?.[level as keyof GameState['cards']]?.map((card) => ( <CardComponent key={card.uuid} card={card} isDisabled={!enableCardInteraction(card.id)} isAffordable={canAffordCard(card)} onClick={handleCardAction} size="normal" className={allowedAction === null && step === 3 ? 'tutorial-active' : ''} /> ))} </div> </div> </div> ))} </div>
                 <div id="gem-area"> {gameState?.gems && COLOR_ORDER.map((color) => { const count = gameState.gems[color] || 0; const isActive = allowedAction === null && step === 1; return ( <div key={color} className={`gem ${color}chip ${isActive ? 'tutorial-active' : 'tutorial-inactive'}`} > <div className="bubble">{count}</div> <div className="underlay"></div> </div> ); })} </div>
             </div>
             <div className="player-panel-container">
@@ -250,7 +297,7 @@ export default function TutorialPage() {
                   </div>
                 )}
             </div>
-         </div>
+          </div>
       </div>
     </ResponsiveGameWrapper>
   );

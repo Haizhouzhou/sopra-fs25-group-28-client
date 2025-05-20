@@ -1,11 +1,13 @@
 /* --- Base Game Styles --- */
 
-/* General Layout */
+/* General Layout - Beibehaltung der Tutorial-Grundstruktur mit Breitenanpassungen */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
   font-family: Georgia, cursive; /* From globals.css */
+  width: 100%;
+  overflow-x: auto; /* Allow horizontal scrolling if content exceeds viewport */
 }
 
 body {
@@ -17,36 +19,36 @@ body {
 }
 
 #game-board {
+  padding: 10px !important; /* Ensure padding isn't unexpectedly large */
+  width: 100% !important;
+  box-sizing: border-box !important; /* Crucial for width calculations with padding */
   min-height: 100vh;
-  width: 100%;
-  margin: 0;
   color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-sizing: border-box;
-  padding: 15px; /* Consistent padding */
 }
 
-/* Main Grid - Using Flexbox for Common Area and Player Panel Area */
+/* Main Grid - Beibehaltung der Tutorial-Grundstruktur mit Breitenanpassungen */
 .main-game-grid {
   display: flex;
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
-  justify-content: center; /* Center items if they wrap or don't fill space */
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 20px;
-  width: 100%;
-  max-width: 1500px;
+  width: 100% !important;     /* Force it to try and take full available width */
+  max-width: 2500px !important; /* Example: Increase further and force it */
+  margin: 0 auto !important;   /* Ensure it's centered if screen is wider than max-width */
 }
 
-#common-area {
+#common-area { /* Beibehalten von Tutorial für Haupt-Layout-Spalte */
   flex: 2 1 750px;
   display: flex;
   flex-direction: column;
-  gap: 0px;
+  gap: 0px; /* Tutorial hatte 0px, gamepage.css hatte 10px für #common-area; dies ist für die Lücke zwischen noble/level/gem areas */
   min-width: 0px;
 }
 
-.player-panel-container {
+.player-panel-container { /* Beibehalten von Tutorial für Haupt-Layout-Spalte */
   flex: 1 1 500px;
   display: flex;
   flex-direction: column;
@@ -54,74 +56,105 @@ body {
   min-width: 320px;
 }
 
-
-/* Nobles - Tutorial Style (Rectangular, width 75% of previous 75px) */
-#noble-area {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 8px;
-  justify-content: flex-start;
-  padding: 5px 0;
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  min-height: 90px; /* Ensure enough height for nobles + padding */
-  align-items: flex-start;
-}
-
 .noble {
-    display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;
-    width: 42px; /* 从56px减小到42px (56px * 0.75 = 42px) */
-    height: 80px; /* Kept height, making it taller than wide */
-    border: 2px solid gold; background-color: #5a3a1a;
-    border-radius: 5px; position: relative; overflow: hidden;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.3); color: white; flex-shrink: 0;
-    padding: 3px; /* Adjusted padding */
-    box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: column;
+  position: relative;
+  padding: 5px !important;
+  box-sizing: border-box;
 }
-.noble .points { font-weight: bold; font-size: 1em; margin-bottom: 3px; } /* Adjusted font size */
-.noble .requirement { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 2px; width: 20%; } /* Adjusted gap */
-.noble .requires {
-    width: 12px; height: 12px; /* Adjusted size */
-    border-radius: 50%; border: 1px solid rgba(255,255,255,0.7);
-    font-size: 0.55em; /* Adjusted font size */
-    display: flex; align-items: center; justify-content: center; font-weight: bold;
-}
-.noble .requires.r { background-color: #e74c3c; } .noble .requires.g { background-color: #2ecc71; } .noble .requires.b { background-color: #3498db; } .noble .requires.u { background-color: #34495e; } .noble .requires.w { background-color: #ecf0f1; color: black; }
 
-/* Gems - Public Area and Selection Area */
+#noble-area .noble {
+  width: 100px !important;
+  height: 100px !important;
+  margin: 8px !important;
+  font-size: 16px !important;
+}
+
+.noble .points {
+  position: absolute !important;
+  top: 5px !important;
+  left: 5px !important;
+  width: auto !important;
+  text-align: left !important;
+  padding: 2px 4px !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  color: white !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  border-radius: 3px !important;
+  z-index: 10 !important;
+}
+
+.noble .requirement {
+  width: 100%;
+  margin-top: auto;
+  padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+#noble-area .noble .requirement .requires {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 3px !important;
+  border: 1px solid white !important;
+  margin-bottom: 3px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  color: white;
+  padding: 0 3px !important;
+  box-sizing: border-box;
+}
+#noble-area .noble .requirement .requires:last-child {
+  margin-bottom: 0 !important;
+}
+
+.noble .requires.r { background-color: #f00 !important; }
+.noble .requires.g { background-color: #0f0 !important; }
+.noble .requires.b { background-color: #00f !important; }
+.noble .requires.u { background-color: #000 !important; } /* Schwarz/Onyx */
+.noble .requires.w { background-color: #fff !important; color: #000 !important; } /* Weiß */
+
+
+
+
+/* --- Gems - Public Area and Selection Area - Beibehalten von Tutorial.css --- */
 #gem-area {
     width: 100%;
     display: flex;
     justify-content: space-around;
-    align-items: center; /* Vertically center gems to help with clipping issues */
+    align-items: center;
     flex-wrap: wrap;
-    gap: 0px; /* 从1px减小到0px */
-    margin-top: 0px;
+    gap: 0px;
+    margin-top: 10px; /* von gamepage.css für Abstand */
     padding: 0px;
     min-height: 76px;
     box-sizing: border-box;
-    overflow: visible; /* Ensure overflow is not hidden */
+    overflow: visible;
 }
 #gem-selection-area .flex {
     width: 100%; display: flex; justify-content: center; align-items: center;
     flex-wrap: wrap;
-    gap: 8px; /* 从8px减小到5px */
+    gap: 8px;
     margin-top: 2px; padding: 2px; box-sizing: border-box;
     overflow: visible;
 }
-
-
-.gem {
+.gem { /* Gilt für öffentliche Edelsteine und die in der Auswahl */
     width: 76px;
     height: 76px;
     display: inline-block; border-radius: 50%; position: relative;
-    cursor: default;
+    cursor: default; /* Wird für interaktive Tutorial-Edelsteine ggf. überschrieben */
     background-image: url('/gamesource/game_page/chips.jpg');
     background-size: 600% 100%;
     background-color: transparent;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    /* Ensure gem itself does not hide overflow if image has odd dimensions */
     overflow: visible;
 }
 .gem .bubble {
@@ -131,10 +164,9 @@ body {
     display: flex; align-items: center;
     justify-content: center; font-weight: bold; font-size: 110%;
     color: white; z-index: 2;
- }
+}
 .gem .underlay { display: none; }
-
-/* Gem Sprite Positions from globals.css */
+/* Gem Sprite Positions from tutorial.css (konsistent mit gamepage.css) */
 .uchip { background-position: 0% 0; }
 .bchip { background-position: 20% 0; }
 .wchip { background-position: 40% 0; }
@@ -143,204 +175,496 @@ body {
 .xchip { background-position: 100% 0; }
 
 
-/* Decks - Tutorial Style */
-#level-area { width: 100%; display: flex; flex-direction: column; gap: 2px; }
-.card-row { display: flex; align-items: center; gap: 1px !important;; width: 100%; overflow-x: auto; padding-bottom: 0px; justify-content: flex-start; }
-.deck { border: 2px dashed grey; border-radius: 8px; position: relative; background-color: rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5em; width: 100px; height: 140px; flex-shrink: 0; }
-.deck.level1::after { content: 'I'; } .deck.level2::after { content: 'II'; } .deck.level3::after { content: 'III'; }
-.deck .remaining { position: absolute; top: 5px; left: 5px; border-radius: 50%; background-color: rgba(0, 0, 0, 0.8); border: 2px solid white; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; color: white; z-index: 2; }
-.face-up-cards { display: flex; flex-wrap: nowrap; gap: 5px; } /* 从8px减小到5px */
+/* --- Decks - Übernahme von gamepage.css --- */
+#level-area { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-bottom:10px; } /* gap von gamepage, margin von gamepage */
 
+.card-row { /* Beibehalten von Tutorial.css für Layout */
+  display: flex;
+  align-items: flex-start; /* gamepage.css hatte flex-start */
+  gap: 15px; /* gamepage.css gap für face-up-cards, hier direkt auf card-row */
+  margin-bottom: 10px; /* Reduziert von gamepage.css .card-row's 20px für kompaktere Tutorial Ansicht */
+  width: 100%;
+  overflow-x: auto; /* Beibehalten von Tutorial.css */
+  padding-bottom: 10px; /* Beibehalten von Tutorial.css */
+  justify-content: flex-start; /* Beibehalten von Tutorial.css */
+}
 
-/* Cards (Base Styles) - Tutorial Style */
-.card { border: 1px solid #555; border-radius: 1px; position: relative; display: inline-flex; flex-direction: column; justify-content: space-between; background-color: #eee; overflow: hidden; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: default; vertical-align: top; width: 100px; height: 140px; flex-shrink: 0; }
-.card .header { display: flex; justify-content: space-between; align-items: flex-start; padding: 1px 1px; background-color: rgba(0,0,0,0.1); width: 100%; }
-.card .points {
+.deck { /* Basis-Styling von gamepage.css (geteilt mit .card) */
+  display: inline-block;
+  margin-bottom: 0; /* Überschreibt 22px, da margin-bottom auf .card-row ist */
+  position: relative;
+  border: 1px solid white;
+  border-radius: 6%;
+  background-size: 300% 100%;
+  background-image: url('/gamesource/game_page/deck.jpg');
+  flex-shrink: 0; /* Von Tutorial.css, nützlich in Flex-Containern */
+}
+
+#common-area .deck { /* Größe und Schatten von gamepage.css */
+  box-shadow: 4px 4px 4px #ccc;
+  width: 160px !important;
+  height: 225px !important;
+  font-size: 20px; /* Für Text im Deck, falls vorhanden */
+  margin-right: 0; /* Überschreibt gamepage.css, da .card-row gap hat */
+}
+
+/* Deck Level Sprite Positionen von gamepage.css */
+.deck.level1 { background-position: 0 0; }
+.deck.level2 { background-position: 50% 0; }
+.deck.level3 { background-position: 100% 0; }
+
+.deck .remaining { /* Styling von gamepage.css, leicht angepasst */
   position: absolute;
-  top: 4px;
-  left: 6px;
-  font-size: 2em;
+  top: 10px; /* Anpassung für bessere Sichtbarkeit */
+  left: 10px; /* Anpassung für bessere Sichtbarkeit */
+  border-radius: 50%; /* Tutorial hatte komplexere Rundung, gamepage.css ist einfacher */
+  background-color: black;
+  border: 3px solid white;
+  width: 30px;   /* gamepage.css */
+  height: 26px;  /* gamepage.css */
+  padding-top: 4px; /* gamepage.css */
+  text-align: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px; /* Etwas größer als Tutorial.css für Lesbarkeit */
   z-index: 2;
+  box-sizing: border-box;
 }
-
-.card .color { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.5); flex-shrink: 0; }
-.card .costs { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 5px; width: 100%; }
-
-/* MODIFIED .card .cost - START */
-.card .cost {
-    display: flex;
-    align-items: center; /* Vertically center the number */
-    justify-content: center; /* Horizontally center the number */
-    border: 1px solid rgba(255,255,255,0.7); /* A slightly visible border on colored backgrounds */
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    /* background-color: rgba(255,255,255,0.9); -- This will be overridden by specific colors below */
-    color: white; /* Default text color is white */
-    font-size: 10px;
-    font-weight: bold;
-    box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
-/* MODIFIED .card .cost - END */
-
-/* Card Size Variants - Tutorial Style */
-.card.card-small {
-    width: 28px;
-    height: 16px; /* Halved height: 31.5px / 2 = 15.75px, rounded to 16px */
-    border-radius: 2px; /* Adjusted */
-    margin: 1px;
-    box-shadow: 1px 1px 1px rgba(0,0,0,0.2); /* Adjusted */
-    overflow: hidden; /* Hide content that doesn't fit */
-    align-items: flex-start; /* Center content if possible */
-}
-.card.card-small .header {
-    padding: 1px; /* Minimal padding */
-    height: 100%; /* Try to make header take full small height */
-    justify-content: center; /* Center color gem */
-}
-.card.card-small .points { display: flex; } /* Points likely won't fit */
-.card.card-small .color {
-    width: 10px; height: 10px; /* Small color indicator */
-    margin: 0; /* Remove margin if any */
-}
-.card.card-small .costs {  } /* Costs won't fit */
-
-.card-placeholder-small { width: 0px; height: 40px; border: 1px dashed rgba(255,255,255,0.3); border-radius: 2px; background-color: rgba(0,0,0,0.1); display: inline-block; margin: 1px; vertical-align: top; }
-
-/* Card specific background colors - Tutorial Style */
-.card-r { background-color: #e74c3c; border-left: 5px solid #c0392b; }
-.card-g { background-color: #2ecc71; border-left: 5px solid #27ae60; }
-.card-b { background-color: #3498db; border-left: 5px solid #2980b9; }
-.card-u { background-color: #95a5a6; border-left: 5px solid #7f8c8d; }
-.card-w { background-color: #ecf0f1; border-left: 5px solid #bdc3c7; }
-
-.rgem { background-color: #e74c3c; }
-.ggem { background-color: #2ecc71; }
-.bgem { background-color: #3498db; }
-.ugem { background-color: #34495e; }
-.wgem { background-color: #fdfefe; border: 5px solid #ccc; }
-
-/* MODIFIED .cost.X rules - START */
-.cost.r {
-    background-color: #c0392b; /* Red background */
-    /* Original color: #c0392b; Now inherits white from .card .cost */
-    /* Original border-color: #c0392b; Border now handled by .card .cost or can be specified if different */
-}
-.cost.g {
-    background-color: #27ae60; /* Green background */
-    /* Original color: #27ae60; Now inherits white */
-    /* Original border-color: #27ae60; */
-}
-.cost.b {
-    background-color: #2980b9; /* Blue background */
-    /* Original color: #2980b9; Now inherits white */
-    /* Original border-color: #2980b9; */
-}
-.cost.u { /* 'U' is often used for Black/Dark Grey gems */
-    background-color: #34495e; /* Dark grey background */
-    /* Original color: #34495e; Now inherits white */
-    /* Original border-color: #34495e; */
-}
-.cost.w { /* 'W' for White/Wild gems */
-    background-color: #bdc3c7; /* Light grey background (similar to card's border) */
-    color: black; /* Black text for readability on light background */
-    /* Original border-color: #7f8c8d; You might want to ensure this border is visible or use the base one */
-}
-/* MODIFIED .cost.X rules - END */
-
-/* Player Boards - Tutorial Style */
-#player-area { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 10px; background-color: rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 8px; width: 100%; }
-.player { border: 1px solid grey; transition: box-shadow 0.3s ease; background-color: rgba(0, 0, 0, 0.2); border-radius: 5px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; min-height: 170px; }
-.playerHeader { border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 5px; margin-bottom: 8px; }
-
-/* Player Gem Stats - Using Sprite from globals.css, size reverted to v7-like */
-.player .gem-stats { display: flex; flex-wrap: nowrap; justify-content: flex-start; gap: 2px; margin-bottom: 8px; width: 100%; overflow-x: auto; padding-bottom: 5px; }
-.player .gem-stats .statSet { display: flex; flex-direction: column; margin: 0 3px; width: auto; min-width: 35px; align-items: center; justify-content: center; box-sizing: border-box; flex-shrink: 0; }
-.player .gem-stats .statSet .stat { padding: 1px 4px; border-radius: 4px; margin-bottom: 3px; border: 1px solid #333; font-size: 0.65em; line-height: 1; background-color: rgba(255,255,255,0.1); color: white; }
-.player .gem-stats .statSet div:first-child { font-size: 16px; font-weight: bold; margin-bottom: 1px; line-height: 1.1; color: white; }
-.player .gem-stats .statSet .chip { width: 22px; height: 22px; border-radius: 50%; margin-top: 2px; background-image: url('/gamesource/game_page/chips.jpg'); background-size: 600% 100%; background-color: transparent; }
-
-.player .reserveCards { display: flex; gap: 0px; justify-content: flex-start; align-items:flex-start; /* Adjusted for new card height */ border-top: 0px solid rgba(255,255,255,0.1); padding-top: 0px; margin-top: 0px; }
-.player .reserveCards .card {
-    cursor: default;
-  width: 50px !important;  /* 你希望的宽度 */
-  height: 70px !important; /* 你希望的高度 */
+.face-up-cards { /* Von gamepage.css, Container für aufgedeckte Karten */
+  display: flex;
+  gap: 15px; /* gamepage.css */
+  flex-wrap: nowrap;
 }
 
 
-/* --- Tutorial Specific Styles --- */
+/* --- Cards (Common Area) - Übernahme von gamepage.css --- */
+.card { /* Basis von gamepage.css */
+  width: 160px !important;
+  height: 225px !important;
+  background-image: url('/gamesource/game_page/cards.jpg');
+  background-size: 1500% 100%;
+  display: inline-block; /* Oder inline-flex aus altem Tutorial, wenn Kinder Flex brauchen */
+  margin-bottom: 0; /* Überschreibt 22px, da .card-row margin hat */
+  position: relative;
+  border: 1px solid white;
+  border-radius: 6%;
+  overflow: hidden; /* Von Tutorial.css, wichtig für border-radius Effekt */
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.2); /* Von Tutorial.css */
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* Von Tutorial.css */
+  cursor: default; /* Wird ggf. überschrieben */
+  vertical-align: top; /* Von Tutorial.css */
+  flex-shrink: 0; /* Von Tutorial.css */
+  background-color: #eee; /* Fallback von Tutorial.css */
+}
+.card .cost.w {
+  color: #000 !important;
+  text-shadow: none !important; /* 防止有白字的阴影干扰可读性 */
+}
+
+
+#common-area .card { /* Größe und Schatten von gamepage.css */
+  box-shadow: 4px 4px 4px #ccc;
+  /* width, height, font-size, margin-right von gamepage.css sind oben in .card / #common-area .deck */
+  cursor: pointer; /* gamepage.css */
+}
+
+/* Interne Kartenstruktur von gamepage.css */
+.card .header {
+  height: 27.5%;
+  width: 98.2%; /* gamepage.css */
+  padding-left: 2%; /* gamepage.css */
+  top: 0px;
+  position: absolute;
+  border-top-left-radius: 6px; /* Muss mit Kartenradius übereinstimmen */
+  border-top-right-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.7); /* gamepage.css (war rgba(0,0,0,0.05) in Tutorial nach Änderung) */
+                                              /* Wenn der dunklere Header gewünscht ist: rgba(0,0,0,0.05) */
+}
+
+.card .points {
+  padding-left: 10%; /* gamepage.css */
+  font-size: 200%;   /* gamepage.css */
+  height: 28%;       /* gamepage.css */
+  margin-bottom: 30%;/* gamepage.css */
+  -webkit-text-stroke-width: 1px; /* gamepage.css */
+  -webkit-text-stroke-color: #777;/* gamepage.css */
+  position: relative; /* Eigene Ergänzung, um es im Fluss zu halten oder für z-index */
+  z-index: 1; /* Damit es über .header Elementen liegt, falls überlappend und .header keinen z-index hat */
+  color: black; /* Standardmäßig sichtbar machen */
+}
+
+.card .color { /* Bonus-Edelstein-Symbol von gamepage.css */
+  width: 32.1%;
+  height: 68.4%;
+  position: absolute;
+  right: 7%;
+  top: 14.2%;
+  background-repeat: no-repeat;
+  background-size: 500% 100%;
+  background-image: url('/gamesource/game_page/gems.png');
+  border-radius: 50%; /* Hinzugefügt für saubere runde Edelsteine */
+  z-index: 1; /* Über dem Header, falls der Header auch absolut ist */
+}
+/* .ugem, .bgem etc. Sprite-Positionen sind oben bei den globalen Edelsteinen definiert */
+
+.card .costs { /* Kosten-Container von gamepage.css */
+  text-align: center;
+  width: 19.1%;
+  height: 60%;
+  padding-left: 4.3%;
+  bottom: 4.3%;
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  z-index: 1;
+}
+
+.card .cost { /* Einzelner Kosten-Edelstein von gamepage.css */
+  width: 85%; /* Relativ zu .costs */
+  height: 20%;/* Relativ zu .costs */
+  font-size: 110%;
+  border-radius: 50%;
+  border: 2px solid white;
+  margin-bottom: 1px;
+  display: flex; /* Eigene Ergänzung für Zentrierung der Zahl */
+  align-items: center; /* Eigene Ergänzung */
+  justify-content: center; /* Eigene Ergänzung */
+  color: white; /* Standard für Zahlen in Kosten, außer .cost.w */
+  font-weight: bold; /* Eigene Ergänzung */
+}
+/* .cost.r, .cost.g etc. Farbklassen sind oben bei den globalen Edelsteinen definiert */
+
+/* Overlay von gamepage.css (Definition siehe oben bei .deck) */
+
+/* Karten-Sprite Positionen (Beispiele) von gamepage.css */
+.card-r.card-level1 { background-position: 85.71% 0; }
+.card-g.card-level1 { background-position: 64.29% 0; }
+.card-u.card-level1 { background-size: 3000% 200%; background-position: 0 0; } /* Spezialfall gamepage.css */
+.card-b.card-level1 { background-position: 21.43% 0; }
+.card-w.card-level1 { background-position: 42.86% 0; }
+/* ... und alle anderen Level und Farb-Kombinationen ... */
+
+
+/* --- Player Boards - Übernahme von gamepage.css --- */
+#player-area { /* Layout von gamepage.css */
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 15px; /* gamepage.css */
+  width: 100%; /* Nimmt Breite von .player-panel-container */
+  /* max-width: 800px; /* von gamepage.css, ggf. anpassen oder weglassen für mehr Flexibilität */
+  background-color: rgba(0, 0, 0, 0.3); /* von Tutorial.css, für Sichtbarkeit des Panels */
+  padding: 10px; /* von Tutorial.css */
+  border-radius: 8px; /* von Tutorial.css */
+}
+
+.player { /* Container für einen Spieler von gamepage.css */
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.2); /* gamepage.css */
+  border-radius: 5px; /* gamepage.css */
+  width: 100%; /* Passt sich der Grid-Zelle an */
+  /* max-height: 350px; /* von gamepage.css, ggf. anpassen für Tutorial */
+  margin-bottom: 0;
+  overflow: hidden; /* gamepage.css */
+  display: flex; /* Tutorial.css, um Kinder zu ordnen */
+  flex-direction: column; /* Tutorial.css */
+  justify-content: space-between; /* Tutorial.css */
+  min-height: 200px; /* Angepasst von Tutorial.css min-height für mehr Inhalt */
+  border: 1px solid grey; /* Tutorial.css */
+}
+
+.playerHeader { /* von gamepage.css und Tutorial.css kombiniert */
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Tutorial.css */
+  padding-bottom: 5px; /* Tutorial.css */
+  display: flex; /* Eigene Ergänzung für Layout */
+  justify-content: space-between; /* Eigene Ergänzung */
+  align-items: center; /* Eigene Ergänzung */
+  color: white; /* Standardtextfarbe */
+}
+.playerName, .playerName2 { /* von gamepage.css */
+  font-size: 16px; /* Angepasst von 20px für Tutorial-Board */
+  cursor: default; /* Tutorial sollte nicht editierbar sein */
+  font-weight: bold;
+}
+.playerPoints { /* von gamepage.css */
+  display: inline-block;
+  font-style: normal;
+  width: 25px;
+  height: 25px;
+  line-height: 25px; /* Für vertikale Zentrierung */
+  text-align: center;
+  background-color: black;
+  font-size: 16px; /* Angepasst von 20px */
+  border-radius: 3px;
+  color: white;
+}
+
+/* Spieler Edelstein-Anzeige (Kombination aus Tutorial und gamepage.css Logik) */
+.player .gem-stats { /* von gamepage.css, war .player .gem-stats in Tutorial.css */
+  display: flex;
+  flex-wrap: nowrap; /* Tutorial.css nowrap ist gut für horizontale Liste */
+  justify-content: flex-start; /* Tutorial.css */
+  gap: 5px; /* gamepage.css, war 2px in Tutorial.css */
+  margin-bottom: 8px;
+  width: 100%;
+  overflow-x: auto; /* Tutorial.css */
+  padding-bottom: 5px; /* Tutorial.css */
+}
+.player .gem-stats .statSet { /* von gamepage.css, leicht angepasst von Tutorial.css */
+  display: flex;
+  flex-direction: column;
+  margin: 0 3px; /* Tutorial.css */
+  width: auto; /* Tutorial.css */
+  min-width: 40px; /* Angepasst von Tutorial.css 35px */
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex-shrink: 0; /* Tutorial.css */
+}
+.player .gem-stats .statSet .stat-text { /* Eigene Klasse für den Text, basierend auf Tutorial.css .stat */
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-bottom: 3px;
+  border: 1px solid #333;
+  font-size: 0.75em; /* Etwas größer als Tutorial.css 0.65em */
+  line-height: 1.2;
+  background-color: rgba(255,255,255,0.1);
+  color: white;
+  min-width: 25px; /* Für "X+Y" Format */
+  text-align: center;
+}
+.player .gem-stats .statSet .chip { /* Chip-Styling von Tutorial.css, aber mit gamepage.css Sprite */
+  width: 30px;  /* Größer als Tutorial, kleiner als gamepage.player.gem */
+  height: 30px;
+  border-radius: 50%;
+  margin-top: 2px;
+  background-image: url('/gamesource/game_page/chips.jpg'); /* von gamepage.css */
+  background-size: 600% 100%; /* von gamepage.css */
+  background-color: transparent;
+  /* .uchip, .bchip etc. Klassen werden hier angewendet */
+}
+/* Die .statr, .statg etc. Klassen für farbigen Hintergrund der .stat-Box aus gamepage.css
+    könnten hier angewendet werden, wenn die .stat-text Box gemeint ist.
+    Die TutorialPage hatte eine Logik für farbigen Text der Summe (div:first-child),
+    diese wird hier vereinfacht zugunsten der Chips.
+*/
+
+/* Gekaufte Karten des Spielers (von gamepage.css) */
+.player .cards { /* Container für gekaufte Karten */
+    display: flex; /* Eigene Ergänzung für Layout */
+    flex-wrap: wrap; /* Eigene Ergänzung für Umbruch */
+    gap: 5px; /* Eigene Ergänzung */
+    margin-bottom: 8px; /* Abstand zu reservierten Karten */
+}
+.player .cards .card {
+  box-shadow: 3px 3px 3px #ccc;
+  width: 75px;   /* gamepage.css */
+  height: 105px; /* gamepage.css */
+  font-size: 11px; /* gamepage.css */
+  /* Erbt interne Struktur (.header, .points etc.) von Basis .card.
+      Diese müssen in der CardComponent für diese Größe angepasst werden,
+      damit sie lesbar bleiben (z.B. kleinere Schrift, weniger Padding). */
+}
+/* Anpassung für Header auf kleinen gekauften Karten */
+.player .cards .card .header {
+  height: 25%; /* Anpassung */
+  background-color: rgba(255, 255, 255, 0.6); /* Etwas weniger transparent */
+}
+.player .cards .card .points {
+  font-size: 120%; /* Anpassung */
+  height: auto; margin-bottom: 0; padding-left: 5px; top: 2px; /* Starke Anpassung */
+  -webkit-text-stroke-width: 0.5px;
+}
+.player .cards .card .color {
+  width: 15px; height: 15px; /* Anpassung */
+  top: 5px; right: 5px; /* Anpassung */
+}
+.player .cards .card .costs {
+  width: 30%; height: 60%; padding-left: 2px; bottom: 2px; /* Starke Anpassung */
+  gap: 1px; /* Tutorial.css .card.card-small .costs hatte gap:1px */
+}
+.player .cards .card .cost {
+  height: 15%; font-size: 80%; border-width: 1px; /* Starke Anpassung */
+}
+
+
+/* --- Reservierte Karten des Spielers (.reserveCards) - MODIFIED AS PER REQUEST --- */
+.player .reserveCards {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: flex !important;
+  gap: 5px !important; /* Adjusted gap for new card size */
+  justify-content: flex-start !important;
+  align-items: flex-start;
+  min-height: 75px; /* Should accommodate the new 70px height + gap */
+  padding-bottom: 5px; /* Ensure some padding if cards wrap */
+}
+
+/* Basis für eine reservierte Karte im Spielerbereich - MODIFIED */
+#player-area .reserveCards .card {
+  width: 50px !important; /* MODIFIED: Fixed width */
+  height: 70px !important; /* MODIFIED: Fixed height */
+  /* aspect-ratio: 0.35 !important; /* REMOVED */
+  position: relative !important;
+  background-size: 1500% 100% !important; /* Kept for card backing */
+  background-image: url('/gamesource/game_page/cards.jpg'); /* Kept for card backing */
+  margin: 0 !important; /* Adjusted margin, gap is on parent */
+  border: 1px solid white !important;
+  border-radius: 4px !important; /* Slightly smaller radius for smaller card */
+  flex-shrink: 0;
+  overflow: hidden !important; /* Ensure content respects border-radius */
+}
+
+/* Interna der reservierten Karte - MODIFIED */
+.reserveCards .card .header {
+  display: none !important; /* MODIFIED: Hide header as per new layout */
+}
+
+.reserveCards .card .color { /* Bonus-Edelstein - MODIFIED */
+  width: 15px !important; /* MODIFIED: Smaller size */
+  height: 15px !important; /* MODIFIED: Smaller size */
+  position: absolute !important;
+  right: 4px !important; /* MODIFIED: Top-right position */
+  top: 4px !important; /* MODIFIED: Top-right position */
+  background-repeat: no-repeat;
+  background-size: 500% 100%;
+  background-image: url('/gamesource/game_page/gems.png');
+  border-radius: 50%;
+  z-index: 3; /* Ensure it's above other elements if any */
+  border: 1px solid rgba(255,255,255,0.5); /* Optional: slight border for definition */
+}
+/* Gem sprite positions for reserved cards */
+.reserveCards .card .color.rgem { background-position: 100% 0 !important; }
+.reserveCards .card .color.ggem { background-position: 75% 0 !important; }
+.reserveCards .card .color.bgem { background-position: 25% 0 !important; }
+.reserveCards .card .color.wgem { background-position: 50% 0 !important; }
+.reserveCards .card .color.ugem { background-position: 0 0 !important; }
+
+.reserveCards .card .points { /* Points - MODIFIED */
+  position: absolute !important;
+  font-size: 12px !important; /* MODIFIED: Adjusted font size */
+  font-weight: bold !important;
+  top: 4px !important; /* MODIFIED: Top-left position */
+  left: 4px !important; /* MODIFIED: Top-left position */
+  z-index: 3; /* Ensure it's above other elements */
+  -webkit-text-stroke-width: 0.5px; /* MODIFIED: Adjusted stroke */
+  -webkit-text-stroke-color: #333;
+  color: white;
+  padding: 1px 3px;
+  background-color: rgba(0,0,0,0.5);
+  border-radius: 2px;
+  line-height: 1; /* Adjust for better vertical alignment if needed */
+  text-shadow: none; /* Remove original text-shadow if too busy */
+}
+
+#player-area .player .reserveCards .card .costs { /* Requirements container - MODIFIED */
+  width: calc(100% - 8px) !important; /* MODIFIED: Span bottom, with padding */
+  height: auto !important; /* MODIFIED: Height based on content */
+  position: absolute !important;
+  bottom: 4px !important; /* MODIFIED: Position at bottom */
+  left: 4px !important; /* MODIFIED: Position at bottom */
+  display: flex !important;
+  flex-direction: row !important; /* MODIFIED: Horizontal layout */
+  flex-wrap: nowrap !important; /* MODIFIED: Prevent wrapping for single line */
+  justify-content: flex-start !important; /* MODIFIED: Align items to the start or space-around */
+  align-items: center !important; /* MODIFIED: Vertically center items in the row */
+  gap: 2px !important; /* MODIFIED: Space between cost items */
+  z-index: 2; /* Above card background, below points/gem if overlapping */
+  /* align-content: flex-end !important; /* REMOVED: Not for single line flex */
+}
+
+#player-area .player .reserveCards .card .cost { /* Individual requirement - MODIFIED */
+  width: 14px !important; /* MODIFIED: Smaller size */
+  height: 14px !important; /* MODIFIED: Smaller size */
+  min-width: 14px !important; /* MODIFIED */
+  min-height: 14px !important; /* MODIFIED */
+  font-size: 9px !important; /* MODIFIED: Smaller font */
+  line-height: 14px !important; /* MODIFIED: For vertical centering of text */
+  border-radius: 50% !important;
+  border: 1px solid white !important; /* MODIFIED: Thinner border */
+  margin: 0 !important; /* MODIFIED: Let gap handle spacing */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  color: white;
+  font-weight: bold;
+}
+#player-area .player .reserveCards .card .cost.w { /* White cost text - Kept */
+  color: #000 !important;
+  text-shadow: none !important;
+  font-weight: bold !important;
+}
+
+/* Sprite-Positionen für reservierte Karten von gamepage.css - Kept */
+.reserveCards .card.card-r.card-level1 { background-position: 85.71% 0 !important; }
+.reserveCards .card.card-g.card-level1 { background-position: 64.29% 0 !important; }
+.reserveCards .card.card-u.card-level1 { background-position: 0% 0 !important; }
+.reserveCards .card.card-w.card-level1 { background-position: 42.86% 0 !important; }
+.reserveCards .card.card-b.card-level1 { background-position: 21.43% 0 !important; }
+/* ... (entsprechend für level2 und level3) ... */
+
+
+.reserveCards .card:hover > .overlay {
+  background-color: rgba(0, 0, 0, 0.4);
+  position: absolute;
+  border-radius: 4px; /* Match card's new border-radius */
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10; /* Ensure overlay is on top */
+  display: block;
+}
+.reserveCards .card .overlay {
+  cursor: pointer;
+  display: none;
+}
+
+
+/* --- Tutorial Specific Styles - Beibehalten von Tutorial.css --- */
 .tutorial-inactive { opacity: 0.6; cursor: not-allowed !important; filter: grayscale(60%); pointer-events: none; transition: opacity 0.3s ease, filter 0.3s ease; }
 .tutorial-active { opacity: 1; cursor: pointer !important; filter: grayscale(0%); pointer-events: auto; }
 .tutorial-highlight-overlay { transition: all 0.2s ease-in-out; box-sizing: border-box; }
+
 #gem-selection-area .gem.selected { border: 4px solid #00ff00 !important; transform: scale(1.1); box-shadow: 0 0 10px #00ff00, inset 0 0 10px rgba(0,0,0,0.5); }
 #gem-selection-area .gem { transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease; }
-#gem-selection-area .gem { width: 50px; height: 50px; }
+#gem-selection-area .gem { width: 50px; height: 50px; cursor: pointer; }
 
-#noble-area .noble {
-  width: 100px  !important;
-  height: 120px !important;
-}
-/* override the inline gap:10px on each .card-row */
-.card-row {
-  gap: 5px !important;   /* or whatever smaller value you like */
+
+/* --- Alte Overrides aus Tutorial.css --- */
+/* Placeholder für kleine Karten, falls noch irgendwo im Tutorial benötigt */
+.card-placeholder-small {
+  width: 50px;
+  height: 70px;
+  border: 1px dashed rgba(255,255,255,0.3);
+  border-radius: 4px;
+  background-color: rgba(0,0,0,0.1);
+  display: inline-block;
+  margin: 1px;
+  vertical-align: top;
 }
 
-/* override the built-in “small card” size everywhere */
-.card-small {
-  width: 50px  !important;
+/* Ggf. eine generische .card-small Klasse für andere Tutorial-Zwecke */
+.card-small-generic {
+  width: 50px !important;
   height: 70px !important;
+  border: 1px solid #444;
+  border-radius: 4px;
+  overflow: hidden;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #ccc;
+  font-size: 9px;
+  color: #333;
+  text-align: center;
+  position: relative;
 }
-.player .reserveCards .card-small {
-  width: 50px  !important;
-  height: 70px !important;
-  min-width: 50px !important;
-  min-height: 70px !important;
+.card-small-generic .color {
+  width: 10px; height: 10px; border-radius: 50%; position: absolute; top:3px; right:3px;
 }
-/* 1) Kill the percentage + aspect‐ratio sizing entirely */
-#player-area .reserveCards .card {
-  width: 50px      !important;
-  height: 70px     !important;
-  aspect-ratio: auto !important;  /* cancel the 0.35 ratio */
-}
-
-/* 2) Also override the .card-small defaults just in case */
-.player .reserveCards .card-small {
-  width: 50px  !important;
-  height: 70px !important;
-}
-/* Reserved Cards 样式优化：取消 points 的外边距，减小字号 */
-.card.card-small .points {
-  font-size: 12px !important;   /* 更小字体 */
-  top: 2px !important;          /* 位置上移 */
-  left: 4px !important;
-  margin: 0 !important;         /* 取消默认边距 */
-}
-
-/* Reserved Cards 的 cost（宝石花费）缩小尺寸 */
-.card.card-small .cost {
-  width: 12px !important;
-  height: 12px !important;
-  font-size: 8px !important;
-  margin: 0px !important;
-  padding: 0px !important;
-  box-shadow: none !important;
-}
-/* Reserved Card: 缩小 cost 容器边距 */
-.card.card-small .costs {
-  padding: 0px !important;
-  gap: 1px !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Reserved Card: 缩小单个 cost 气泡 */
-.card.card-small .cost {
-  width: 12px !important;
-  height: 12px !important;
-  font-size: 8px !important;
-  line-height: 12px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-  border: 1px solid rgba(255,255,255,0.5) !important;
-}
+.card-small-generic .points { font-size: 12px; font-weight: bold; }
