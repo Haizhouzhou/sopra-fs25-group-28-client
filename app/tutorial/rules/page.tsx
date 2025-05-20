@@ -2,6 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
+// If you start using Next.js Image, uncomment this:
+// import Image from 'next/image'; 
 
 // Define precise types for gem colors and collections of gems
 type GemColor = "white" | "blue" | "green" | "red" | "black";
@@ -16,20 +18,19 @@ type GemCollection = {
 interface ExampleCard {
   id: number;
   points: number;
-  color: string; // This could be a more specific type if card colors are limited
+  color: string; 
   tier: number;
-  cost: GemCollection; // Use GemCollection for the cost
+  cost: GemCollection; 
 }
 
 // Interface for the noble structure
 interface ExampleNoble {
   id: number;
   points: number;
-  requirements: GemCollection; // Use GemCollection for requirements
+  requirements: GemCollection; 
   imageIndex: number;
 }
 
-// Card data (subset for demonstration) - Typed with ExampleCard[]
 const exampleCardsData: ExampleCard[] = [
   { id: 8, points: 0, color: "blue", tier: 1, cost: { white: 1, green: 1, red: 1, black: 1 } },
   { id: 14, points: 1, color: "red", tier: 1, cost: { white: 4 } },
@@ -37,7 +38,6 @@ const exampleCardsData: ExampleCard[] = [
   { id: 49, points: 5, color: "blue", tier: 3, cost: { white: 7, blue: 3 } },
 ];
 
-// Expanded mock noble data for 10 nobles with imageIndex - Typed with ExampleNoble[]
 const exampleNoblesData: ExampleNoble[] = [
   { id: 1, points: 3, requirements: { red: 3, blue: 3 }, imageIndex: 0 },
   { id: 2, points: 3, requirements: { white: 4, black: 4 }, imageIndex: 1 },
@@ -47,11 +47,10 @@ const exampleNoblesData: ExampleNoble[] = [
   { id: 6, points: 3, requirements: { red: 3, white: 3, black: 3 }, imageIndex: 5 },
   { id: 7, points: 3, requirements: { blue: 3, green: 3, red: 3 }, imageIndex: 6 },
   { id: 8, points: 3, requirements: { black: 3, blue: 3, white: 3 }, imageIndex: 7 },
-  { id: 9, points: 3, requirements: { green: 4, red: 0, black: 4 }, imageIndex: 8 }, // red: 0 is fine
-  { id: 10, points: 3, requirements: { white: 4, blue: 0, green: 4 }, imageIndex: 9 }, // blue: 0 is fine
+  { id: 9, points: 3, requirements: { green: 4, red: 0, black: 4 }, imageIndex: 8 },
+  { id: 10, points: 3, requirements: { white: 4, blue: 0, green: 4 }, imageIndex: 9 }, 
 ];
 
-// Data for the gem description table
 const gemTableInfo = [
   { key: 'ruby', name: 'Ruby', cssColor: 'red', displayTableColor: 'Red', quantity: 7, title: 'Ruby (Red Gem)' },
   { key: 'emerald', name: 'Emerald', cssColor: 'green', displayTableColor: 'Green', quantity: 7, title: 'Emerald (Green Gem)' },
@@ -90,9 +89,7 @@ const RulesPage = () => {
     return colorName.charAt(0);
   };
 
-  // Updated function signature to use GemCollection
   const renderCosts = (costObject: GemCollection) => {
-    // Object.entries on GemCollection will yield [string, number][] for existing keys
     return Object.entries(costObject).map(([color, count]) => (
       <div key={color} className={`cost ${getMappedColorValue(color, 'costClass')}`} title={`${count} ${color}`}>
         {count}
@@ -100,11 +97,8 @@ const RulesPage = () => {
     ));
   };
 
-  // Updated function signature and added a type guard in filter
   const renderNobleRequirements = (requirements: GemCollection) => {
     return Object.entries(requirements)
-      // Filter out entries where count is undefined (shouldn't happen with Object.entries for GemCollection)
-      // or where count is not > 0. Also, ensure TypeScript knows count is a number after this.
       .filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] > 0)
       .map(([color, count]) => (
         <div
@@ -139,7 +133,6 @@ const RulesPage = () => {
     ></div>
   );
   
-  // Constants for layout calculations from previous step (assuming they are correct)
   const NAV_CONTENT_WIDTH = 220;
   const NAV_PADDING_HORIZONTAL = 20 + 20;
   const NAV_VISUAL_WIDTH = NAV_CONTENT_WIDTH + NAV_PADDING_HORIZONTAL;
@@ -155,7 +148,6 @@ const RulesPage = () => {
   const LOGO_OFFSET_FROM_BLOCK_START = 80;
   const baseLeftOffsetCalc = `calc((100vw - ${TOTAL_EFFECTIVE_CONTENT_WIDTH}px) / 2)`;
 
-
   return (
     <div
       style={{
@@ -166,7 +158,6 @@ const RulesPage = () => {
         color: "#FFD700",
       }}
     >
-      {/* Background */}
       <img
         src="/gamesource/tile_background.png"
         alt="Splendor Background"
@@ -180,7 +171,6 @@ const RulesPage = () => {
         }}
       />
 
-      {/* Back Button */}
       <div
         style={{
           position: "fixed",
@@ -206,7 +196,6 @@ const RulesPage = () => {
         </Link>
       </div>
 
-    {/* Left Navigation */}
     <nav
       style={{
         position: "fixed",
@@ -259,7 +248,6 @@ const RulesPage = () => {
       </ul>
     </nav>
 
-      {/* Logo */}
       <div
         style={{
           position: "absolute",
@@ -276,7 +264,6 @@ const RulesPage = () => {
         />
       </div>
 
-      {/* Rules Content */}
       <div
         style={{
           maxWidth: `${RULES_CONTENT_MAX_WIDTH}px`,
@@ -353,7 +340,7 @@ const RulesPage = () => {
           <h3 id="development-cards" style={{ fontSize: "1.2rem", marginTop: "1rem", marginBottom: "0.5rem", color: "#FFD700" }}>🃏 Development Cards</h3>
           <p>Example <a href="#development-cards" style={keywordLinkStyle}>Development Cards</a>:</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '10px', marginBottom: '15px', justifyContent: 'center',color: 'white', }}>
-            {exampleCardsData.map(card => ( // Error was here
+            {exampleCardsData.map(card => (
               <div key={card.id} className={`card card-${getMappedColorValue(card.color, 'initial')} card-level${card.tier}`} title={`Tier ${card.tier} ${card.color} card, ${card.points} points`}>
                 <div className="header">
                   {card.points > 0 && <div className="points" style={{ color: 'white' }}>{card.points}</div>}
@@ -366,7 +353,7 @@ const RulesPage = () => {
                   }}
                 ></div>
                 <div className="costs">
-                  {renderCosts(card.cost)} {/* Function call fixed by typing card.cost and renderCosts param */}
+                  {renderCosts(card.cost)}
                 </div>
               </div>
             ))}
@@ -393,7 +380,7 @@ const RulesPage = () => {
           <h3 id="noble-tiles" style={{ fontSize: "1.2rem", marginTop: "1rem", marginBottom: "0.5rem", color: "#FFD700" }}>👑 Noble Tiles</h3>
           <p>Example <a href="#noble-tiles" style={keywordLinkStyle}>Noble Tiles</a> (all 10 types shown below as examples):</p>
            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '10px', marginBottom: '15px', justifyContent: 'center' }}>
-            {exampleNoblesData.map(noble => ( // Error was here
+            {exampleNoblesData.map(noble => ( 
               <div
                 key={noble.id}
                 id={`noble${noble.imageIndex}`}
@@ -425,7 +412,7 @@ const RulesPage = () => {
                   {noble.points}
                 </div>
                 <div className="requirement" style={{ alignItems: 'flex-start', justifyContent: 'flex-end', gap: '3px', marginTop: '40px' }}>
-                  {renderNobleRequirements(noble.requirements)} {/* Function call fixed by typing noble.requirements and renderNobleRequirements param */}
+                  {renderNobleRequirements(noble.requirements)}
                 </div>
               </div>
             ))}
@@ -512,6 +499,7 @@ const RulesPage = () => {
             <li>If you take a card from the display, it is not immediately replaced.</li>
             <li>Receive 1 <a href="#gem-tokens" style={keywordLinkStyle}>gold token</a> ( <InlineGoldChip /> ) from the central supply (if any are available). If you have 10 <a href="#gem-tokens" style={keywordLinkStyle}>tokens</a> already, you must discard one <a href="#gem-tokens" style={keywordLinkStyle}>token</a> (it can be the <a href="#gem-tokens" style={keywordLinkStyle}>gold token</a> you just received or another <a href="#gem-tokens" style={keywordLinkStyle}>token</a>) to stay at the 10-<a href="#gem-tokens" style={keywordLinkStyle}>token</a> limit.</li>
             <li>You may have a maximum of 3 reserved cards at any one time.</li>
+            {/* THIS LINE IS CORRECTED: */}
             <li>Reserved cards are kept in your hand, hidden from other players, and may only be purchased by you in a future turn (using the &quot;Buy a <a href="#development-cards" style={keywordLinkStyle}>Development Card</a>&quot; action).</li>
           </ul>
 
@@ -566,7 +554,7 @@ const RulesPage = () => {
           <h3 style={{ fontSize: "1.2rem", marginTop: "1rem", marginBottom: "0.5rem", color: "#FFD700" }}>💡 Request AI Advice</h3>
           <p>Each player is able to request AI assistance once per game</p>
           <ul style={{ paddingLeft: "1.2rem", marginTop: "0.5rem" }}>
-            <li>Clicking an "AI Advice" button could provide strategy suggestions.</li>
+            <li>Clicking an &quot;AI Advice&quot; button could provide strategy suggestions.</li>
             <li>The turn timer might pause while waiting for AI advice and resume afterward.</li>
           </ul>
         </section>
