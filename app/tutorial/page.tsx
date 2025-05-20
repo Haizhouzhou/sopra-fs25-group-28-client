@@ -20,7 +20,6 @@ export default function TutorialPage() {
         minHeight: "100vh",
         width: "100%",
         overflow: "hidden",
-        fontFamily: "monospace",
       }}
     >
       {/* Background image */}
@@ -36,35 +35,6 @@ export default function TutorialPage() {
           zIndex: -1,
         }}
       />
-
-{/* Logo and Back Button */}
-<div style={{ position: "absolute", top: 20, left: 20, zIndex: 10 }}>
-  <button
-    onClick={() => router.push("/")}
-    style={{
-      backgroundColor: "#0F2149",
-      border: "2px solid #FFD700",
-      color: "#FFD700",
-      padding: "6px 14px",
-      borderRadius: 4,
-      cursor: "pointer",
-      fontWeight: "bold",
-      fontFamily: "monospace",
-      marginBottom: "10px",
-      fontSize: "14px",
-      boxShadow: "0 0 6px rgba(255, 215, 0, 0.5)",
-    }}
-  >
-    ← Back
-  </button>
-  <img
-    src="/gamesource/splendor_logo.png"
-    alt="Splendor Logo"
-    width={500}
-    style={{ height: "auto" }}
-  />
-</div>
-
 
       {/* Main content area */}
       <div
@@ -92,15 +62,19 @@ export default function TutorialPage() {
             who will allow you to turn raw gems into beautiful jewels.
           </p>
 
-          {/* Action buttons */}
+          {/* Action buttons + Back */}
           <div
             style={{
               marginTop: "2rem",
               display: "flex",
               gap: 20,
               justifyContent: "center",
+              flexWrap: "wrap",
             }}
           >
+            <button onClick={() => router.push("/")} style={buttonStyle}>
+              ← Back
+            </button>
             <button style={buttonStyle} onClick={handleStartTutorial}>
               Read Rules
             </button>
@@ -109,6 +83,16 @@ export default function TutorialPage() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Logo in corner */}
+      <div style={{ position: "absolute", top: 20, left: 20, zIndex: 10 }}>
+        <img
+          src="/gamesource/splendor_logo.png"
+          alt="Splendor Logo"
+          width={500}
+          style={{ height: "auto" }}
+        />
       </div>
     </div>
   );
@@ -122,5 +106,4 @@ const buttonStyle: React.CSSProperties = {
   borderRadius: 4,
   cursor: "pointer",
   fontWeight: "bold",
-  fontFamily: "monospace",
 };
