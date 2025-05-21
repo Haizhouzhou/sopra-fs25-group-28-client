@@ -241,23 +241,32 @@ const GameLobby: React.FC = () => {
               backgroundColor: selectedRoom === room.id ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
               cursor: 'pointer',
               alignItems: 'center',
-              transition: 'background-color 0.2s ease' // 添加过渡效果
+              transition: 'background-color 0.2s ease'
             }}>
               <div>{room.id}</div>
               <div>{room.name}</div>
               <div>{room.owner}</div>
               <div>{room.players}</div>
-              <div>{room.gameStatus === null ? 'Waiting to Start' : 
-                    room.gameStatus === 'NOT_STARTED' ? 'Waiting to Start' : 
-                    room.gameStatus === 'RUNNING' ? 'Game Running' : 
-                    room.gameStatus === 'FINISHED' ? 'Game Over' : room.gameStatus}</div> 
+              <div style={{
+                color: 
+                  room.gameStatus === null || room.gameStatus === 'NOT_STARTED' ? '#8aff8a' : // Green for waiting
+                  room.gameStatus === 'RUNNING' ? '#ffeb3b' : // Yellow for running
+                  room.gameStatus === 'FINISHED' ? '#ff6b6b' : // Red for finished
+                  'white', // Default color
+                fontWeight: 'bold'
+              }}>
+                {room.gameStatus === null ? 'Waiting to Start' : 
+                room.gameStatus === 'NOT_STARTED' ? 'Waiting to Start' : 
+                room.gameStatus === 'RUNNING' ? 'Game Running' : 
+                room.gameStatus === 'FINISHED' ? 'Game Over' : room.gameStatus}
+              </div> 
             </div>
           )) : (
             <div style={{ 
               padding: 20, 
               textAlign: 'center', 
               color: 'white',
-              transition: 'opacity 0.3s ease' // 添加过渡效果
+              transition: 'opacity 0.3s ease'
             }}>
               No rooms available. Create a new game!
             </div>

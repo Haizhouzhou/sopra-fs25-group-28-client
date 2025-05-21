@@ -269,11 +269,6 @@ export default function GamePage() {
     if (isTimeUp) {
       return "Time's up!";
     }
-    if ((aiHintProcessedForTurn || isPageRefreshed) && 
-      gameState?.currentPlayerId === currentUser.id && 
-      !currentAction) {
-    return "Choose Action";
-  }
     // 正常计时显示
     return `Timer: ${seconds}s`;
   };
@@ -523,7 +518,7 @@ useEffect(() => {
 
 
   useEffect(() => {
-    if (seconds <= 0 || aiActiveRef.current || hintLoading) return; // 添加hintLoading条件
+    if (seconds <= 0 || aiActiveRef.current) return; // 添加hintLoading条件
   
     const timer = setInterval(() => {
       setSeconds((prev) => {
@@ -550,7 +545,7 @@ useEffect(() => {
     }, 1000);
   
     return () => clearInterval(timer);
-  }, [seconds, gameState, currentUser.id, gameId, stableSessionId, sendMessage, hintLoading]); // 添加hintLoading依赖
+  }, [seconds, gameState, currentUser.id, gameId, stableSessionId, sendMessage]); // 添加hintLoading依赖
   
 
   useEffect(() => {
@@ -1619,7 +1614,6 @@ const TooltipPortal = () => {
     setHintMessage("");
     
     aiActiveRef.current = true; // 标记 AI 开始
-    setSeconds(0); // 停止倒计时
 
     // 发送AI提示请求
     sendMessage({
@@ -2339,13 +2333,14 @@ const TooltipPortal = () => {
           {/* Player panels */}
           <div id="player-area" style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", // 自动适应列数
+            gridTemplateColumns: "repeat(2, 1fr)", 
             gap: "10px",
             backgroundColor: "rgba(0, 0, 0, 0.3)",
             padding: "10px", 
             borderRadius: "8px",
             width: "100%",
-            minWidth: "340px", // 确保最小宽度
+            minWidth: "600px", // 增加整体最小宽度
+            minHeight: "600px", // 确保有足够的最小高度
             maxHeight: "calc(100vh - 350px)",
             overflowY: "auto", // 改为auto，需要时才显示滚动条
             alignContent: "start"
