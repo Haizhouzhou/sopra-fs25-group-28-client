@@ -2340,7 +2340,7 @@ const TooltipPortal = () => {
             borderRadius: "8px",
             width: "100%",
             minWidth: "600px", // 增加整体最小宽度
-            minHeight: "600px", // 确保有足够的最小高度
+            height: (gameState?.players?.length || 0) <= 2 ? "300px" : "600px",
             maxHeight: "calc(100vh - 350px)",
             overflowY: "auto", // 改为auto，需要时才显示滚动条
             alignContent: "start"

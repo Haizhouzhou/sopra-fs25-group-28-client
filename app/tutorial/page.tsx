@@ -13,6 +13,10 @@ export default function TutorialPage() {
     router.push("/tutorial/start/4player");
   };
 
+  const handleGoBack = () => {
+  router.back(); 
+  };
+
   return (
     <div
       style={{
@@ -72,7 +76,7 @@ export default function TutorialPage() {
               flexWrap: "wrap",
             }}
           >
-            <button onClick={() => router.push("/")} style={buttonStyle}>
+            <button onClick={handleGoBack} style={buttonStyle}>
               ← Back
             </button>
             <button style={buttonStyle} onClick={handleStartTutorial}>

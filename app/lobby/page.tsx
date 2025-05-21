@@ -85,6 +85,10 @@ const GameLobby: React.FC = () => {
     router.push("/leaderboard");
   };
 
+  const handleTutorialClick = () => {
+  router.push("/tutorial");
+  };
+
   useEffect(() => {
     const initialize = async () => {
       if (!token || !localUser?.id) return;
@@ -198,7 +202,7 @@ const GameLobby: React.FC = () => {
         {isConnected ? 'Server Connected' : 'Server Disconnected'}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', maxWidth: '800px', margin: '0 auto', padding: '200px 20px 20px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', maxWidth: '1000px', margin: '0 auto', padding: '200px 20px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <h1 style={{ color: '#FFD700', fontSize: '2.5rem' }}>Game Lobby</h1>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '20px' }}>
@@ -209,9 +213,10 @@ const GameLobby: React.FC = () => {
               </div>
             )}
             <div style={{ display: 'flex', gap: '20px' }}>
+              <button onClick={handleTutorialClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>TUTORIAL</button>
               <button onClick={handleLeaderboardClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>LEADERBOARD</button>
               <button onClick={handleProfileClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>PROFILE</button>
-              <button onClick={handleLogout} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>LOG OUT</button>
+              <button onClick={handleLogout} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149', whiteSpace: 'nowrap'}}>LOG OUT</button>
             </div>
           </div>
         </div>

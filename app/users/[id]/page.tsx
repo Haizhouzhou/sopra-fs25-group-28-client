@@ -62,11 +62,11 @@ const Profile: React.FC = () => {
         token
       });
   
-      if (currentUser.id === userId) {
-        const updated = { ...currentUser, name, avatar };
-        localStorage.setItem("currentUser", JSON.stringify(updated));
-      }
-  
+    if (Number(currentUser.id) === userId) {
+      const updated = { ...currentUser, name, avatar };
+      localStorage.setItem("currentUser", JSON.stringify(updated));
+    }
+      
       alert("Profile updated!");
     } catch (err) {
       console.error("Failed to update profile", err);
