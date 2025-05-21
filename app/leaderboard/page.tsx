@@ -18,8 +18,9 @@ interface LeaderboardDisplayData {
   playerId: number;
   avatar: string;
   username: string;
-  wins: number;
+  wincounter: number;
 }
+
 
 const Leaderboard: React.FC = () => {
   const router = useRouter();
@@ -35,7 +36,8 @@ const Leaderboard: React.FC = () => {
     async function loadData() {
       try {
         setIsLoading(true);
-        const leaderboardEntries = await apiService.get<LeaderboardEntryDTO[]>("/users/leaderboard");
+        const leaderboardEntries = await apiService.get<UserListGetDTO[]>("/users/leaderboard");
+
         
         // 如果没有数据，使用mock数据
         if (!Array.isArray(leaderboardEntries) || leaderboardEntries.length === 0) {
@@ -48,18 +50,18 @@ const Leaderboard: React.FC = () => {
         const users = await apiService.get<UserListGetDTO[]>("/users");
         
         // 合并数据
-        const processedData: LeaderboardDisplayData[] = leaderboardEntries.map(entry => {
-          const user = users.find(u => u.id === entry.playerId);
-          return {
-            playerId: entry.playerId,
-            avatar: user?.avatar || "a_01.png",
-            username: user?.username || "Unknown",
-            wins: entry.wins
-          };
-        });
+        const processedData: LeaderboardDisplayData[] = leaderboardEntries.map(user => ({
+        playerId: user.id,
+        avatar: user.avatar || "a_01.png",
+        username: user.username || "Unknown",
+        wincounter: user.wincounter || 0
+        }));
+
+
         
         // 排序
-        processedData.sort((a, b) => b.wins - a.wins);
+        processedData.sort((a, b) => b.wincounter - a.wincounter);
+
         setLeaderboardData(processedData);
       } catch (err) {
         console.error("Error loading leaderboard data:", err);
@@ -79,13 +81,13 @@ const Leaderboard: React.FC = () => {
         playerId: 999,
         avatar: "a_07.png",
         username: "Test_Champion123",
-        wins: 15
+        wincounter: 15
       },
       {
         playerId: 888,
         avatar: "a_08.png",
         username: "Test_ProGamer",
-        wins: 10
+        wincounter: 10
       }
     ];
   };
@@ -193,7 +195,7 @@ const Leaderboard: React.FC = () => {
                   />
                 </div>
                 <div>{player.username}</div>
-                <div>{player.wins}</div>
+                <div>{player.wincounter}</div>
               </div>
             ))
           ) : (
