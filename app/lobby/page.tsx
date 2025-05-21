@@ -12,6 +12,7 @@ interface GameRoom {
   owner: string;
   players: string;
   isReady: boolean;
+  gameStatus: string | null;
 }
 
 const GameLobby: React.FC = () => {
@@ -50,7 +51,8 @@ const GameLobby: React.FC = () => {
           name: room.roomName || "Untitled",
           owner: room.owner || 'Unknown',
           players: `${room.players}/${room.maxPlayers || 4}`,
-          isReady: false
+          isReady: false,
+          gameStatus: room.gameStatus // 新增解析游戏状态
         }));
         
         console.log("更新房间列表:", parsedRooms);
@@ -115,12 +117,45 @@ const GameLobby: React.FC = () => {
 
   const handleJoinGame = () => {
     if (!selectedRoom || !isConnected || !currentUser) return;
+    
+    // 找到选中的房间
+    const selectedGameRoom = gameRooms.find(room => room.id === selectedRoom);
+    
+    // 判断房间状态
+    if (selectedGameRoom) {
+      const [current, max] = selectedGameRoom.players.split('/').map(Number);
+      const isFull = current >= max;
+      const isRunning = selectedGameRoom.gameStatus === 'RUNNING';
+      if (isFull || isRunning) {
+        alert(isFull ? "Sorry, the room is full. You can't join at the moment." : "The game has already started. Please try another room.");
+        return;
+      }
+    }
+    
+    // 发送加入房间的消息
     websocketService.sendMessage({
       type: "JOIN_ROOM",
       roomId: selectedRoom,
       content: {}
     });
   };
+
+  const getCanJoinRoom = () => {
+  if (!selectedRoom || !isConnected) return false;
+  
+  const selectedGameRoom = gameRooms.find(room => room.id === selectedRoom);
+  if (!selectedGameRoom) return false;
+  
+  // 检查房间是否满员
+  const [current, max] = selectedGameRoom.players.split('/').map(Number);
+  const isFull = current >= max;
+  
+  // 检查游戏是否正在进行
+  const isRunning = selectedGameRoom.gameStatus === 'RUNNING';
+  
+  return !isFull && !isRunning;
+  };
+
 
   const handleCreateGame = () => {
     router.push("/create");
@@ -189,17 +224,18 @@ const GameLobby: React.FC = () => {
             <button onClick={handleRefreshRooms} style={{ backgroundColor: '#0F2149', border: '1px solid #FFD700', color: '#FFD700', padding: '4px 12px', borderRadius: 4 }}>REFRESH</button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderBottom: '1px solid #FFD700', padding: '8px 0', color: '#FFD700', fontWeight: 'bold' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', borderBottom: '1px solid #FFD700', padding: '8px 0', color: '#FFD700', fontWeight: 'bold' }}>
             <div>Room Id</div>
             <div>Room Name</div>
             <div>Owner</div>
             <div>Players</div>
+            <div>Status</div>
           </div>
 
           {gameRooms.length > 0 ? gameRooms.map((room) => (
             <div key={room.id} onClick={() => setSelectedRoom(room.id)} style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(5, 1fr)',
               padding: '12px 0',
               color: 'white',
               backgroundColor: selectedRoom === room.id ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
@@ -211,6 +247,10 @@ const GameLobby: React.FC = () => {
               <div>{room.name}</div>
               <div>{room.owner}</div>
               <div>{room.players}</div>
+              <div>{room.gameStatus === null ? 'Waiting to Start' : 
+                    room.gameStatus === 'NOT_STARTED' ? 'Waiting to Start' : 
+                    room.gameStatus === 'RUNNING' ? 'Game Running' : 
+                    room.gameStatus === 'FINISHED' ? 'Game Over' : room.gameStatus}</div> 
             </div>
           )) : (
             <div style={{ 
@@ -225,15 +265,15 @@ const GameLobby: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
-          <button onClick={handleJoinGame} disabled={!selectedRoom || !isConnected} style={{
+          <button onClick={handleJoinGame} disabled={!getCanJoinRoom()} style={{
             backgroundColor: '#0F2149',
             border: '2px solid #FFD700',
             color: '#FFD700',
             padding: '12px 30px',
             borderRadius: '4px',
             fontWeight: 'bold',
-            cursor: (!selectedRoom || !isConnected) ? 'not-allowed' : 'pointer',
-            opacity: (!selectedRoom || !isConnected) ? 0.7 : 1
+            cursor: getCanJoinRoom() ? 'pointer' : 'not-allowed',
+            opacity: getCanJoinRoom() ? 1 : 0.7
           }}>
             JOIN GAME
           </button>

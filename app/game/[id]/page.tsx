@@ -279,6 +279,12 @@ export default function GamePage() {
   };
 
 
+  // 计算玩家当前拥有的宝石总数
+  const countPlayerGems = (player: Player | undefined) => {
+    if (!player || !player.gems) return 0;
+    
+    return Object.values(player.gems).reduce((total, count) => total + count, 0);
+  };
 
   const triggerCardAnimation = (_cardId: string, type: string, playerId: number | string, cardElement: HTMLElement) => {
     if (!cardElement) return;
@@ -874,17 +880,32 @@ const mapFrontendToBackendGemColor = (shortCode: string): string => {
 
 //action logic
 const handleGemSelect = (color: string) => {
-
   if (hintLoading) {
     alert("Please wait for the AI advice to complete.");
     return;
   }
 
+  // 获取当前玩家
+  const currentPlayer = gameState?.players.find(p => p.id === currentUser.id);
+  if (!currentPlayer) return;
+  
+  // 计算当前宝石总数
+  const currentGemCount = countPlayerGems(currentPlayer);
+  
   if (selectedGems.includes(color)) {
+    // 如果已选择，取消选择这个颜色
     setSelectedGems(selectedGems.filter(c => c !== color));
   } else {
-    if (selectedGems.length >= 3) return;
-    setSelectedGems([...selectedGems, color]);
+    // 如果选择3个不同颜色
+    if (selectedGems.length < 3 && !selectedGems.includes(color)) {
+      // 检查添加后是否会超过10个
+      if (currentGemCount + (selectedGems.length + 1) > 10) {
+        alert("The total number of gems will be more than 10 when taken! Please use some gems first.");
+        return;
+      }
+      setSelectedGems([...selectedGems, color]);
+    }
+    // 如果选择2个相同颜色，实际上这种情况在handleConfirmGems中处理
   }
   console.log("选中颜色:", color, "映射发送为:", mapFrontendToBackendGemColor(color));
 };
@@ -896,6 +917,13 @@ const handleConfirmGems = () => {
   }
 
   const publicGems = gameState?.gems || {};
+  
+  // 获取当前玩家
+  const currentPlayer = gameState?.players.find(p => p.id === currentUser.id);
+  if (!currentPlayer) return;
+  
+  // 计算当前宝石总数
+  const currentGemCount = countPlayerGems(currentPlayer);
 
   // 定义动画函数
   const animateSelectedGems = () => {
@@ -913,16 +941,23 @@ const handleConfirmGems = () => {
   // 玩家选了一个颜色的宝石(双倍)
   if (selectedGems.length === 1) {
     const color = selectedGems[0];
+    
+    // 检查公共区域是否有足够的宝石
     if (publicGems[color] < 4) {
       alert("Cannot take two gems of the same color: at least 4 gems must be available to do so!");
-      return; // 取消发送
+      return;
+    }
+    
+    // 检查拿取后是否会超过10个
+    if (currentGemCount + 2 > 10) {
+      alert("The total number of gems will be more than 10 when taken! Please use some gems first.");
+      return;
     }
 
     // 先执行动画
     animateSelectedGems();
     // 播放拾取宝石音效
     playSound('takeGem');
-
     
     // 然后发送请求
     setTimeout(() => {
@@ -942,17 +977,23 @@ const handleConfirmGems = () => {
   
   // 玩家选了三个不同颜色的宝石
   else if (selectedGems.length === 3) {
+    // 检查公共区域是否有足够的宝石
     const invalid = selectedGems.some(color => publicGems[color] <= 0);
     if (invalid) {
       alert("One or more selected gem colors are unavailable!");
       return;
     }
+    
+    // 检查拿取后是否会超过10个
+    if (currentGemCount + 3 > 10) {
+      alert("The total number of gems will be more than 10 when taken! Please use some gems first.");
+      return;
+    }
 
     // 先执行动画
     animateSelectedGems();
-  // 播放拾取宝石音效 
+    // 播放拾取宝石音效 
     playSound('takeGem');
-
     
     // 然后发送请求
     setTimeout(() => {
@@ -1497,6 +1538,7 @@ const TooltipPortal = () => {
   
     // Try to find the clicked card
     let targetCard: Card | undefined;
+    let isFromReserved = false;
   
     // Search visible cards
     for (const level in gameState.cards) {
@@ -1510,6 +1552,9 @@ const TooltipPortal = () => {
     // Search reserved cards if not found
     if (!targetCard) {
       targetCard = currentPlayer.reserved.find(card => card.uuid === cardUuid);
+       if (targetCard) {
+      isFromReserved = true; // 标记卡牌来自预留区
+    }
     }
   
     if (!targetCard) {
@@ -1534,9 +1579,25 @@ const TooltipPortal = () => {
         alert("You don't have enough gems to buy this card.");
       }
     } else if (currentAction === "reserve") {
-      if (currentPlayer.reserved.length >= 3) {
-        alert("You already have 3 reserved cards.");
-      } else {
+        // 如果卡牌来自预留区，阻止玩家预留
+        if (isFromReserved) {
+          alert("This Card Already Reserved!");
+          return;
+        }
+
+        if (currentPlayer.reserved.length >= 3) {
+          alert("You already have 3 reserved cards.");
+          return;
+        }
+
+        // 检查预留后宝石总数是否会超过10个
+        const currentGemCount = countPlayerGems(currentPlayer);
+        // 预留卡会获得1个金色宝石
+        if (currentGemCount + 1 > 10) {
+          alert("You will have more than 10 gems after reserving! Please use some gems first.");
+          return;
+        }
+
         triggerCardAnimation(cardUuid, "reserve", currentUser.id, clickedElement);
         playSound('reserveCard');
 
@@ -1548,7 +1609,6 @@ const TooltipPortal = () => {
           sendAction("next", ""); 
         }, 1000);
       }
-    }
   };
   
 
@@ -2129,10 +2189,20 @@ const TooltipPortal = () => {
                     onClick={() => {
                       if (isPlayerTurn()) {
                         const currentPlayer = gameState?.players.find(p => p.uuid === currentUser.uuid);
-                        if (currentPlayer && currentPlayer.reserved.length < 3) {
+                        if (currentPlayer) {
+                          if (currentPlayer.reserved.length >= 3) {
+                            alert("You already have 3 reserved cards!");
+                            return;
+                          }
+                          
+                          // 检查预留后宝石总数是否会超过10个
+                          const currentGemCount = countPlayerGems(currentPlayer);
+                          if (currentGemCount + 1 > 10) {
+                            alert("You will have more than 10 gems after reserving! Please use some gems first.");
+                            return;
+                          }
+                          
                           sendAction("reserve", level);
-                        } else {
-                          alert("You already have 3 reserved cards!");
                         }
                       } else {
                         alert("It's not your turn!");
