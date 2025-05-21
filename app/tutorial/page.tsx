@@ -13,9 +13,43 @@ export default function TutorialPage() {
     router.push("/tutorial/start/4player");
   };
 
-  const handleGoBack = () => {
-  router.back(); 
+  const handleBackToLobby = () => {
+  router.push("/lobby");
   };
+
+  const handleQuitGame = () => {
+    router.push("/");
+  };
+
+  // 主要按钮样式（Read Rules和Start Tutorial用）
+  const primaryButtonStyle: React.CSSProperties = {
+    backgroundColor: "#0F2149",
+    border: "2px solid #FFD700",
+    color: "#FFD700",
+    padding: "12px 30px",
+    borderRadius: 4,
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "1rem",
+    transition: "all 0.3s ease"
+  };
+
+  // Back to Lobby按钮样式
+  const backButtonStyle: React.CSSProperties = {
+    ...primaryButtonStyle,
+    backgroundColor: "#1F3A6D", // 稍微浅一点的蓝色
+    borderColor: "#90EE90", // 浅绿色边框
+    color: "#90EE90"
+  };
+
+  // Quit Game按钮样式
+  const quitButtonStyle: React.CSSProperties = {
+    ...primaryButtonStyle,
+    backgroundColor: "#3A1F42", // 深紫色背景
+    borderColor: "#FF7F7F", // 浅红色边框
+    color: "#FF7F7F"
+  };
+
 
   return (
     <div
@@ -59,33 +93,75 @@ export default function TutorialPage() {
             color: "#FFD700",
           }}
         >
-          <h1 style={{ fontSize: "2.5rem" }}>Welcome to Splendor!</h1>
-          <p style={{ fontSize: "1.2rem" }}>
-            In Splendor, you take on the role of a rich merchant during the Renaissance.
-            You will use your resources to acquire mines, transportation methods, and artisans
-            who will allow you to turn raw gems into beautiful jewels.
-          </p>
+        <h1 style={{ 
+          fontSize: "3rem", 
+          textShadow: "2px 2px 4px rgba(0,0,0,0.5)",
+          marginBottom: "1rem"
+        }}>
+          Welcome to Splendor!
+        </h1>
+        <p style={{ 
+          fontSize: "1.3rem", 
+          lineHeight: "1.6",
+          maxWidth: "80%",
+          margin: "0 auto 2rem",
+          textShadow: "1px 1px 3px rgba(0,0,0,0.3)"
+        }}>
+          In Splendor, you take on the role of a rich merchant during the Renaissance.
+          You will use your resources to acquire mines, transportation methods, and artisans
+          who will allow you to turn raw gems into beautiful jewels.
+        </p>
 
-          {/* Action buttons + Back */}
-          <div
-            style={{
-              marginTop: "2rem",
-              display: "flex",
-              gap: 20,
-              justifyContent: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <button onClick={handleGoBack} style={buttonStyle}>
-              ← Back
-            </button>
-            <button style={buttonStyle} onClick={handleStartTutorial}>
-              Read Rules
-            </button>
-            <button style={buttonStyle} onClick={handleReadRules}>
-              Start Tutorial
-            </button>
-          </div>
+          {/* 按钮区域 */}
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    gap: 20,
+    alignItems: "center"
+  }}
+>
+  {/* 主要按钮 */}
+  <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap" }}>
+    <button 
+      style={primaryButtonStyle} 
+      onClick={handleStartTutorial}
+      onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+      onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+    >
+      Read Rules
+    </button>
+    <button 
+      style={primaryButtonStyle} 
+      onClick={handleReadRules}
+      onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+      onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+    >
+      Start Tutorial
+    </button>
+  </div>
+  
+  {/* Back和Quit按钮 */}
+  <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap", marginTop: "10px" }}>
+    <button 
+      onClick={handleBackToLobby} 
+      style={backButtonStyle}
+      onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+      onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+    >
+      Back to Lobby
+    </button>
+    <button 
+      onClick={handleQuitGame} 
+      style={quitButtonStyle}
+      onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+      onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+    >
+      Quit Game
+    </button>
+  </div>
+</div>
+
         </div>
       </div>
 
@@ -102,12 +178,3 @@ export default function TutorialPage() {
   );
 }
 
-const buttonStyle: React.CSSProperties = {
-  backgroundColor: "#0F2149",
-  border: "2px solid #FFD700",
-  color: "#FFD700",
-  padding: "12px 30px",
-  borderRadius: 4,
-  cursor: "pointer",
-  fontWeight: "bold",
-};

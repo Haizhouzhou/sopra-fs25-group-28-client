@@ -2340,8 +2340,8 @@ const TooltipPortal = () => {
             borderRadius: "8px",
             width: "100%",
             minWidth: "600px", // 增加整体最小宽度
-            height: (gameState?.players?.length || 0) <= 2 ? "300px" : "600px",
-            maxHeight: "calc(100vh - 350px)",
+            height: (gameState?.players?.length || 0) <= 2 ? "375px" : "720px",
+            maxHeight: (gameState?.players?.length || 0) <= 2 ? "375px" : "720px",
             overflowY: "auto", // 改为auto，需要时才显示滚动条
             alignContent: "start"
           }}>
@@ -2353,8 +2353,7 @@ const TooltipPortal = () => {
                   backgroundColor: "rgba(0, 0, 0, 0.2)",
                   borderRadius: "5px",
                   width: "100%",
-                  height: "auto",
-                  maxHeight: "280px",
+                  height: "350px",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
@@ -2363,19 +2362,60 @@ const TooltipPortal = () => {
                   {/* Header */}
                   <div className="playerHeader" style={{
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "5px",
-                    fontSize: "0.95em",
-                    fontWeight: player.id === currentUser.id ? "bold" : "normal",
-                    color: player.id === currentUser.id ? "#90ee90" : "white", // 当前用户绿色
-                    animation: gameState.currentPlayerId === player.id ? "pulse 2s infinite" : "none"
+                    flexDirection: "column", // 改为纵向排列
+                    alignItems: "center", // 居中对齐
+                    marginBottom: "10px",
+                    padding: "5px",
+                    borderRadius: "5px",
+                    backgroundColor: gameState.currentPlayerId === player.id ? "rgba(25, 118, 210, 0.5)" : "rgba(0, 0, 0, 0.4)", // 蓝色主题
+                    border: gameState.currentPlayerId === player.id ? "2px solid #64b5f6" : "1px solid rgba(255, 255, 255, 0.2)", // 浅蓝色边框
+                    boxShadow: gameState.currentPlayerId === player.id ? "0 0 15px rgba(100, 181, 246, 0.6)" : "none", // 蓝色发光效果
+                    animation: gameState.currentPlayerId === player.id ? "pulse 2s infinite" : "none",
+                    transition: "all 0.3s ease"
                   }}>
-                    <span>
-                      {gameState.currentPlayerId === player.id && "Current Player: "}
-                      {player.id === currentUser.id ? "You" : player.name}
-                    </span>
-                    <span>Score: {player.score}</span>
+                    {/* 玩家名称 - 第一行 */}
+                    <div style={{
+                      width: "100%",
+                      fontSize: "18px",
+                      fontWeight: "bold",
+                      color: gameState.currentPlayerId === player.id ? "#90ee90" : (player.id === currentUser.id ? "#FFD700" : "white"),
+                      textAlign: "center",
+                      textShadow: gameState.currentPlayerId === player.id ? "0 0 10px rgba(85, 255, 51, 0.8)" : "none"
+                    }}>
+                      {gameState.currentPlayerId === player.id && <span style={{marginRight: "5px"}}>Current Player:</span>}
+                      {player.id === currentUser.id ? "You!" : player.name}
+                    </div>
+                    
+                    {/* 宝石数和分数 - 第二行 */}
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      width: "100%",
+                      fontSize: "0.9em",
+                      marginTop: "5px",
+                      padding: "2px 5px"
+                    }}>
+                      {/* 宝石总数 */}
+                      <span style={{
+                        backgroundColor: countPlayerGems(player) >= 10 ? "rgba(255, 50, 50, 0.7)" : "rgba(30, 30, 80, 0.6)", 
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        fontWeight: "bold"
+                      }}>
+                        Total Gems: {countPlayerGems(player)}/10
+                      </span>
+                      
+                      {/* 分数 */}
+                      <span style={{
+                        backgroundColor: "rgba(255, 215, 0, 0.7)",
+                        color: "#000",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        fontWeight: "bold"
+                      }}>
+                        Victory Points: {player.score}
+                      </span>
+                    </div>
                   </div>
   
                   {/* Nobles */}
@@ -2485,68 +2525,86 @@ const TooltipPortal = () => {
 
                   </div>
   
-                  {/* Reserved Cards */}
-                  <div className="reserveCards">
-                    {[0, 1, 2].map((i) => {
-                      const card = player.reserved?.[i];
+              {/* Reserved Cards */}
+              <div className="reserveCards" style={{
+                display: "flex",
+                justifyContent: "space-between",
+                width: "100%",
+                height: "200px" , // 增加固定高度
+                marginTop: "10px",
+                marginBottom: "10px", // 增加底部间距
+                gap: "8px", // 确保有间距
+                overflow: "visible" ,// 确保内容不被裁剪
 
-                      if (card) {
-                        const shortColor = card.color && card.color.length === 1 
-                          ? card.color 
-                          : mapColorToFrontend(card.color);
+              }}>
+                {[0, 1, 2].map((i) => {
+                  const card = player.reserved?.[i];
 
-                        return (
-                          <div
-                            key={card.uuid}
-                            className={`card card-${shortColor} card-${card.level}`} // 移除 card-${i}，保持与主区域一致
-                            onClick={(e) => {
-                              if (player.id === currentUser.id && isPlayerTurn()) {
-                                handleCardAction(card.uuid, e.currentTarget);
-                              }
-                            }}
-                            onMouseEnter={(e) => {
-                              const missing = calculateMissingGems(card);
-                              setTooltipInfo({
-                                show: true,
-                                card: card,
-                                mousePosition: { x: e.clientX + 20, y: e.clientY - 10 }, // 初始位置是鼠标位置偏移
-                                missing: missing
-                              });
-                            }}
-                              onMouseLeave={() => setTooltipInfo(prev => ({ ...prev, show: false }))}
-                          >
-                            <div className="header">
-                              <div className={`color ${shortColor}gem`}></div>
-                              <div className="points">{card.points}</div>
-                            </div>
-                            <div className="overlay"></div>
-                            <div className="costs">
-                              {Object.entries(card.cost).map(([color, count]) =>
-                                count > 0 ? (
-                                  <div key={color} className={`cost ${color}`}>
-                                    {count}
-                                  </div>
-                                ) : null
-                              )}
-                            </div>
-                          </div>
-                        );
-                      } else {
-                        return (
-                          <div
-                            key={`reserved-empty-${i}`}
-                            style={{
-                              width: "32%",
-                              aspectRatio: "0.8",
-                              border: "1px dashed rgba(255,255,255,0.3)",
-                              borderRadius: "4px",
-                              backgroundColor: "rgba(0,0,0,0.1)"
-                            }}
-                          />
-                        );
-                      }
-                    })}
-                  </div>
+                  if (card) {
+                    const shortColor = card.color && card.color.length === 1 
+                      ? card.color 
+                      : mapColorToFrontend(card.color);
+
+                    return (
+                      <div
+                        key={card.uuid}
+                        className={`card card-${shortColor} card-${card.level}`}
+                        onClick={(e) => {
+                          if (player.id === currentUser.id && isPlayerTurn()) {
+                            handleCardAction(card.uuid, e.currentTarget);
+                          }
+                        }}
+                        onMouseEnter={(e) => {
+                          const missing = calculateMissingGems(card);
+                          setTooltipInfo({
+                            show: true,
+                            card: card,
+                            mousePosition: { x: e.clientX + 20, y: e.clientY - 10 },
+                            missing: missing
+                          });
+                        }}
+                        onMouseLeave={() => setTooltipInfo(prev => ({ ...prev, show: false }))}
+                        style={{
+                          width: "30%", // 设为百分比宽度
+                          height: "150px", // 固定高度
+                          maxWidth: "110px", // 设置最大宽度
+                          margin: "0", // 移除外边距
+                          position: "relative"
+                        }}
+                      >
+                        <div className="header">
+                          <div className={`color ${shortColor}gem`}></div>
+                          <div className="points">{card.points}</div>
+                        </div>
+                        <div className="overlay"></div>
+                        <div className="costs">
+                          {Object.entries(card.cost).map(([color, count]) =>
+                            count > 0 ? (
+                              <div key={color} className={`cost ${color}`}>
+                                {count}
+                              </div>
+                            ) : null
+                          )}
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div
+                        key={`reserved-empty-${i}`}
+                        style={{
+                          width: "30%", // 与卡片宽度一致
+                          height: "150px", // 固定高度
+                          maxWidth: "110px", // 最大宽度
+                          border: "1px dashed rgba(255,255,255,0.3)",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(0,0,0,0.1)"
+                        }}
+                      />
+                    );
+                  }
+                })}
+              </div>
                 </div>
               );
             })}

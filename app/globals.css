@@ -1607,3 +1607,19 @@ body > .gem:hover,
     opacity: 0;
   }
 }
+
+
+/* 修复预留卡片区域高度问题 */
+.reserveCards {
+  height: 150px !important; /* 增加固定高度 */
+  min-height: 150px !important; /* 确保最小高度 */
+  overflow: visible !important; /* 确保内容不被裁剪 */
+  margin-bottom: 10px !important; /* 添加底部间距 */
+}
+
+/* 确保预留卡片有合适的高度 */
+.reserveCards .card,
+.reserveCards > div {
+  height: 140px !important; /* 确保卡片高度适合容器 */
+  min-height: 140px !important; /* 最小高度 */
+}
