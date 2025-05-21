@@ -225,20 +225,33 @@ export default function GamePage() {
   const [lastNobleCount, setLastNobleCount] = useState(0);
 
   const [isPageRefreshed, setIsPageRefreshed] = useState(false);
+  
   const requestGameState = useCallback(() => {
     if (!wsConnected || !stableSessionId || !gameId) return;
     
-    console.log("页面被刷新，请求恢复游戏状态...");
-    sendMessage({
-      type: "GET_GAME_STATE",
-      roomId: gameId,
-      sessionId: stableSessionId,
-      content: {
-        userId: currentUser.id
-      }
-    });
+    // 清除之前的请求超时
+    if (requestTimeoutRef.current) {
+      clearTimeout(requestTimeoutRef.current);
+    }
+    
+    // 设置新的超时
+    requestTimeoutRef.current = setTimeout(() => {
+      console.log("请求恢复游戏状态...");
+      sendMessage({
+        type: "GET_GAME_STATE",
+        roomId: gameId,
+        sessionId: stableSessionId,
+        content: {
+          userId: currentUser.id
+        }
+      });
+      requestTimeoutRef.current = null;
+    }, 300); // 300ms 防抖
   }, [wsConnected, stableSessionId, gameId, sendMessage, currentUser.id]);
 
+  const refreshRequestSent = useRef(false);
+  
+  const requestTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 计时器显示文本函数
   const getTimerDisplay = () => {
@@ -246,25 +259,21 @@ export default function GamePage() {
     if (hintLoading) {
       return "Waiting for AI Hint...";
     }
-    
     // 如果不是当前玩家的回合
     if (gameState && gameState.currentPlayerId !== currentUser.id) {
       const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayerId);
       const playerName = currentPlayer?.name || "Other player";
       return `${playerName}'s turn`;
     }
-    
     // 如果是当前玩家的回合但时间到了
     if (isTimeUp) {
       return "Time's up!";
     }
-    
     if ((aiHintProcessedForTurn || isPageRefreshed) && 
       gameState?.currentPlayerId === currentUser.id && 
       !currentAction) {
     return "Choose Action";
   }
-    
     // 正常计时显示
     return `Timer: ${seconds}s`;
   };
@@ -352,6 +361,43 @@ export default function GamePage() {
     }, 1000);
   };
 
+  const sendLeaveRoomMessage = useCallback(() => {
+  if (wsConnected && gameId) {
+    console.log("发送离开房间消息...");
+    sendMessage({
+      type: "LEAVE_ROOM",
+      roomId: gameId,
+      sessionId: stableSessionId,
+      content: {
+        userId: currentUser.id
+      }
+    });
+    
+    // 短暂延迟后关闭连接，确保消息能发送出去
+    setTimeout(() => {
+      if (webSocketService?.isConnected()) {
+        console.log("关闭WebSocket连接...");
+        webSocketService.disconnect();
+      }
+    }, 200);
+  } else {
+    // 如果连接已断开，直接进行下一步
+    if (webSocketService?.isConnected()) {
+      webSocketService.disconnect();
+    }
+  }
+}, [wsConnected, gameId, stableSessionId, sendMessage, currentUser.id, webSocketService]);
+
+
+  // 添加这个 useEffect 在组件的顶层
+  useEffect(() => {
+    return () => {
+      // 清理所有超时
+      if (requestTimeoutRef.current) {
+        clearTimeout(requestTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // useEffect用于检测页面刷新
   useEffect(() => {
@@ -372,8 +418,10 @@ export default function GamePage() {
     };
     
     // 如果是页面刷新，并且websocket已连接，请求游戏状态
-    if (wasRefreshed() && wsConnected) {
+    if (wasRefreshed() && wsConnected && !refreshRequestSent.current) {
       console.log("检测到页面刷新，准备恢复游戏状态...");
+      // 设置标记为已发送请求
+      refreshRequestSent.current = true;
       // 短暂延迟确保WebSocket完全连接
       setTimeout(() => {
         requestGameState();
@@ -602,6 +650,7 @@ useEffect(() => {
 
               setGameState(gameStateData);
               setPendingGameState(null); // 清除缓存
+              refreshRequestSent.current = true; // 标记已收到游戏状态，不再请求
             }
           } catch (err) {
             console.error("转换游戏状态失败:", err);
@@ -730,7 +779,8 @@ useEffect(() => {
       };
       
       // 如果是页面刷新，请求游戏状态
-      if (wasRefreshed()) {
+      if (wasRefreshed() && !refreshRequestSent.current) {
+        refreshRequestSent.current = true;
         // 延迟请求，确保加入房间处理完成
         setTimeout(() => requestGameState(), 1000);
       }
@@ -1742,12 +1792,12 @@ const TooltipPortal = () => {
           }}>
             <button
               onClick={() => {
-                if (webSocketService?.isConnected()) {
-                  console.log("Closing WebSocket before navigating back to lobby...");
-                  webSocketService.disconnect();
-                }
-                globalThis.location.href = "/lobby"}
-              }
+                sendLeaveRoomMessage();
+                // 短暂延迟后跳转，确保离开消息能发送出去
+                setTimeout(() => {
+                  globalThis.location.href = "/lobby";
+                }, 500);
+              }}
               style={{
                 padding: "10px 20px",
                 backgroundColor: "rgba(100, 100, 200, 0.8)",
@@ -1835,11 +1885,10 @@ const TooltipPortal = () => {
           }}>
             <button
               onClick={() => {
-                if (webSocketService?.isConnected()) {
-                  console.log("退出游戏前关闭WebSocket连接...");
-                  webSocketService.disconnect();
-                }
-                globalThis.location.href = "/lobby";
+                sendLeaveRoomMessage();
+                setTimeout(() => {
+                  globalThis.location.href = "/lobby";
+                }, 500);
               }}
               style={{
                 padding: "10px 20px",
@@ -2000,7 +2049,7 @@ const TooltipPortal = () => {
       {/* Main game layout */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "auto auto", // 左侧自适应，右侧固定800px宽度
+        gridTemplateColumns: "auto auto", 
         width: "100%",
         maxWidth: "2000px",
         margin: "0 auto",
@@ -2212,20 +2261,23 @@ const TooltipPortal = () => {
           flexDirection: "column",
           gap: "25px",
           width: "100%",
+          minWidth: "700px", // 确保最小宽度
+          overflow: "auto",
+          overflowX: "hidden", // 添加这个属性
+
         }}>
           {/* Player panels */}
           <div id="player-area" style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr", // 2列网格
-            gridTemplateRows: "auto auto", // 2行网格，高度自适应
+            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", // 自动适应列数
             gap: "10px",
             backgroundColor: "rgba(0, 0, 0, 0.3)",
             padding: "10px", 
             borderRadius: "8px",
             width: "100%",
-            maxWidth: "800px",
+            minWidth: "340px", // 确保最小宽度
             maxHeight: "calc(100vh - 350px)",
-            overflowY: "visible",
+            overflowY: "auto", // 改为auto，需要时才显示滚动条
             alignContent: "start"
           }}>
             {gameState?.players?.map((player) => {
@@ -2548,7 +2600,11 @@ const TooltipPortal = () => {
               padding: "10px",
               backgroundColor: "rgba(0,0,0,0.2)",
               borderRadius: "8px",
-              textAlign: "center"
+              textAlign: "center",
+              width: "100%",
+              minWidth: "700px", // 增加最小宽度，确保内容不会被压缩
+              overflowX: "visible", // 允许内容溢出但不显示滚动条
+              boxSizing: "border-box", // 确保边框和内边距计入宽度
             }}>
               {currentAction === null ? (
                 <>

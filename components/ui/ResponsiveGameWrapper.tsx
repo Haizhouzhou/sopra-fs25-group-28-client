@@ -1,8 +1,8 @@
-"use client";
+// 在 ResponsiveGameWrapper 中添加以下修改
 
+"use client";
 import { useState, useEffect, ReactNode } from 'react';
 import { GAME_BACKGROUND } from '@/utils/constants';
-
 
 interface ResponsiveGameWrapperProps {
   children: ReactNode;
@@ -11,16 +11,16 @@ interface ResponsiveGameWrapperProps {
 
 const ResponsiveGameWrapper = ({ 
   children,
-  debugMode = false // 开发时可以设为true，发布时改为false
+  debugMode = false 
 }: ResponsiveGameWrapperProps) => {
   const [scale, setScale] = useState(1);
   const [mounted, setMounted] = useState(false);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
-
-  // 根据截图设置必要的尺寸
+  
+  // 修改设计宽度和高度
   const designWidth = 1750;
   const designHeight = 1250;
-
+  
   useEffect(() => {
     setMounted(true);
     
@@ -30,59 +30,59 @@ const ResponsiveGameWrapper = ({
       
       setViewportSize({ width, height });
       
-      // 计算必要的缩放比例
-      const horizontalScale = (width) / designWidth;
-      const verticalScale = (height) / designHeight;
+      // 重要：检查是否需要应用最小宽度限制
+      const minTotalWidth = 900; // 左侧区域500px + 右侧区域350px + 间距50px
       
-      // 取较小值以确保内容完全可见
-      const calculatedScale = Math.min(horizontalScale, verticalScale);
-      
-      
-      // 保守的缩放比例
-      const safeScale = calculatedScale * 0.99;
-      const finalScale = Math.min(safeScale, 1);
-      setScale(finalScale);
+      if (width < minTotalWidth) {
+        // 如果屏幕宽度小于最小总宽度，计算缩放因子
+        const newScale = width / minTotalWidth;
+        // 限制最小缩放因子，确保界面不会过小
+        setScale(Math.max(newScale, 0.6));
+      } else {
+        // 正常情况下的缩放逻辑
+        const horizontalScale = width / designWidth;
+        const verticalScale = height / designHeight;
+        const calculatedScale = Math.min(horizontalScale, verticalScale);
+        const safeScale = calculatedScale * 0.99;
+        setScale(Math.min(safeScale, 1));
+      }
     };
     
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
+  
   if (!mounted) {
     return <div style={{ width: '100vw', height: '100vh' }}></div>;
   }
-
+  
   return (
     <div style={{
-        width: '100vw',
-        height: '100vh',
-        background: GAME_BACKGROUND,
-        display: 'flex',
-        justifyContent: 'center', // 改为左对齐，不要居中
-        alignItems: 'center',
-        position: 'relative',
-        overflow: 'auto',
-        // 添加一些水平内边距，让游戏不贴边
-        paddingLeft: '20px',
+      width: '100vw',
+      height: '100vh',
+      background: GAME_BACKGROUND,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+      padding: '0',
     }}>
       <div style={{
         transform: `scale(${scale})`,
-        transformOrigin: 'center center', // 从左侧开始变换
+        transformOrigin: 'center center',
         width: `${designWidth}px`,
         height: `${designHeight}px`,
         transition: 'transform 0.2s ease',
         position: 'relative',
-        boxShadow: 'none', // 移除阴影
-        border: 'none', // 确保没有边框
-        outline: 'none', // 移除轮廓
-        overflow: 'hidden' ,// 防止内容溢出
+        boxSizing: 'border-box',
         margin: '0',
       }}>
         {children}
       </div>
       
-      {/* 调试信息 - 仅在开发模式显示 */}
+      {/* 调试信息 */}
       {debugMode && (
         <div style={{
           position: 'fixed',
