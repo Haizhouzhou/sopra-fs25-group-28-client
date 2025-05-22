@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Input } from "antd";
 import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
+import WebSocketService from "@/hooks/useWebSocket"; 
 
 interface User {
   id: number;
@@ -47,32 +48,55 @@ const Profile: React.FC = () => {
     fetchUser();
   }, [userId, router]);
 
-  const handleSave = async () => {
-    try {
-      const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
-      if (!currentUser) {
-        alert("No current user found");
-        return;
-      }
+const handleSave = async () => {
+  console.log("Updating profile with:", { name, avatar });
+  try {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "null");
+    if (!currentUser) {
+      alert("No current user found");
+      return;
+    }
   
-      await apiService.put(`/users/${userId}`, {
-        username: currentUser.username, 
-        name,
-        avatar,
-        token
-      });
+    await apiService.put(`/users/${userId}`, {
+      username: currentUser.username, 
+      name,
+      avatar,
+      token
+    });
+    console.log("Profile update response received");
   
+    // 更新本地存储
     if (Number(currentUser.id) === userId) {
       const updated = { ...currentUser, name, avatar };
       localStorage.setItem("currentUser", JSON.stringify(updated));
+      console.log("Updated user in localStorage:", updated);
     }
       
-      alert("Profile updated!");
-    } catch (err) {
-      console.error("Failed to update profile", err);
-      alert("Failed to update profile on server");
+    alert("Profile updated!");
+    
+    // 获取WebSocket服务实例并断开连接
+    const webSocketService = WebSocketService.getInstance();
+    if (webSocketService.isConnected()) {
+      console.log("断开WebSocket连接以刷新用户信息...");
+      webSocketService.disconnect();
+            // 设置一个短暂的延迟后重新连接
+      setTimeout(() => {
+        console.log("重新连接WebSocket...");
+        webSocketService.connect(token).then((success: boolean) => { // 显式指定success为boolean类型
+          console.log("WebSocket重连结果:", success ? "成功" : "失败");
+          // 不管成功与否，都跳转到大厅页面
+          router.push("/lobby");
+        });
+      }, 300); // 300毫秒的延迟，可以根据需要调整
+    } else {
+      // 如果没有活跃的WebSocket连接，直接导航到大厅
+      router.push("/lobby");
     }
-  };
+  } catch (err) {
+    console.error("Failed to update profile", err);
+    alert("Failed to update profile on server");
+  }
+};
   
 
   const handleBack = () => {
@@ -122,8 +146,59 @@ const Profile: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <button onClick={handleBack} style={{ backgroundColor: '#0F2149', border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>BACK</button>
-            <button onClick={handleSave} style={{ backgroundColor: '#0F2149', border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>SAVE</button>
+            <button 
+              onClick={handleBack} 
+              style={{ 
+                backgroundColor: '#0F2149', 
+                border: '2px solid #FFD700', 
+                color: '#FFD700', 
+                padding: '8px 20px', 
+                borderRadius: '4px', 
+                cursor: 'pointer', 
+                fontWeight: 'bold', 
+                fontSize: '1rem',
+                transition: "all 0.3s ease" 
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.backgroundColor = '#1A377A';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.backgroundColor = '#0F2149';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              BACK
+            </button>
+
+            <button 
+              onClick={handleSave} 
+              style={{ 
+                backgroundColor: '#0F2149', 
+                border: '2px solid #FFD700', 
+                color: '#FFD700', 
+                padding: '8px 20px', 
+                borderRadius: '4px', 
+                cursor: 'pointer', 
+                fontWeight: 'bold', 
+                fontSize: '1rem',
+                transition: "all 0.3s ease" 
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.backgroundColor = '#1A377A';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.backgroundColor = '#0F2149';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              SAVE
+            </button>
           </div>
         </div>
       </div>

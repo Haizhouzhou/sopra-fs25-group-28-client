@@ -166,21 +166,35 @@ const CreateGame: React.FC = () => {
               <button
                 type="submit"
                 disabled={!isConnected}
+                className={isConnected ? "clickable" : "disabled"}
                 style={{
                   backgroundColor: "#0F2149",
                   border: "2px solid #FFD700",
                   color: "#FFD700",
                   padding: "10px 25px",
                   borderRadius: "4px",
-                  cursor: isConnected ? "pointer" : "not-allowed",
                   fontWeight: "bold",
                   fontSize: "1rem",
-                  opacity: isConnected ? 1 : 0.7
+                  opacity: isConnected ? 1 : 0.7,
+                  transition: "all 0.3s ease"
+                }}
+                onMouseOver={e => {
+                  if (isConnected) {
+                    e.currentTarget.style.backgroundColor = '#1A377A';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                  }
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.backgroundColor = '#0F2149';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
                 CREATE NEW GAME
               </button>
 
+              
               <button
                 type="button"
                 onClick={() => router.push("/lobby")}
@@ -190,9 +204,19 @@ const CreateGame: React.FC = () => {
                   color: "#FFD700",
                   padding: "10px 25px",
                   borderRadius: "4px",
-                  cursor: "pointer",
                   fontWeight: "bold",
-                  fontSize: "1rem"
+                  fontSize: "1rem",
+                  transition: "all 0.3s ease"
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.backgroundColor = '#1A377A';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.backgroundColor = '#0F2149';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
                 BACK

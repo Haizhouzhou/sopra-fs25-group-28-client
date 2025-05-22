@@ -17,9 +17,6 @@ export default function TutorialPage() {
   router.push("/lobby");
   };
 
-  const handleQuitGame = () => {
-    router.push("/");
-  };
 
   // 主要按钮样式（Read Rules和Start Tutorial用）
   const primaryButtonStyle: React.CSSProperties = {
@@ -41,15 +38,6 @@ export default function TutorialPage() {
     borderColor: "#90EE90", // 浅绿色边框
     color: "#90EE90"
   };
-
-  // Quit Game按钮样式
-  const quitButtonStyle: React.CSSProperties = {
-    ...primaryButtonStyle,
-    backgroundColor: "#3A1F42", // 深紫色背景
-    borderColor: "#FF7F7F", // 浅红色边框
-    color: "#FF7F7F"
-  };
-
 
   return (
     <div
@@ -122,7 +110,17 @@ export default function TutorialPage() {
   }}
 >
   {/* 主要按钮 */}
+  
   <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap" }}>
+    <button 
+      onClick={handleBackToLobby} 
+      style={backButtonStyle}
+      onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+      onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+    >
+      Back to Lobby
+    </button>
+
     <button 
       style={primaryButtonStyle} 
       onClick={handleStartTutorial}
@@ -141,25 +139,6 @@ export default function TutorialPage() {
     </button>
   </div>
   
-  {/* Back和Quit按钮 */}
-  <div style={{ display: "flex", gap: 20, justifyContent: "center", flexWrap: "wrap", marginTop: "10px" }}>
-    <button 
-      onClick={handleBackToLobby} 
-      style={backButtonStyle}
-      onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-      onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
-    >
-      Back to Lobby
-    </button>
-    <button 
-      onClick={handleQuitGame} 
-      style={quitButtonStyle}
-      onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-      onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
-    >
-      Quit Game
-    </button>
-  </div>
 </div>
 
         </div>

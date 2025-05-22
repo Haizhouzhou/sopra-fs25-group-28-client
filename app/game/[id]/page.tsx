@@ -132,7 +132,6 @@ const buttonStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  cursor: "pointer",
   boxShadow: "0 0 20px rgba(255, 150, 0, 0.6)",
   fontSize: "20px",
   fontWeight: "bold",
@@ -1214,9 +1213,9 @@ const handleConfirmGems = () => {
       cards,
       nobles,
       decks: {
-        level1: 40 - (cards.level1.length || 0),
-        level2: 30 - (cards.level2.length || 0),
-        level3: 20 - (cards.level3.length || 0)
+        level1: data.level1CardDeckSize !== undefined ? data.level1CardDeckSize : 0,
+        level2: data.level2CardDeckSize !== undefined ? data.level2CardDeckSize : 0,
+        level3: data.level3CardDeckSize !== undefined ? data.level3CardDeckSize : 0
       },
       turn: data.currentPlayerIndex || 0,
       log: [],
@@ -1362,10 +1361,24 @@ const TooltipPortal = () => {
         zIndex: 99999,
         color: "white",
         boxShadow: "0 0 15px rgba(255, 215, 0, 0.6)",
-        width: "200px",
+        width: "250px",
         pointerEvents: "none"
       }}
     >
+      <div style={{ 
+        marginBottom: "12px", 
+        color: "#FFFFFF",
+        fontSize: "16px", 
+        fontWeight: "bold",
+        backgroundColor: "rgba(70, 70, 70, 0.7)",
+        borderRadius: "4px",
+        padding: "5px 10px",
+        border: "1px solid rgba(255, 255, 255, 0.5)",
+        textAlign: "center"
+      }}>
+        Card ID: {tooltipInfo.card.uuid}
+      </div>
+
       <div style={{ marginBottom: "8px", fontWeight: "bold", color: "#FFD700" }}>
         Required Resources:
       </div>
@@ -1859,7 +1872,6 @@ const TooltipPortal = () => {
                 border: "none",
                 borderRadius: "5px",
                 fontSize: "16px",
-                cursor: "pointer",
                 transition: "all 0.2s ease"
               }}
             >
@@ -1875,7 +1887,6 @@ const TooltipPortal = () => {
                 border: "none",
                 borderRadius: "5px",
                 fontSize: "16px",
-                cursor: "pointer",
                 transition: "all 0.2s ease"
               }}
             >
@@ -1951,7 +1962,6 @@ const TooltipPortal = () => {
                 border: "none",
                 borderRadius: "5px",
                 fontSize: "16px",
-                cursor: "pointer",
                 transition: "all 0.2s ease"
               }}
             >
@@ -1967,7 +1977,6 @@ const TooltipPortal = () => {
                 border: "none",
                 borderRadius: "5px",
                 fontSize: "16px",
-                cursor: "pointer",
                 transition: "all 0.2s ease"
               }}
             >
@@ -2013,7 +2022,6 @@ const TooltipPortal = () => {
           padding: "8px 12px",
           borderRadius: "6px",
           fontWeight: "bold",
-          cursor: "pointer"
         }}
       >
         Show Result
@@ -2034,7 +2042,6 @@ const TooltipPortal = () => {
           padding: "8px 12px",
           borderRadius: "6px",
           border: "2px solid white",
-          cursor: "pointer",
           boxShadow: "0 0 10px rgba(255, 0, 0, 0.5)",
           transition: "all 0.2s ease"
         }}
@@ -2056,7 +2063,6 @@ const TooltipPortal = () => {
           padding: "8px 12px",
           borderRadius: "6px",
           border: "2px solid white",
-          cursor: "pointer",
           boxShadow: soundEnabled ? "0 0 10px rgba(0, 255, 0, 0.5)" : "none",
           transition: "all 0.2s ease"
         }}
@@ -2118,8 +2124,18 @@ const TooltipPortal = () => {
           gap: "10px",
           maxWidth: "900px" // 设置最大宽度
         }}>
+          
           {/*Noble Area*/}
-          <div id="noble-area">
+          <div id="noble-area" 
+            style={{ 
+            width: '150%', 
+            display: 'flex',
+            justifyContent: 'flex-start',
+            marginRight: 'auto', 
+            maxWidth: '100%',
+            overflowX: 'auto' 
+          }}
+        >
             {gameState?.nobles?.map((noble, idx) => (
               <div
                 key={noble.uuid}
@@ -2213,7 +2229,7 @@ const TooltipPortal = () => {
                       <div
                         key={card.uuid}
                         data-card-id={card.uuid}
-                        className={`card card-${card.color} card-${card.level}`}
+                        className={`card card-${card.color} card-${card.level} clickable`} 
                         onClick={(e) => handleCardAction(card.uuid, e.currentTarget)}
                         onMouseEnter={(e) => {
                           const missing = calculateMissingGems(card);
@@ -2340,8 +2356,8 @@ const TooltipPortal = () => {
             borderRadius: "8px",
             width: "100%",
             minWidth: "600px", // 增加整体最小宽度
-            height: (gameState?.players?.length || 0) <= 2 ? "375px" : "720px",
-            maxHeight: (gameState?.players?.length || 0) <= 2 ? "375px" : "720px",
+            height: (gameState?.players?.length || 0) <= 2 ? "400px" : "750px",
+            maxHeight: (gameState?.players?.length || 0) <= 2 ? "400px" : "750px",
             overflowY: "auto", // 改为auto，需要时才显示滚动条
             alignContent: "start"
           }}>
@@ -2535,7 +2551,8 @@ const TooltipPortal = () => {
                 marginBottom: "10px", // 增加底部间距
                 gap: "8px", // 确保有间距
                 overflow: "visible" ,// 确保内容不被裁剪
-
+                cursor:"pointer"
+              
               }}>
                 {[0, 1, 2].map((i) => {
                   const card = player.reserved?.[i];
@@ -2569,7 +2586,7 @@ const TooltipPortal = () => {
                           height: "150px", // 固定高度
                           maxWidth: "110px", // 设置最大宽度
                           margin: "0", // 移除外边距
-                          position: "relative"
+                          position: "relative",
                         }}
                       >
                         <div className="header">
@@ -2648,11 +2665,14 @@ const TooltipPortal = () => {
                 </button>
               ) : (
                 <button
-                  onClick={() => {
+                onClick={() => {
                     playSound('AIhint');
                     requestAiHint();
                   }}
                   disabled={!isPlayerTurn() || hintCount >= 1}
+                  className={
+                    !isPlayerTurn() || hintCount >= 1 ? "disabled" : "clickable"
+                  }
                   style={{
                     padding: "8px 24px",
                     fontWeight: "bold",
@@ -2661,15 +2681,15 @@ const TooltipPortal = () => {
                     border: "none",
                     backgroundColor:
                       !isPlayerTurn() || hintCount >= 1
-                        ? "rgba(120, 120, 120, 0.5)" // 灰色背景
-                        : "rgba(0, 100, 255, 0.9)",  // 正常蓝色背景
+                        ? "rgba(120, 120, 120, 0.5)"
+                        : "rgba(0, 100, 255, 0.9)",
                     color: "white",
-                    cursor: !isPlayerTurn() || hintCount >= 1 ? "not-allowed" : "pointer",
                     boxShadow:
                       !isPlayerTurn() || hintCount >= 1
                         ? "none"
                         : "0 0 10px rgba(0, 100, 255, 0.6)",
-                    transition: "all 0.2s ease"
+                    transition: "all 0.2s ease",
+                    opacity: !isPlayerTurn() || hintCount >= 1 ? 0.6 : 1,
                   }}
                 >
                   {hintCount >= 1 ? "Used" : "Get AI Advice"}
@@ -2862,7 +2882,6 @@ const TooltipPortal = () => {
                                     ? "3px solid #FFD700"
                                     : "1px solid #aaa",
                                   borderRadius: "50%",
-                                  cursor: "pointer",
                                   boxShadow: selectedGems.includes(color)
                                     ? "0 0 10px rgba(255, 215, 0, 0.7)"
                                     : "none"
@@ -2882,7 +2901,6 @@ const TooltipPortal = () => {
                               borderRadius: "6px",
                               fontWeight: "bold",
                               color: "#000",
-                              cursor: "pointer",
                               boxShadow: "0 0 8px rgba(34, 187, 85, 0.5)",
                               marginLeft: "10px",
                               whiteSpace: "nowrap"
@@ -2920,7 +2938,6 @@ const TooltipPortal = () => {
               alignItems: "center",
               justifyContent: "center",
               boxShadow: `0 0 20px ${isTimeUp ? "rgba(255, 100, 100, 0.6)" : "rgba(255, 200, 0, 0.6)"}`,
-              animation: isTimeUp ? "pulse 2s infinite" : "none"
             }}>
               <div style={{
                 fontSize: "28px",
@@ -2933,7 +2950,9 @@ const TooltipPortal = () => {
             </div>
             
             {/* Pass Turn Button */}
-            <div style={{
+            <div   
+            className={isPlayerTurn() ? "clickable" : "disabled"}
+            style={{
               flex: "1",
               backgroundColor: "rgba(255, 150, 0, 0.8)",
               border: "3px solid #ff6a00",
@@ -2942,7 +2961,6 @@ const TooltipPortal = () => {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              cursor: isPlayerTurn() ? "pointer" : "not-allowed",
               boxShadow: "0 0 20px rgba(255, 150, 0, 0.6)",
               opacity: isPlayerTurn() ? 1 : 0.5
             }}
@@ -3003,7 +3021,6 @@ const TooltipPortal = () => {
           }}
           style={{
             width: "230px",
-            cursor: "pointer",
             padding: "3px 10px",
             borderBottom: "1px solid black",
             marginBottom: "5px",

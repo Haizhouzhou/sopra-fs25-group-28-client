@@ -378,7 +378,6 @@ const GameRoomClient = () => {
             border: '1px solid #FFD700',
             borderRadius: '4px',
             padding: '5px 10px',
-            cursor: 'pointer'
           }}
         >
           Refresh Room
@@ -466,18 +465,31 @@ const GameRoomClient = () => {
                     borderRadius: '4px 0 0 4px' 
                   }} 
                 />
-                <button 
-                  type="submit" 
-                  disabled={!isConnected} 
-                  style={{ 
-                    backgroundColor: '#0F2149', 
-                    border: '1px solid #FFD700', 
-                    borderLeft: 'none', 
-                    color: '#FFD700', 
-                    padding: '8px 16px', 
-                    borderRadius: '0 4px 4px 0', 
-                    cursor: isConnected ? 'pointer' : 'not-allowed', 
-                    opacity: isConnected ? 1 : 0.7 
+                <button
+                  type="submit"
+                  disabled={!isConnected}
+                  className={isConnected ? 'clickable' : 'disabled'}
+                  style={{
+                    backgroundColor: '#0F2149',
+                    border: '1px solid #FFD700',
+                    borderLeft: 'none',
+                    color: '#FFD700',
+                    padding: '8px 16px',
+                    borderRadius: '0 4px 4px 0',
+                    opacity: isConnected ? 1 : 0.7,
+                    transition: "all 0.3s ease"
+                  }}
+                  onMouseOver={e => {
+                    if (isConnected) {
+                      e.currentTarget.style.backgroundColor = '#1A377A';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                    }
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.backgroundColor = '#0F2149';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
                   Send
@@ -538,57 +550,93 @@ const GameRoomClient = () => {
             <div style={{ marginTop: 'auto' }}>
               <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                 {isOwner ? (
-                  <button 
-                    onClick={handleStartGame} 
-                    disabled={!allPlayersReady || !isConnected} 
-                    style={{ 
-                      flex: 1, 
-                      backgroundColor: '#0F2149', 
-                      border: '2px solid #FFD700', 
-                      color: '#FFD700', 
-                      padding: '12px', 
-                      borderRadius: '4px', 
-                      cursor: allPlayersReady && isConnected ? 'pointer' : 'not-allowed', 
-                      fontWeight: 'bold', 
-                      opacity: allPlayersReady && isConnected ? 1 : 0.7 
+                  <button
+                    onClick={handleStartGame}
+                    disabled={!allPlayersReady || !isConnected}
+                    className={allPlayersReady && isConnected ? 'clickable' : 'disabled'}
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#0F2149',
+                      border: '2px solid #FFD700',
+                      color: '#FFD700',
+                      padding: '12px',
+                      borderRadius: '4px',
+                      fontWeight: 'bold',
+                      opacity: allPlayersReady && isConnected ? 1 : 0.7,
+                      transition: "all 0.3s ease"
+                    }}
+                    onMouseOver={e => {
+                      if (allPlayersReady && isConnected) {
+                        e.currentTarget.style.backgroundColor = '#1A377A';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                      }
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.backgroundColor = '#0F2149';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
                     }}
                   >
                     START GAME
                   </button>
-                ) : (
-                  <button 
-                    onClick={handleReady} 
-                    disabled={!isConnected} 
-                    style={{ 
-                      flex: 1, 
-                      backgroundColor: '#0F2149', 
-                      border: '2px solid #FFD700', 
-                      color: '#FFD700', 
-                      padding: '12px', 
-                      borderRadius: '4px', 
-                      cursor: isConnected ? 'pointer' : 'not-allowed', 
-                      fontWeight: 'bold', 
-                      opacity: isConnected ? 1 : 0.7 
+                  ) : (
+                  <button
+                  onClick={handleReady}
+                  disabled={!isConnected}
+                  className={isConnected ? 'clickable' : 'disabled'} 
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#0F2149',
+                    border: '2px solid #FFD700',
+                    color: '#FFD700',
+                    padding: '12px',
+                    borderRadius: '4px',
+                    fontWeight: 'bold',
+                    opacity: isConnected ? 1 : 0.7,
+                    transition: "all 0.3s ease"
+                    }}
+                    onMouseOver={e => {
+                      if (isConnected) {
+                        e.currentTarget.style.backgroundColor = '#1A377A';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                      }
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.backgroundColor = '#0F2149';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
                     }}
                   >
                     {isReady ? 'CANCEL READY' : 'READY'}
                   </button>
-                )}
-                <button 
-                  onClick={handleLeaveRoom} 
-                  style={{ 
-                    flex: 1, 
-                    backgroundColor: '#0F2149', 
-                    border: '2px solid #FFD700', 
-                    color: '#FFD700', 
-                    padding: '12px', 
-                    borderRadius: '4px', 
-                    cursor: 'pointer', 
-                    fontWeight: 'bold' 
-                  }}
-                >
-                  QUIT GAME
-                </button>
+                  )}
+                  <button
+                    onClick={handleLeaveRoom}
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#0F2149',
+                      border: '2px solid #FFD700',
+                      color: '#FFD700',
+                      padding: '12px',
+                      borderRadius: '4px',
+                      fontWeight: 'bold',
+                      transition: "all 0.3s ease"
+                    }}
+                    onMouseOver={e => {
+                      e.currentTarget.style.backgroundColor = '#1A377A';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.backgroundColor = '#0F2149';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    QUIT GAME
+                  </button>
               </div>
             </div>
           </div>

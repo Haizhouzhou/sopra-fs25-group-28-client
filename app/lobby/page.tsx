@@ -190,7 +190,7 @@ const GameLobby: React.FC = () => {
     return <div style={{ color: 'white' }}>Loading lobby...</div>;
   }
 
-  return (
+return (
     <div style={{ position: 'relative', minHeight: '100vh', width: '100%', overflow: 'hidden' }}>
       <img src="/gamesource/tile_background.png" alt="Background" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: -1 }} />
 
@@ -213,10 +213,91 @@ const GameLobby: React.FC = () => {
               </div>
             )}
             <div style={{ display: 'flex', gap: '20px' }}>
-              <button onClick={handleTutorialClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>TUTORIAL</button>
-              <button onClick={handleLeaderboardClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>LEADERBOARD</button>
-              <button onClick={handleProfileClick} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149' }}>PROFILE</button>
-              <button onClick={handleLogout} style={{ border: '2px solid #FFD700', color: '#FFD700', padding: '8px 20px', borderRadius: '4px', backgroundColor: '#0F2149', whiteSpace: 'nowrap'}}>LOG OUT</button>
+              <button 
+                onClick={handleTutorialClick} 
+                style={{ 
+                  border: '2px solid #FFD700', 
+                  color: '#FFD700', 
+                  padding: '8px 20px', 
+                  borderRadius: '4px', 
+                  backgroundColor: '#0F2149', 
+                  transition: "all 0.3s ease", 
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.backgroundColor = '#1A377A';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.backgroundColor = '#0F2149';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >TUTORIAL</button>
+              <button 
+                onClick={handleLeaderboardClick} 
+                style={{ 
+                  border: '2px solid #FFD700', 
+                  color: '#FFD700', 
+                  padding: '8px 20px', 
+                  borderRadius: '4px', 
+                  backgroundColor: '#0F2149', 
+                  transition: "all 0.3s ease", 
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.backgroundColor = '#1A377A';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.backgroundColor = '#0F2149';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >LEADERBOARD</button>
+              <button 
+                onClick={handleProfileClick} 
+                style={{ 
+                  border: '2px solid #FFD700', 
+                  color: '#FFD700', 
+                  padding: '8px 20px', 
+                  borderRadius: '4px', 
+                  backgroundColor: '#0F2149', 
+                  transition: "all 0.3s ease", 
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.backgroundColor = '#1A377A';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.backgroundColor = '#0F2149';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >PROFILE</button>
+              <button 
+                onClick={handleLogout} 
+                style={{ 
+                  border: '2px solid #FFD700', 
+                  color: '#FFD700', 
+                  padding: '8px 20px', 
+                  borderRadius: '4px', 
+                  backgroundColor: '#0F2149', 
+                  whiteSpace: 'nowrap', 
+                  transition: "all 0.3s ease", 
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.backgroundColor = '#1A377A';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.backgroundColor = '#0F2149';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >LOG OUT</button>
             </div>
           </div>
         </div>
@@ -226,7 +307,27 @@ const GameLobby: React.FC = () => {
             <span style={{ color: '#8aff8a', fontSize: '0.9rem' }}>
               {isConnected ? 'Real-time Updates Active' : 'Waiting for connection...'}
             </span>
-            <button onClick={handleRefreshRooms} style={{ backgroundColor: '#0F2149', border: '1px solid #FFD700', color: '#FFD700', padding: '4px 12px', borderRadius: 4 }}>REFRESH</button>
+            <button 
+              onClick={handleRefreshRooms} 
+              style={{ 
+                backgroundColor: '#0F2149', 
+                border: '1px solid #FFD700', 
+                color: '#FFD700', 
+                padding: '4px 12px', 
+                borderRadius: 4, 
+                transition: "all 0.3s ease", 
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.backgroundColor = '#1A377A';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.backgroundColor = '#0F2149';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >REFRESH</button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', borderBottom: '1px solid #FFD700', padding: '8px 0', color: '#FFD700', fontWeight: 'bold' }}>
@@ -279,28 +380,62 @@ const GameLobby: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
-          <button onClick={handleJoinGame} disabled={!getCanJoinRoom()} style={{
-            backgroundColor: '#0F2149',
-            border: '2px solid #FFD700',
-            color: '#FFD700',
-            padding: '12px 30px',
-            borderRadius: '4px',
-            fontWeight: 'bold',
-            cursor: getCanJoinRoom() ? 'pointer' : 'not-allowed',
-            opacity: getCanJoinRoom() ? 1 : 0.7
-          }}>
+          <button 
+            onClick={handleJoinGame} 
+            disabled={!getCanJoinRoom()} 
+            className={getCanJoinRoom() ? "clickable" : "disabled"}
+            style={{
+              backgroundColor: '#0F2149',
+              border: '2px solid #FFD700',
+              color: '#FFD700',
+              padding: '12px 30px',
+              borderRadius: '4px',
+              fontWeight: 'bold',
+              opacity: getCanJoinRoom() ? 1 : 0.7,
+              transition: "all 0.3s ease"
+            }}
+            onMouseOver={e => {
+              if (getCanJoinRoom()) {
+                e.currentTarget.style.backgroundColor = '#1A377A';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+              }
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.backgroundColor = '#0F2149';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
             JOIN GAME
           </button>
-          <button onClick={handleCreateGame} disabled={!isConnected} style={{
-            backgroundColor: '#0F2149',
-            border: '2px solid #FFD700',
-            color: '#FFD700',
-            padding: '12px 30px',
-            borderRadius: '4px',
-            fontWeight: 'bold',
-            cursor: isConnected ? 'pointer' : 'not-allowed',
-            opacity: isConnected ? 1 : 0.7
-          }}>
+          <button 
+            onClick={handleCreateGame} 
+            disabled={!isConnected} 
+            className={isConnected ? "clickable" : "disabled"}
+            style={{
+              backgroundColor: '#0F2149',
+              border: '2px solid #FFD700',
+              color: '#FFD700',
+              padding: '12px 30px',
+              borderRadius: '4px',
+              fontWeight: 'bold',
+              opacity: isConnected ? 1 : 0.7,
+              transition: "all 0.3s ease"
+            }}
+            onMouseOver={e => {
+              if (isConnected) {
+                e.currentTarget.style.backgroundColor = '#1A377A';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+              }
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.backgroundColor = '#0F2149';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
             CREATE NEW GAME
           </button>
         </div>

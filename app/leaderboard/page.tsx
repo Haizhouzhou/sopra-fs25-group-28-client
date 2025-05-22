@@ -198,8 +198,8 @@ const Leaderboard: React.FC = () => {
 
         {/* Button area */}
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <button 
-            onClick={handleBackToLobby} 
+          <button
+            onClick={handleBackToLobby}
             style={{
               backgroundColor: '#0F2149',
               border: '2px solid #FFD700',
@@ -207,7 +207,18 @@ const Leaderboard: React.FC = () => {
               padding: '12px 30px',
               borderRadius: '4px',
               fontWeight: 'bold',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              transition: "all 0.3s ease"
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.backgroundColor = '#1A377A';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.backgroundColor = '#0F2149';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
             }}
           >
             BACK TO LOBBY

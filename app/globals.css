@@ -424,9 +424,6 @@ body > .gem:hover,
     display: block;
   }
   
-  .reserve:hover {
-    background-color: rgba(255, 255, 255, 0.7);
-  }
   
   #common-area .reserve {
     position: absolute;
@@ -464,9 +461,6 @@ body > .gem:hover,
     margin: 0 4px;
   }
   
-  .card .underlay {
-    z-index: 1;
-  }
   
   .colorSet {
     display: inline-block;
@@ -570,17 +564,7 @@ body > .gem:hover,
     top: -5px;            
   }
   
-  /* Reserved Cards hover */
-.reserveCards .card:hover > .overlay {
-    background-color: rgba(0, 0, 0, 0.4);
-    position: absolute;
-    border-radius: 6px;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 2;
-    display: block;
-  }
+
 
 /* 调整预定卡牌的比例 - 增加高度但保持宽度不变 */
 /* 增加选择器优先级，确保样式被应用 */
@@ -1622,4 +1606,29 @@ body > .gem:hover,
 .reserveCards > div {
   height: 140px !important; /* 确保卡片高度适合容器 */
   min-height: 140px !important; /* 最小高度 */
+}
+
+/* ✅ 全局默认光标，仅设置 html 和 body，避免污染全部元素 */
+html, body {
+  cursor: url('/gamesource/cursor/pointer_c_shaded.png'), auto;
+}
+
+/* ✅ 可点击元素的光标 */
+/* button,
+a,
+[role="button"],
+[onclick],
+.clickable {
+  cursor: url('/gamesource/cursor/hand_point_n.png'), pointer;
+} */
+
+/* 输入框的光标 */
+input,
+textarea {
+  cursor: url('/gamesource/cursor/bracket_a_vertical.png') 6 8, text;
+}
+
+/* 禁用状态 */
+.disabled {
+  cursor: url('/gamesource/cursor/disabled.png') 6 6, not-allowed;
 }
