@@ -78,11 +78,10 @@ const GameRoomClient = () => {
     // 在handleWebSocketMessage中处理ROOM_STATE消息·
     if (msg.type === "ROOM_STATE") {
       try {
-        console.log("处理ROOM_STATE消息:", msg);
+        console.log("ROOM_STATE message:", msg);
         
         // 更新房间名称（如果服务器提供了）
         if (msg.roomName) {
-          console.log("收到房间名称:", msg.roomName);
           setRoomName(msg.roomName);
         }
         
@@ -91,7 +90,6 @@ const GameRoomClient = () => {
         const rawPlayers = roomStateMsg.players || [];
         
         if (!Array.isArray(rawPlayers)) {
-          console.error("players不是数组:", rawPlayers);
           return;
         }
         
@@ -103,7 +101,6 @@ const GameRoomClient = () => {
           avatar: p.avatar || "a_01.png",
         }));
         
-        console.log("处理后的players:", updatedPlayers);
         
         // 设置玩家列表
         setPlayers(updatedPlayers);
@@ -112,10 +109,10 @@ const GameRoomClient = () => {
         const user = currentUserRef.current;
         if (user?.id) {
           const me = updatedPlayers.find(p => String(p.id) === String(user.id));
-          console.log("找到当前用户:", me);
+          console.log("current user:", me);
           
           if (me) {
-            console.log("更新UI状态 - isReady:", me.isReady);
+            console.log("ui status - isReady:", me.isReady);
             setIsReady(me.isReady); // 确保这行生效
             setIsOwner(me.isOwner || false);
           }
@@ -127,14 +124,14 @@ const GameRoomClient = () => {
         setAllPlayersReady(allReady);
         
       } catch (err) {
-        console.error("处理ROOM_STATE消息出错:", err);
+        console.error("ROOM_STATE err:", err);
       }
     }
       
       // 处理其他消息...
       if (msg.type === "GAME_STATE") {
 
-        console.log("收到游戏状态，保存到全局状态并跳转", msg.content);
+        console.log("game state", msg.content);
         // 保存游戏状态到全局上下文
         saveGameState(msg.content);
 
@@ -293,7 +290,7 @@ const GameRoomClient = () => {
 
   // Handle ready status
   const handleReady = () => {
-    console.log("Ready 按钮点击:", {
+    console.log("Ready button click:", {
       isOwner,
       currentUser,
       isConnected,
@@ -304,7 +301,7 @@ const GameRoomClient = () => {
     
     // 发送状态切换消息
     const newStatus = !isReady;
-    console.log(`尝试将准备状态切换为: ${newStatus}`);
+    console.log(`switch to: ${newStatus}`);
     
     // 使用简化的消息格式
     WebSocketService.getInstance().sendMessage({
@@ -423,6 +420,10 @@ const GameRoomClient = () => {
 
               <h3 style={{ color: '#FFD700' }}>🏆 Winning</h3>
               <p>First to 15 Prestige triggers last round. Highest score wins.</p>
+
+              <h3 style={{ color: '#FFD700' }}>💡 AI Hint</h3>
+              <p>The AI assistant offers real-time strategic tips to support your play, but use your judgment—<span style={{ color: 'red', fontWeight: 'bold' }}>it may not always right!</span></p>
+
             </div>
 
             {/* 聊天框区域 */}

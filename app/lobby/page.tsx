@@ -130,8 +130,17 @@ const GameLobby: React.FC = () => {
       const [current, max] = selectedGameRoom.players.split('/').map(Number);
       const isFull = current >= max;
       const isRunning = selectedGameRoom.gameStatus === 'RUNNING';
-      if (isFull || isRunning) {
-        alert(isFull ? "Sorry, the room is full. You can't join at the moment." : "The game has already started. Please try another room.");
+      const isFinished = selectedGameRoom.gameStatus === 'FINISHED';
+      if (isFull || isRunning || isFinished) {
+        let message = "";
+        if (isFull) {
+          message = "Sorry, the room is full. You can't join at the moment.";
+        } else if (isRunning) {
+          message = "The game has already started. Please try another room.";
+        } else if (isFinished) {
+          message = "The game has already finished. Please try another room.";
+        }
+        alert(message);
         return;
       }
     }
@@ -155,9 +164,9 @@ const GameLobby: React.FC = () => {
   const isFull = current >= max;
   
   // 检查游戏是否正在进行
-  const isRunning = selectedGameRoom.gameStatus === 'RUNNING';
-  
-  return !isFull && !isRunning;
+    const isRunning = selectedGameRoom.gameStatus === 'RUNNING';
+    const isFinished = selectedGameRoom.gameStatus === 'FINISHED';
+    return !isFull && !isRunning && !isFinished;
   };
 
 

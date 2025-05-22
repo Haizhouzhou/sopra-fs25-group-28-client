@@ -243,7 +243,7 @@ export default function GamePage() {
     
     // 设置新的超时
     requestTimeoutRef.current = setTimeout(() => {
-      console.log("请求恢复游戏状态...");
+      console.log("Recover game...");
       sendMessage({
         type: "GET_GAME_STATE",
         roomId: gameId,
@@ -371,7 +371,7 @@ export default function GamePage() {
 
   const sendLeaveRoomMessage = useCallback(() => {
   if (wsConnected && gameId) {
-    console.log("发送离开房间消息...");
+    console.log("Leaving Room...");
     sendMessage({
       type: "LEAVE_ROOM",
       roomId: gameId,
@@ -384,7 +384,7 @@ export default function GamePage() {
     // 短暂延迟后关闭连接，确保消息能发送出去
     setTimeout(() => {
       if (webSocketService?.isConnected()) {
-        console.log("关闭WebSocket连接...");
+        console.log("Close WebSocket Connection...");
         webSocketService.disconnect();
       }
     }, 200);
@@ -425,12 +425,8 @@ export default function GamePage() {
       return false;
     };
     
-    // 如果是页面刷新，并且websocket已连接，请求游戏状态
     if (wasRefreshed() && wsConnected && !refreshRequestSent.current) {
-      console.log("检测到页面刷新，准备恢复游戏状态...");
-      // 设置标记为已发送请求
       refreshRequestSent.current = true;
-      // 短暂延迟确保WebSocket完全连接
       setTimeout(() => {
         requestGameState();
       }, 500);
@@ -442,10 +438,6 @@ export default function GamePage() {
     if (cardAnimation.active && cardAnimation.sourceRect && cardAnimation.targetRect) {
       const sourceRect = cardAnimation.sourceRect as DOMRect;
       const targetRect = cardAnimation.targetRect as DOMRect;
-      
-      // 直接记录这些值以便调试
-      console.log("Source position:", sourceRect.left, sourceRect.top);
-      console.log("Target position:", targetRect.left, targetRect.top);
       
       document.documentElement.style.setProperty(
         '--source-x', 
@@ -507,7 +499,7 @@ useEffect(() => {
       }, 2000);
     }
 
-    const hasFinalRound = gameState.players.some(player => player.score >= 5); // FINAL ROUND CONDITION
+    const hasFinalRound = gameState.players.some(player => player.score >= 15); // FINAL ROUND CONDITION
     if (hasFinalRound && !isFinalRound) {
       setIsFinalRound(true);
       setShowFinalRoundAnimation(true);
@@ -582,15 +574,13 @@ useEffect(() => {
 
   // WebSocket消息处理函数
   function handleWebSocketMessage(msg: WebSocketMessage) {
-    console.log("收到游戏消息类型:", msg.type, "内容:", msg.content);
+    console.log("Receive state:", msg.type, "Content:", msg.content);
     if (msg.type === "GAME_STATE" && typeof msg.content === 'object') {
     // 获取当前贵族ID数量
     const visibleNobleIds = msg.content.visibleNobleIds || [];
     const currentNobleCount = visibleNobleIds.length;
-    console.log("原始贵族数量:", lastNobleCount, "->", currentNobleCount);
     // 检测贵族数量是否减少
     if (lastNobleCount > 0 && currentNobleCount < lastNobleCount) {
-      console.log("检测到贵族数量减少! 从", lastNobleCount, "变为", currentNobleCount);
       // 触发动画
       setShowNobleVisitAnimation(true);
       playSound('nobleVisit');
@@ -608,27 +598,20 @@ useEffect(() => {
       // 如果内容是字符串，尝试解析为JSON
       if (typeof msg.content === 'string') {
         try {
-          const parsedContent = JSON.parse(msg.content);
-          console.log("解析后的消息内容:", parsedContent);
-          
+          const parsedContent = JSON.parse(msg.content);          
           // 检查解析后的内容中是否有房间名称
           if (parsedContent.roomName) {
-            console.log("从解析后的内容获取到房间名称:", parsedContent.roomName);
             setRoomName(parsedContent.roomName);
           }
           
           msg.content = parsedContent;
         } catch (e) {
-          console.error("解析JSON失败:", e);
         }
       }
       // 如果已经是对象
       else if (typeof msg.content === 'object') {
-        console.log("消息内容(对象):", msg.content);
-        
         // 检查对象中是否有房间名称
         if (msg.content.roomName) {
-          console.log("从对象内容获取到房间名称:", msg.content.roomName);
           setRoomName(msg.content.roomName);
         }
       }
@@ -636,21 +619,19 @@ useEffect(() => {
 
     switch (msg.type) {
       case "GAME_STATE":
-        console.log("游戏状态原始数据:", msg.content);
-        console.log("当前玩家索引:", msg.content.currentPlayerIndex);
-        console.log("玩家顺序:", msg.content.playerOrder);
-        console.log("计算得到的当前玩家ID:", msg.content.playerOrder?.[msg.content.currentPlayerIndex]);        
+        // console.log("游戏状态原始数据:", msg.content);
+        // console.log("当前玩家索引:", msg.content.currentPlayerIndex);
+        // console.log("玩家顺序:", msg.content.playerOrder);
+        // console.log("计算得到的当前玩家ID:", msg.content.playerOrder?.[msg.content.currentPlayerIndex]);        
         // 处理游戏状态更新
         if (cardsData.length > 0 && noblesData.length > 0) {
           try {
-            console.log("数据已就绪，处理游戏状态");
             const gameStateData = transformGameState(msg.content, cardsData, noblesData, userMap);
             if (gameStateData) {
-              console.log("设置新游戏状态:", gameStateData);
+              // console.log("设置新游戏状态:", gameStateData);
 
               // 检查是否是页面刷新后收到的第一个状态更新
               if (isPageRefreshed && gameStateData.currentPlayerId === currentUser.id) {
-                console.log("检测到页面刷新后的首次状态更新，当前是玩家回合");
                 setAiHintProcessedForTurn(true); // 使其显示"Choose Action"
                 setSeconds(30); // 设置合理的倒计时时间
                 setIsPageRefreshed(false); // 重置页面刷新标记
@@ -661,11 +642,9 @@ useEffect(() => {
               refreshRequestSent.current = true; // 标记已收到游戏状态，不再请求
             }
           } catch (err) {
-            console.error("转换游戏状态失败:", err);
             setPendingGameState(msg.content); // 出错时保留缓存
           }
         } else {
-          console.log("🕓 数据未就绪，缓存GAME_STATE");
           setPendingGameState(msg.content);
         }
         break;
@@ -673,8 +652,6 @@ useEffect(() => {
       
         
         case "ROOM_STATE":{
-          console.log("收到ROOM_STATE消息:", msg);
-
           const roomContent = msg.content;
           if (roomContent) {
             // 更新房间名
@@ -767,7 +744,6 @@ useEffect(() => {
   // 在连接成功后发送加入房间消息
   useEffect(() => {
     if (wsConnected && !hasJoinedRef.current) {
-      console.log("WebSocket连接成功，发送加入房间消息");
       sendMessage({
         type: "JOIN_ROOM",
         roomId: gameId
@@ -797,20 +773,16 @@ useEffect(() => {
 
   
   // 加载卡牌和贵族数据
-  useEffect(() => {
-    console.log("开始加载卡牌和贵族数据...");
-    
+  useEffect(() => {    
     // 使用绝对路径
     Promise.all([
       fetch('/cards.json').then(response => {
-        console.log("卡牌数据响应:", response.status);
         if (!response.ok) {
           throw new Error(`加载卡牌数据失败: ${response.status}`);
         }
         return response.json();
       }),
       fetch('/noblemen.json').then(response => {
-        console.log("贵族数据响应:", response.status);
         if (!response.ok) {
           throw new Error(`加载贵族数据失败: ${response.status}`);
         }
@@ -818,13 +790,10 @@ useEffect(() => {
       })
     ])
     .then(([cards, nobles]) => {
-      console.log("卡牌数据加载完成，共", cards.length, "张卡牌");
-      console.log("贵族数据加载完成，共", nobles.length, "个贵族");
       setCardsData(cards);
       setNoblesData(nobles);
     })
     .catch(error => {
-      console.error("加载游戏数据失败:", error);
     });
   }, [pendingGameState]);
 
@@ -832,14 +801,12 @@ useEffect(() => {
   // 监听卡牌和贵族数据加载
   useEffect(() => {
     if (lastGameState && cardsData.length > 0 && noblesData.length > 0) {
-      console.log("从全局状态加载游戏数据:", lastGameState);
       try {
         const gameStateData = transformGameState(lastGameState, cardsData, noblesData, userMap);
         if (gameStateData) {
           setGameState(gameStateData);
         }
       } catch (error) {
-        console.error("转换游戏状态失败:", error);
       }
     }
   }, [lastGameState, cardsData, noblesData]);
@@ -848,7 +815,6 @@ useEffect(() => {
 // 添加这个useEffect专门处理pendingGameState
 useEffect(() => {
   if (pendingGameState && cardsData.length > 0 && noblesData.length > 0) {
-    console.log("数据已就绪，处理缓存的游戏状态");
     try {
       const gameStateData = transformGameState(
         pendingGameState, 
@@ -857,12 +823,11 @@ useEffect(() => {
         userMap
       );
       if (gameStateData) {
-        console.log("从缓存设置游戏状态:", gameStateData);
         setGameState(gameStateData);
         setPendingGameState(null);
       }
     } catch (error) {
-      console.error("处理缓存游戏状态失败:", error);
+      console.error("fail:", error);
     }
   }
 }, [pendingGameState, cardsData, noblesData, userMap]);
@@ -909,7 +874,7 @@ const handleGemSelect = (color: string) => {
     }
     // 如果选择2个相同颜色，实际上这种情况在handleConfirmGems中处理
   }
-  console.log("选中颜色:", color, "映射发送为:", mapFrontendToBackendGemColor(color));
+  // console.log("选中颜色:", color, "映射发送为:", mapFrontendToBackendGemColor(color));
 };
 
 const handleConfirmGems = () => {
@@ -1023,14 +988,9 @@ const handleConfirmGems = () => {
 
 
   // 转换游戏状态函数 - 改进版本
-  function transformGameState(data: any, cardsData: any[], noblesData: any[], userMap: Record<string | number, { name: string }>): GameState | null {    console.log("正在转换游戏状态:", data);
-    console.log("正在转换游戏状态:", data);
-    console.log("当前玩家索引:", data.currentPlayerIndex);
-    console.log("玩家顺序:", data.playerOrder);
-    console.log("计算的当前玩家ID:", data.playerOrder?.[data.currentPlayerIndex]);
+  function transformGameState(data: any, cardsData: any[], noblesData: any[], userMap: Record<string | number, { name: string }>): GameState | null {
 
     if (!data) {
-      console.warn("收到空的游戏状态数据");
       return null;
     }
 
@@ -1041,12 +1001,10 @@ const handleConfirmGems = () => {
       const numId = typeof id === "string" ? parseInt(id) : id;
       const card = cardsData.find(c => c.id === numId);
       if (!card) {
-        console.warn(`未找到ID为 ${numId} 的卡牌`);
         return null;
       }
 
       const mappedColor = mapColorToFrontend(card.color);
-      console.log(`卡牌 ${numId}: 后端颜色=${card.color}, 前端颜色=${mappedColor}`);
 
       return {
         uuid: card.id.toString(),
@@ -1075,7 +1033,6 @@ const handleConfirmGems = () => {
       
       const noble = noblesData.find(n => n.id === id);
       if (!noble) {
-        console.warn(`未找到ID为 ${id} 的贵族`);
         return null;
       }
       
@@ -1160,12 +1117,10 @@ const handleConfirmGems = () => {
       // 获取玩家预留的卡牌
       const reservedCards = (player.reservedCardIds || [])
         .map((id: number) =>  {
-          console.log(`📥 玩家 ${player.name || player.userId} 预定卡ID:`, id);
           const found = getCardById(id);
           if (!found) {
-            console.warn("⚠️ 未能从 cardsData 找到卡牌，ID =", id);
           } else {
-            console.log("✅ 找到预定卡:", found);
+            console.log("找到预定卡:", found);
           }
           return found;
         }).filter(Boolean) as Card[];
@@ -1233,17 +1188,7 @@ const handleConfirmGems = () => {
       currentPlayerId: Number(data.playerOrder?.[data.currentPlayerIndex]) || 0,
     };
     
-    // console.log("转换后的游戏状态:", result);
-    // console.log("各级别卡牌数量:", {
-    //   level1: result.cards.level1.length,
-    //   level2: result.cards.level2.length,
-    //   level3: result.cards.level3.length
-    // });
-    
-    console.log("转换后的结果 - turn:", result.turn);
-    console.log("转换后的结果 - currentPlayerId:", result.currentPlayerId);
 
-    // checkColorFormat(result, 'gameState');
     return result;
   }
 
@@ -1344,7 +1289,7 @@ const playSound = (soundName: string) => {
     // 重置音频以便可以重复播放
     sound.pause();
     sound.currentTime = 0;
-    sound.play().catch(err => console.error("音效播放失败:", err));
+    sound.play().catch(err => console.error("Sound fail:", err));
   }
 };
 
@@ -1619,7 +1564,6 @@ const TooltipPortal = () => {
         playSound('reserveCard');
 
         setTimeout(() => {
-          console.log("📤 发送 RESERVE 请求, cardUuid =", cardUuid);
           sendAction("reserve", cardUuid);
           setCurrentAction(null); // Auto pass after action
           setSeconds(0); //倒计时归零
@@ -1630,7 +1574,7 @@ const TooltipPortal = () => {
   
 
   const requestAiHint = () => {
-    if (!isPlayerTurn() || hintCount >= 1) return; // 限制使用1次
+  if (!isPlayerTurn() || hintCount >= 1 || seconds < 10) return; // 限制1次 添加 seconds < 10 条件
     
     setHintLoading(true);
     setHintMessage("");
@@ -1656,7 +1600,7 @@ const TooltipPortal = () => {
   // 发送动作到WebSocket
   const sendAction = (action: string, target: string, extraData: Record<string, any> = {}) => {
     if (!wsConnected) {
-      console.warn("WebSocket尚未连接");
+      console.warn("WebSocket not connect");
       return;
     }
     
@@ -2423,7 +2367,7 @@ const TooltipPortal = () => {
                           fontSize: "14px",
                           fontWeight: "normal"
                         }}>
-                          (offline)
+                          (Quit)
                         </span>
                       )}
                     </div>
@@ -2695,9 +2639,9 @@ const TooltipPortal = () => {
                     playSound('AIhint');
                     requestAiHint();
                   }}
-                  disabled={!isPlayerTurn() || hintCount >= 1}
+                  disabled={!isPlayerTurn() || hintCount >= 1 || seconds < 10}
                   className={
-                    !isPlayerTurn() || hintCount >= 1 ? "disabled" : "clickable"
+                    !isPlayerTurn() || hintCount >= 1 || seconds < 10 ? "disabled" : "clickable"
                   }
                   style={{
                     padding: "8px 24px",
@@ -2706,19 +2650,19 @@ const TooltipPortal = () => {
                     borderRadius: "8px",
                     border: "none",
                     backgroundColor:
-                      !isPlayerTurn() || hintCount >= 1
+                      !isPlayerTurn() || hintCount >= 1 || seconds < 10
                         ? "rgba(120, 120, 120, 0.5)"
                         : "rgba(0, 100, 255, 0.9)",
                     color: "white",
                     boxShadow:
-                      !isPlayerTurn() || hintCount >= 1
+                      !isPlayerTurn() || hintCount >= 1 || seconds < 10
                         ? "none"
                         : "0 0 10px rgba(0, 100, 255, 0.6)",
                     transition: "all 0.2s ease",
-                    opacity: !isPlayerTurn() || hintCount >= 1 ? 0.6 : 1,
+                    opacity: !isPlayerTurn() || hintCount >= 1 || seconds < 10 ? 0.6 : 1,
                   }}
                 >
-                  {hintCount >= 1 ? "Used" : "Get AI Advice"}
+                  {hintCount >= 1 ? "Used" : seconds < 10 ? "Time Low" : "Get AI Advice"}
                 </button>
               )}
             </div>
