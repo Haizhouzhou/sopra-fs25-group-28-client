@@ -44,6 +44,7 @@ interface Player {
   gems: { [color: string]: number };
   nobles: Noble[];
   reserved: Card[];
+  isInThisGame?: boolean;
 }
 
 // Game State
@@ -76,6 +77,7 @@ interface PlayerSnapshot {
   gems?: Record<string, number>;
   bonusGems?: Record<string, number>;
   reservedCardIds?: number[];
+  isInThisGame?: boolean; 
 }
 
 interface GameOverPlayer {
@@ -177,7 +179,13 @@ export default function GamePage() {
   // for AI hint
   const [hintMessage, setHintMessage] = useState("");
   const [hintLoading, setHintLoading] = useState(false);
-  const [hintCount, setHintCount] = useState(0); // 可以限制每场游戏使用次数
+  const [hintCount, setHintCount] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem(`ai-hint-count-${gameId}`);
+      return saved ? parseInt(saved) : 0;
+    }
+    return 0;
+  });
 
   const [roomName, setRoomName] = useState("Test name");
   const [userMap, setUserMap] = useState<Record<string | number, { name: string }>>({});
@@ -1170,7 +1178,8 @@ const handleConfirmGems = () => {
         cards: playerCards,
         gems: transformGems(player.gems || {}),
         nobles: [], // 后端目前没有提供玩家拥有的贵族信息
-        reserved: reservedCards
+        reserved: reservedCards,
+        isInThisGame: player.isInThisGame !== false
       };
     });
     
@@ -1636,7 +1645,12 @@ const TooltipPortal = () => {
     });
     
     // 增加使用次数
-    setHintCount(prev => prev + 1);
+      setHintCount(prev => {
+        const newCount = prev + 1;
+        // 同时保存到 localStorage
+        sessionStorage.setItem(`ai-hint-count-${gameId}`, newCount.toString());
+        return newCount;
+      });
   };
 
   // 发送动作到WebSocket
@@ -1859,6 +1873,7 @@ const TooltipPortal = () => {
           }}>
             <button
               onClick={() => {
+                sessionStorage.removeItem(`ai-hint-count-${gameId}`);
                 sendLeaveRoomMessage();
                 // 短暂延迟后跳转，确保离开消息能发送出去
                 setTimeout(() => {
@@ -1950,6 +1965,7 @@ const TooltipPortal = () => {
           }}>
             <button
               onClick={() => {
+                sessionStorage.removeItem(`ai-hint-count-${gameId}`);
                 sendLeaveRoomMessage();
                 setTimeout(() => {
                   globalThis.location.href = "/lobby";
@@ -2400,6 +2416,16 @@ const TooltipPortal = () => {
                     }}>
                       {gameState.currentPlayerId === player.id && <span style={{marginRight: "5px"}}>Current Player:</span>}
                       {player.id === currentUser.id ? "You!" : player.name}
+                      {player.isInThisGame === false && (
+                        <span style={{
+                          color: "#ff4444",
+                          marginLeft: "8px",
+                          fontSize: "14px",
+                          fontWeight: "normal"
+                        }}>
+                          (offline)
+                        </span>
+                      )}
                     </div>
                     
                     {/* 宝石数和分数 - 第二行 */}
@@ -2962,7 +2988,8 @@ const TooltipPortal = () => {
               alignItems: "center",
               justifyContent: "center",
               boxShadow: "0 0 20px rgba(255, 150, 0, 0.6)",
-              opacity: isPlayerTurn() ? 1 : 0.5
+              opacity: isPlayerTurn() ? 1 : 0.5,
+              cursor:"pointer"
             }}
             onClick={() => {
               playSound('passturn');
