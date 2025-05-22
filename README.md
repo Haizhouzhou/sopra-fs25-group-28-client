@@ -303,6 +303,8 @@ This project includes sound effects from [Pixabay](https://pixabay.com/sound-eff
 - Free for commercial and non-commercial use
 - No attribution required (although credit is appreciated)
 - Allowed to be modified and integrated into other works
+  
+Thanks to the Pixabay community for providing high-quality, royalty-free audio content.
 
 This project also includes cursor assets from the Cursor Pack (1.1) created by [Kenney](https://www.kenney.nl), used under the [Creative Commons Zero (CC0) License](http://creativecommons.org/publicdomain/zero/1.0/).
 
@@ -310,4 +312,4 @@ This project also includes cursor assets from the Cursor Pack (1.1) created by [
 - No attribution required
 - Allowed to be modified and redistributed
 
-Special thanks to Kenney for providing high-quality, freely available game assets. 
+Thanks to Kenney for providing high-quality, freely available game assets. 
