@@ -189,6 +189,7 @@ JDBC URL: `jdbc:h2:mem:testdb` | User: `sa` | (no password)
 
 ## Roadmap
 
+### Completed Milestones
 - Core Gameplay Mechanics  
   - Full implementation of turn-based logic: take gems, reserve/buy cards, gain nobles.  
   - Victory detection and game-over screen with real-time UI update.
@@ -206,6 +207,16 @@ JDBC URL: `jdbc:h2:mem:testdb` | User: `sa` | (no password)
 
 - Token-based Lobby System  
   - Room creation, player join/leave logic, and game start restricted to authenticated users.
+ 
+### Future Goals
+- AI Bots  
+  - Support AI players via strategy modules (e.g., greedy bot, minimax bot).
+- Mobile Responsiveness Enhancements  
+  - Further optimize layout and scaling for touch-based interaction and smaller screens.
+- Multi-language Support  
+  - Add support for multiple languages.
+  
+  
 
 ## Game Wiki
 
