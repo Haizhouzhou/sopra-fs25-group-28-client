@@ -36,15 +36,24 @@
 
 ## Introduction
 
-Two, three, or four players. One goal: build the most prestigious trade empire—who will rise to the top?
+Splendor Online is a web-based multiplayer adaptation of the popular board game Splendor, designed for 2–4 players. Each player takes turns collecting gems and purchasing development cards to build their trade network and earn prestige points.
 
-Splendor Online is a web-based multiplayer board game where players compete to collect gems, attract nobles, and claim victory through wealth and influence. Every turn, you’ll gather gems—emeralds(Greem Gem), diamonds(White Gem), sapphires((Blue Gem)), onyx((Black Gem)), rubies((Red Gem))—and use them to purchase Development Cards. These cards give you permanent bonuses (discounts for future purchases) and earn you prestige points.
+On each turn, players can:
 
-But it’s not just about buying cards. Earn enough bonuses in the right colors, and Noble Tiles will seek you out, rewarding you with extra prestige points. The first player to reach 15 prestige points triggers the endgame—and whoever holds the highest total wins.
+- Take gem tokens (emerald, diamond, sapphire, onyx, ruby)
+- Buy development cards, which offer permanent gem bonuses and prestige(Victory points)
+- Reserve cards for later use and gain a wildcard (gold token)
 
-Play with 2–4 friends in real-time online matches, chat as you compete, keep an eye on the turn timer, and if you’re feeling stuck? Turn on the AI Advisor for some strategic tips (or chaotic suggestions).
+As you accumulate bonuses, Noble tiles may automatically join you if your gem bonuses meet their requirements—granting additional prestige points. The first player to reach 15 prestige(Victory points) triggers the endgame, and the player with the most points wins.
 
-Whether you’re a seasoned Splendor pro or a newcomer ready to build your empire, Splendor Online brings the classic tabletop experience straight to your browser—no setup, no cleanup, just pure fun.
+Key features:
+
+- Real-time online matches with 2–4 players
+- Turn timer to keep the game moving
+- Optional AI Advisor for in-game strategic suggestions
+- No download, no setup—just open the browser and start playing
+
+Whether you're familiar with the tabletop version or trying it for the first time, Splendor Online provides a smooth and accessible way to enjoy the game with friends.
 
 ## Technologies
 
@@ -80,6 +89,10 @@ Whether you’re a seasoned Splendor pro or a newcomer ready to build your empir
 * **Rules**
 
   * `/tutorial/rules` full text rules and victory conditions
+
+* **LeaderBoard**
+
+  * `/leaderboard` trace all Players' performance
 
 ## Launch & Deployment
 
@@ -145,33 +158,54 @@ JDBC URL: `jdbc:h2:mem:testdb` | User: `sa` | (no password)
 
 ## Illustrations
 
- The user starts by either signing or loging in. As soon as the user is on the home site he has the choice between creating or joining a game, look at all the users or logout.
+ The user starts by either signing or loging in. As soon as the user is on the home site he has the choice between creating or joining a game, look tutorial, check leaderboard, edit profile, or logout.
 
 
 * **Home / Sign up / Login**
+
   ![Home](./Pictures_README/home.png)
+
   ![Home](./Pictures_README/signup.png)
+
   ![Home](./Pictures_README/login.png)
   
 
-* **Game Lobby**
+* **Game Lobby / Game Room**
+
   ![Home](./Pictures_README/lobby.png)
 
+  ![Home](./Pictures_README/room.png)
+
 * **Game Board**
+
   ![Home](./Pictures_README/game.png)
 
 * **Tutorial**
-
+  ![Home](./Pictures_README/tutorial.png)
 
 * **Rules**
+  ![Home](./Pictures_README/rule.png)
 
 
 ## Roadmap
 
-* **Persistent Game Records**: store finished games in a database
-* **Enhanced AI Advice**: smarter, context-aware prompts
-* **Friends & Leaderboards**: add social features and global rankings
-* **Mobile & Accessibility**: responsive layout, ARIA support
+- Core Gameplay Mechanics  
+  - Full implementation of turn-based logic: take gems, reserve/buy cards, gain nobles.  
+  - Victory detection and game-over screen with real-time UI update.
+
+- Real-Time Communication  
+  - WebSocket-based messaging system for room status, game events, and in-game chat.  
+  - Synchronization of player actions and board state across multiple clients.
+
+- AI Strategy Hint  
+  - Integrated Gemini API for generating strategy suggestions.  
+
+- Modular UI Component System  
+  - Card grid, player panel, noble display, timer, and chat separated into reusable components.  
+  - `ResponsiveGameWrapper` developed to scale the entire UI responsively via viewport-based transform.
+
+- Token-based Lobby System  
+  - Room creation, player join/leave logic, and game start restricted to authenticated users.
 
 ## Game Wiki
 
@@ -201,11 +235,11 @@ On your turn you must perform **exactly one** of:
 - **Reserve 1 Development card & take 1 gold** (max 3 reserved)  
 - **Purchase 1 Development card** (face-up or reserved)
 
-Your **Development cards** grant Prestige and **permanent discounts** (the card’s color) for future purchases. Collect enough discounts to buy cards for free!
+Your **Development cards** grant Prestige(Victory Points) and **permanent discounts** (the card’s color) for future purchases. Collect enough discounts to buy cards for free!
 
 At the end of your turn, check **Noble tiles**: if you meet a tile’s color-card requirements, you automatically gain that Noble (worth 3 Prestige). Only one Noble per turn.
 
-As soon as any player reaches **15 Prestige**, finish the round so everyone has equal turns. The player with the most Prestige wins. Ties are broken by the fewest cards purchased.
+As soon as any player reaches **15 Prestige(Victory Points)**, the game goes in **FINAL TURN**, so everyone has equal turns. The player with the most Prestige wins. 
 
 ---
 
@@ -213,8 +247,8 @@ As soon as any player reaches **15 Prestige**, finish the round so everyone has 
 
 | Condition                  | How to Achieve                                                                 |
 |----------------------------|--------------------------------------------------------------------------------|
-| **Development Cards**      | Purchase Development cards worth a total of 15 Prestige (counting Nobles).      |
-| **Nobles**                 | Attract enough Nobles to push your Prestige to 15.                             |
+| **Development Cards**      | Purchase Development cards worth a total of 15 Prestige(Victory Points) ,counting Nobles.      |
+| **Nobles**                 | Attract enough Nobles to push your Prestige(Victory Points) to 15.                             |
 
 ---
 
@@ -237,15 +271,15 @@ As soon as any player reaches **15 Prestige**, finish the round so everyone has 
 
 - Each Noble requires a specific set of colored bonuses.  
 - Visit automatically at turn’s end if requirements met.  
-- Worth 3 Prestige each; only one per turn.
+- Worth 3 Prestige(Victory Points) each; only one per turn.
 
 ---
 
 ### End of Game
 
-- Trigger: a player reaches **15 Prestige** at turn’s end.  
+- Trigger: a player reaches **15 Prestige(Victory Points)** at turn’s end.  
 - Final round: every player takes one last turn in seating order.  
-- Victory: highest Prestige; tie → fewest Development cards wins.
+- Victory: highest Prestige(Victory Points); tie → fewest Development cards wins.
 
 ## Authors & Acknowledgement
 
@@ -270,4 +304,10 @@ This project includes sound effects from [Pixabay](https://pixabay.com/sound-eff
 - No attribution required (although credit is appreciated)
 - Allowed to be modified and integrated into other works
 
-Thanks to the Pixabay community for providing high-quality, royalty-free audio content.
+This project also includes cursor assets from the Cursor Pack (1.1) created by [Kenney](https://www.kenney.nl), used under the [Creative Commons Zero (CC0) License](http://creativecommons.org/publicdomain/zero/1.0/).
+
+- Free to use in personal, educational, and commercial projects
+- No attribution required
+- Allowed to be modified and redistributed
+
+Special thanks to Kenney for providing high-quality, freely available game assets. 
