@@ -231,9 +231,6 @@ const RulesPage = () => {
           <a href="#setup" style={{ color: "#FFD700", textDecoration: "none" }}>Setup 🛠️</a>
         </li>
         <li>
-          <a href="#players" style={{ color: "#FFD700", textDecoration: "none" }}>2–3 Players 👥</a>
-        </li>
-        <li>
           <a href="#actions" style={{ color: "#FFD700", textDecoration: "none" }}>Actions 🎯</a>
         </li>
         <li>
