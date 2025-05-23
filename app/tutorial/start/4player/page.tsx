@@ -232,6 +232,8 @@ export default function TutorialPage() {
   const enableCardInteraction = (cardId: number): boolean => { return ((allowedAction === 'buyCard' || allowedAction === 'reserveCard') && cardId === currentStepConfig?.targetCardId); };
 
   return (
+    <div className="tutorial-page">
+
     <ResponsiveGameWrapper>
       {/* Back Button */}
 <div
@@ -300,5 +302,6 @@ export default function TutorialPage() {
           </div>
       </div>
     </ResponsiveGameWrapper>
+    </div>
   );
 }
