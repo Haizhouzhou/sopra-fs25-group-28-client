@@ -65,34 +65,40 @@ Whether you're familiar with the tabletop version or trying it for the first tim
 
 ## High-Level Components
 
-* **Authentication**
+The backend server consists of several main components：
 
-  * `/login` & `/sign_up` for user management
-  * `/users` to view & edit profile (name, avatar, password)
-* **Lobby**
+### Controller
 
-  * `/lobby` to list, create, or join game rooms
-* **Room**
+- [UserController](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs24/controller/UserController.java)
+   Handles REST API endpoints related to user management, such as login, logout, and profile retrieval. It acts as the entry point for all HTTP-based user operations and delegates business logic to the corresponding service layer.
 
-  * `/room/[id]` shows current players, “Start Game” button, and chat
-* **Game**
+### Service
 
-  * `/game/[id]` board view with:
+- [UserService](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs24/service/UserService.java)
+   Provides business logic for user-related tasks, such as authentication and user data management. It is called by the UserController to process requests.
+- [GeminiService](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs24/service/GeminiService.java)
+   Responsible for handling requests to the external Gemini AI API. It processes player hint requests by communicating with the external service and returning suggestions to the frontend.
 
-    * Take gems (2 same or 3 different)
-    * Buy or reserve cards
-    * AI advice button
-    * Real-time chat & turn timer
-* **Tutorial**
+### WebSocket
 
-  * `/tutorial` interactive, step-by-step guide through core rules
-* **Rules**
+- [WebSocketServer](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs24/websocket/WebSocketServer.java)
+   Manages the WebSocket endpoint for real-time communication. It handles client connections, disconnections, and routing of messages between players and the server.
 
-  * `/tutorial/rules` full text rules and victory conditions
+Within the websocket module, the following subcomponents organize the application logic:
 
-* **LeaderBoard**
+- [game](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs24/websocket/game/Game.java)
+   Contains core game logic, such as game state management, turn progression, and rule enforcement.
 
-  * `/leaderboard` trace all Players' performance
+- [action](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/tree/main/src/main/java/ch/uzh/ifi/hase/soprafs24/websocket/action)
+   Includes various Action classes, each representing a possible player action (e.g., collecting gems, buying cards, reserving cards). Each action class performs validation and executes the corresponding logic.
+
+- [util](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/tree/main/src/main/java/ch/uzh/ifi/hase/soprafs24/websocket/util)
+
+  Provides supporting classes, such as:
+
+  - [Player](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs24/websocket/util/Player.java): Manages player-specific variables and state during the game.
+  - [Card](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs24/websocket/util/Card.java) and [Noble](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs24/websocket/util/Noble.java): Represent key game items used in gameplay logic.
+  - [MyWebSocketMessage](https://github.com/Haizhouzhou/sopra-fs25-group-28-server/blob/main/src/main/java/ch/uzh/ifi/hase/soprafs24/websocket/util/MyWebSocketMessage.java): Defines the structure of messages transmitted via WebSocket, making it easier to extend and decode message content.
 
 ## Launch & Deployment
 
@@ -107,24 +113,30 @@ Both frontend and backend are public GitHub repos:
 * Java 17
 * (Optional) Google Cloud SDK
 
-## Setup with Your IDE
+### Setup with Your IDE
 
-### IntelliJ IDEA
+Download your IDE of choice (e.g., [IntelliJ](https://www.jetbrains.com/idea/download/), [Visual Studio Code](https://code.visualstudio.com/), or [Eclipse](http://www.eclipse.org/downloads/)). Make sure Java 17 is installed on your system (for Windows, please make sure your `JAVA_HOME` environment variable is set to the correct version of Java).
+
+#### IntelliJ IDEA
 
 1. Clone the **server** repo and open in IntelliJ.
 2. Import as a **Gradle** project.
 3. Ensure **Java 17** SDK is selected.
 4. Run `Application.java` or use the Gradle **bootRun** task.
 
-### VS Code
+#### VS Code
 
 1. Clone both **client** and **server** folders.
-2. Install recommended extensions: ESLint, Prettier, vscjava.vscode-java-pack, vmware.vscode-spring-boot
+2. Install recommended extensions:
+ -   `vmware.vscode-spring-boot`
+ -   `vscjava.vscode-spring-initializr`
+ -   `vscjava.vscode-spring-boot-dashboard`
+ -   `vscjava.vscode-java-pack`
 3. Use integrated terminal to execute the commands below.
 
-## Building & Running
+### Building & Running
 
-### Build Frontend
+#### Build Frontend
 
 ```bash
 cd sopra-fs25-group-28-client
@@ -132,29 +144,55 @@ npm install
 npm run build
 ```
 
-### Run Frontend
+#### Run Frontend
 
 ```bash
-npm run dev       # Opens at http://localhost:3000
+npm run dev
 npm run start     # Production mode
 ```
 
-### Build Backend
+#### Build Backend with Gradle
+
+You can use the local Gradle Wrapper to build the application.
+-   macOS: `./gradlew`
+-   Linux: `./gradlew`
+-   Windows: `./gradlew.bat`
+
+More Information about [Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html) and [Gradle](https://gradle.org/docs/).
+
+#### Build
 
 ```bash
-cd sopra-fs25-group-28-server
 ./gradlew bootJar
 ```
 
-### Run Backend
+#### Run Backend
 
 ```bash
-java -jar build/libs/sopra-fs25-group-28-server-0.0.1-SNAPSHOT.jar
-# Server on http://localhost:8080
+./gradlew bootRun
 ```
 
-**H2 Console:** [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
-JDBC URL: `jdbc:h2:mem:testdb` | User: `sa` | (no password)
+#### Test Backend
+
+```bash
+./gradlew test
+```
+
+#### Backend Development Mode
+You can start the backend in development mode, this will automatically trigger a new build and reload the application
+once the content of a file has been changed.
+
+Start two terminal windows and run:
+
+`./gradlew build --continuous`
+
+and in the other one:
+
+`./gradlew bootRun`
+
+If you want to avoid running all tests with every change, use the following command instead:
+
+`./gradlew build --continuous -xtest`
 
 ## Illustrations
 
@@ -188,109 +226,18 @@ JDBC URL: `jdbc:h2:mem:testdb` | User: `sa` | (no password)
 
 
 ## Roadmap
+For those who is interested in this game and want to make contributions, here are some possible new features and future works for you to consider:
 
-### Completed Milestones
-- Core Gameplay Mechanics  
-  - Full implementation of turn-based logic: take gems, reserve/buy cards, gain nobles.  
-  - Victory detection and game-over screen with real-time UI update.
+- **External Database & True Data Persistence**
+	At the moment, we are using an in-memory H2 database to persist our data, mainly user entries. Since our backend is deployed on a flexible environment on Google Cloud with a minimum instance count of 1, normally our data should not be lost unless Google Cloud itself goes down. However, this is not a typical or robust solution.
 
-- Real-Time Communication  
-  - WebSocket-based messaging system for room status, game events, and in-game chat.  
-  - Synchronization of player actions and board state across multiple clients.
+	Using an in-memory database does not provide true data persistence. For better reliability and scalability, switching to an external database is recommended. Due to limited development time and resource considerations, we have not integrated an external database so far. If you plan to make this change, you may need to add dependencies in `build.gradle` and update the relevant database configuration in `application.properties`. Please also document the setup and maintenance procedures for the external database for future maintainers.
 
-- AI Strategy Hint  
-  - Integrated Gemini API for generating strategy suggestions.  
-
-- Modular UI Component System  
-  - Card grid, player panel, noble display, timer, and chat separated into reusable components.  
-  - `ResponsiveGameWrapper` developed to scale the entire UI responsively via viewport-based transform.
-
-- Token-based Lobby System  
-  - Room creation, player join/leave logic, and game start restricted to authenticated users.
- 
-### Future Goals
-- AI Bots  
-  - Support AI players via strategy modules (e.g., greedy bot, minimax bot).
-- Mobile Responsiveness Enhancements  
-  - Further optimize layout and scaling for touch-based interaction and smaller screens.
-- Multi-language Support  
-  - Add support for multiple languages.
-  
-  
-
-## Game Wiki
-
-### Contents & Setup
-
-- **40 gem tokens** (7 each of Emerald, Sapphire, Ruby, Diamond, Onyx; 5 Gold jokers)  
-- **90 Development cards** (40 Level 1, 30 Level 2, 20 Level 3)  
-- **10 Noble tiles**
-
-**Setup (4-player)**  
-1. Shuffle each deck, stack by level.  
-2. Reveal 4 cards from each level in a row.  
-3. Shuffle Nobles, reveal 5. Return the rest.  
-4. Sort tokens by color into six piles.  
-5. Youngest player takes the First Player marker.
-
-_Adjust for 2–3 players by removing extra tokens and fewer Nobles._
-
----
-
-### Game Overview
-
-On your turn you must perform **exactly one** of:
-
-- **Take 3 different gems** (no gold; only if ≥3 colors available)  
-- **Take 2 gems of the same color** (only if ≥4 in supply; no gold)  
-- **Reserve 1 Development card & take 1 gold** (max 3 reserved)  
-- **Purchase 1 Development card** (face-up or reserved)
-
-Your **Development cards** grant Prestige(Victory Points) and **permanent discounts** (the card’s color) for future purchases. Collect enough discounts to buy cards for free!
-
-At the end of your turn, check **Noble tiles**: if you meet a tile’s color-card requirements, you automatically gain that Noble (worth 3 Prestige). Only one Noble per turn.
-
-As soon as any player reaches **15 Prestige(Victory Points)**, the game goes in **FINAL TURN**, so everyone has equal turns. The player with the most Prestige wins. 
-
----
-
-### Win Conditions (15 Prestige)
-
-| Condition                  | How to Achieve                                                                 |
-|----------------------------|--------------------------------------------------------------------------------|
-| **Development Cards**      | Purchase Development cards worth a total of 15 Prestige(Victory Points) ,counting Nobles.      |
-| **Nobles**                 | Attract enough Nobles to push your Prestige(Victory Points) to 15.                             |
-
----
-
-### Actions & Flow
-
-1. **Choose an action** (Take gems, Reserve, Purchase).  
-2. **Resolve** the action immediately (draw, pay cost, claim Noble).  
-3. **End turn** (pass to next player or automatic if timer expires).
-
----
-
-### Resources & Discounts
-
-- **Gems** (emerald, sapphire, ruby, diamond, onyx) and **Gold** (wild).  
-- **Bonuses** from your face-up cards reduce future gem costs by one per bonus.
-
----
-
-### Noble Tiles
-
-- Each Noble requires a specific set of colored bonuses.  
-- Visit automatically at turn’s end if requirements met.  
-- Worth 3 Prestige(Victory Points) each; only one per turn.
-
----
-
-### End of Game
-
-- Trigger: a player reaches **15 Prestige(Victory Points)** at turn’s end.  
-- Final round: every player takes one last turn in seating order.  
-- Victory: highest Prestige(Victory Points); tie → fewest Development cards wins.
+- **Advanced Leaderboard & Player Statistics**
+	Expand the leaderboard to show more detailed player statistics, such as win/loss ratios, average game duration, and achievement badges. This can provide more meaningful feedback and motivation for regular players.
+	
+- **Game State Synchronization and Heartbeat Mechanism**
+	Currently, we already have a game state synchronization mechanism between the frontend and backend, and the system is able to handle frontend refresh or disconnection events during a game. However, since we do not use a heartbeat mechanism, some parts of the connection management logic are more complex and less maintainable. Introducing a regular heartbeat between client and server would make connection management more robust, improve code readability and maintainability, and further simplify reconnection and state recovery in the future.
 
 ## Authors & Acknowledgement
 
