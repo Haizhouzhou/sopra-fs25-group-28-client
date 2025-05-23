@@ -17,22 +17,11 @@
     - [IntelliJ IDEA](#intellij-idea)
     - [VS Code](#vs-code)
   - [Building \& Running](#building--running)
-    - [Build Frontend](#build-frontend)
-    - [Run Frontend](#run-frontend)
-    - [Build Backend](#build-backend)
-    - [Run Backend](#run-backend)
   - [Illustrations](#illustrations)
   - [Roadmap](#roadmap)
-  - [Game Wiki](#game-wiki)
-    - [Contents \& Setup](#contents--setup)
-    - [Game Overview](#game-overview)
-    - [Win Conditions (15 Prestige)](#win-conditions-15-prestige)
-    - [Actions \& Flow](#actions--flow)
-    - [Resources \& Discounts](#resources--discounts)
-    - [Noble Tiles](#noble-tiles)
-    - [End of Game](#end-of-game)
   - [Authors \& Acknowledgement](#authors--acknowledgement)
   - [License](#license)
+  - [Third-party Assets and Licenses](#third-party-assets-and-licenses)
 
 ## Introduction
 
@@ -60,8 +49,7 @@ Whether you're familiar with the tabletop version or trying it for the first tim
 - **WebSockets (Custom JSON Protocol)**  
   We leverage Spring Boot’s native WebSocket support to power all real-time interactions—game state updates (`GAME_STATE`), chat (`CHAT_MESSAGE`), turn timers, and AI hint requests (`AI_HINT`). A single endpoint registers a `WebSocketHandler` on server startup, routing messages by `sessionId` and `roomId`. On the client, our `useWebSocket` hook handles connection lifecycle, automatic reconnection, JSON parsing, and dispatch into React Context.
 - **Google Gemini API (AI Strategy Hints)**  
-  To provide in-game strategic advice, the client emits an `AI_HINT` over WebSocket. The Spring service then calls Google’s Gemini generative-language endpoint (`gemini-2.5-flash-preview-04-17:generateContent`) using `gemini.api.key` and `gemini.api.url`. We package a concise system prompt plus the current turn snapshot, then stream back the AI’s one-sentence recommendation (e.g. “Take 2 Blue Gems”) as a `AI_HINT` message. Usage is limited to three hints per player per game to balance assistance and performance.
-
+  To provide in-game strategic advice, the client emits an AI_HINT over WebSocket. The Spring service then calls Google’s Gemini generative-language endpoint (`gemini-2.0-flash`). We package a concise system prompt along with the current turn snapshot, and stream back the AI’s one-sentence recommendation (e.g. “Take 2 Blue Gems”) as an AI_HINT message. Usage is limited to one hints per player per game to balance assistance and performance.
 
 ## High-Level Components
 
@@ -229,14 +217,17 @@ If you want to avoid running all tests with every change, use the following comm
 For those who is interested in this game and want to make contributions, here are some possible new features and future works for you to consider:
 
 - **External Database & True Data Persistence**
+
 	At the moment, we are using an in-memory H2 database to persist our data, mainly user entries. Since our backend is deployed on a flexible environment on Google Cloud with a minimum instance count of 1, normally our data should not be lost unless Google Cloud itself goes down. However, this is not a typical or robust solution.
 
 	Using an in-memory database does not provide true data persistence. For better reliability and scalability, switching to an external database is recommended. Due to limited development time and resource considerations, we have not integrated an external database so far. If you plan to make this change, you may need to add dependencies in `build.gradle` and update the relevant database configuration in `application.properties`. Please also document the setup and maintenance procedures for the external database for future maintainers.
 
 - **Advanced Leaderboard & Player Statistics**
+
 	Expand the leaderboard to show more detailed player statistics, such as win/loss ratios, average game duration, and achievement badges. This can provide more meaningful feedback and motivation for regular players.
 	
 - **Game State Synchronization and Heartbeat Mechanism**
+
 	Currently, we already have a game state synchronization mechanism between the frontend and backend, and the system is able to handle frontend refresh or disconnection events during a game. However, since we do not use a heartbeat mechanism, some parts of the connection management logic are more complex and less maintainable. Introducing a regular heartbeat between client and server would make connection management more robust, improve code readability and maintainability, and further simplify reconnection and state recovery in the future.
 
 ## Authors & Acknowledgement
