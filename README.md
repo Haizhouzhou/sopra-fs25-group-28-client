@@ -151,7 +151,7 @@ More Information about [Gradle Wrapper](https://docs.gradle.org/current/userguid
 #### Build
 
 ```bash
-./gradlew bootJar
+./gradlew build
 ```
 
 #### Run Backend
