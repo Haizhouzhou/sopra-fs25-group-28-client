@@ -504,7 +504,7 @@ body {
 
 /* Basis für eine reservierte Karte im Spielerbereich - MODIFIED */
 #player-area .reserveCards .card {
-  width: 50px !important; /* MODIFIED: Fixed width */
+  width: 120px !important; /* MODIFIED: Fixed width */
   height: 70px !important; /* MODIFIED: Fixed height */
   /* aspect-ratio: 0.35 !important; /* REMOVED */
   position: relative !important;
@@ -637,7 +637,7 @@ body {
 /* --- Alte Overrides aus Tutorial.css --- */
 /* Placeholder für kleine Karten, falls noch irgendwo im Tutorial benötigt */
 .card-placeholder-small {
-  width: 50px;
+  width: 140px;
   height: 70px;
   border: 1px dashed rgba(255,255,255,0.3);
   border-radius: 4px;
