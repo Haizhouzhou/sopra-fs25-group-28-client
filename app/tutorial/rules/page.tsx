@@ -448,28 +448,6 @@ const RulesPage = () => {
               <strong>Starting Player:</strong> The game randomly selects a player to take the first turn.
             </li>
           </ol>
-          <p><em>(Refer to the <a href="#players" style={keywordLinkStyle}>2–3 Players Adjustments</a> section for modifications to <a href="#gem-tokens" style={keywordLinkStyle}>gem token</a> availability and the number of <a href="#noble-tiles" style={keywordLinkStyle}>Noble tiles</a> based on player count.)</em></p>
-        </section>
-        <hr style={{ borderColor: "#FFD700", margin: "2rem 0" }} />
-
-        <section id="players" style={{ marginBottom: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.8rem", color: "#FFD700" }}>👥 2–3 Players Adjustments</h2>
-          <p>For games with fewer than 4 players, the initial game setup is adjusted as follows:</p>
-          <ul style={{ paddingLeft: "1.2rem", marginTop: "0.5rem" }}>
-            <li><strong>2 players:</strong> 
-                <ul style={{ paddingLeft: "1.2rem", marginTop: "0.2rem", listStyleType: "disc" }}>
-                    <li>Only 4 of each colored <a href="#gem-tokens" style={keywordLinkStyle}>gem token</a> (excluding gold) are made available in the supply.</li>
-                    <li>3 <a href="#noble-tiles" style={keywordLinkStyle}>Noble tiles</a> (2 players + 1) are revealed.</li>
-                </ul>
-            </li>
-            <li><strong>3 players:</strong>
-                <ul style={{ paddingLeft: "1.2rem", marginTop: "0.2rem", listStyleType: "disc" }}>
-                    <li>Only 5 of each colored <a href="#gem-tokens" style={keywordLinkStyle}>gem token</a> (excluding gold) are made available in the supply.</li>
-                    <li>4 <a href="#noble-tiles" style={keywordLinkStyle}>Noble tiles</a> (3 players + 1) are revealed.</li>
-                </ul>
-            </li>
-          </ul>
-          <p>The number of <a href="#development-cards" style={keywordLinkStyle}>development cards</a> and <a href="#gem-tokens" style={keywordLinkStyle}>gold tokens</a> (5) remains the same regardless of player count.</p>
         </section>
         <hr style={{ borderColor: "#FFD700", margin: "2rem 0" }} />
         
@@ -482,7 +460,7 @@ const RulesPage = () => {
             <li>Take 3 <a href="#gem-tokens" style={keywordLinkStyle}>tokens</a> of <strong>different</strong> colors.</li>
             <li>Take 2 <a href="#gem-tokens" style={keywordLinkStyle}>tokens</a> of the <strong>same</strong> color (this is only allowed if there are at least 4 <a href="#gem-tokens" style={keywordLinkStyle}>tokens</a> of that color remaining in the supply before you take them).</li>
           </ul>
-          <p><em>You may hold a maximum of 10 <a href="#gem-tokens" style={keywordLinkStyle}>tokens</a> (<a href="#gem-tokens" style={keywordLinkStyle}>gems</a> + <a href="#gem-tokens" style={keywordLinkStyle}>gold</a>) in total. If taking <a href="#gem-tokens" style={keywordLinkStyle}>tokens</a> results in you having more than 10, you must immediately discard <a href="#gem-tokens" style={keywordLinkStyle}>tokens</a> of your choice back to the supply until you have 10.</em></p>
+          <p><em>You may hold a maximum of 10 <a href="#gem-tokens" style={keywordLinkStyle}>tokens</a> (<a href="#gem-tokens" style={keywordLinkStyle}>gems</a> + <a href="#gem-tokens" style={keywordLinkStyle}>gold</a>) in total. </em></p>
 
           <h3 style={{ fontSize: "1.2rem", marginTop: "1rem", marginBottom: "0.5rem", color: "#FFD700" }}>2️⃣ Buy a Development Card</h3>
           <p>Purchase one face-up <a href="#development-cards" style={keywordLinkStyle}>Development Card</a> from the display rows or one of the cards you have previously reserved.</p>
@@ -532,7 +510,6 @@ const RulesPage = () => {
           <ol style={{ paddingLeft: "1.2rem", marginTop: "0.5rem" }}>
             <li>When any player reaches <strong>15 or more Prestige Points</strong> at the end of their turn (after attracting a <a href="#noble-tiles" style={keywordLinkStyle}>Noble</a>, if applicable), the current round of play is completed. This means every player will have had the same number of turns.</li>
             <li>After the round finishes, the player with the most Prestige Points wins the game.</li>
-            <li><strong>Tie-Breaker:</strong> If two or more players have the same highest number of Prestige Points, the player among them who has purchased the fewest <a href="#development-cards" style={keywordLinkStyle}>Development Cards</a> wins the game.</li>
           </ol>
           <h3 style={{ fontSize: "1.2rem", marginTop: "1rem", marginBottom: "0.5rem", color: "#FFD700" }}>📊 Prestige Points Scoring</h3>
           <p>Your total Prestige Points are the sum of:</p>
